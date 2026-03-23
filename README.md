@@ -47,4 +47,4 @@ Aplicación frontend construida con Next.js.
 ## Instalación
 
 ```powershell
-npm install
+npm install 
