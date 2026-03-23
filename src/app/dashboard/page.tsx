@@ -6,7 +6,7 @@ import { dashboardApi } from "@/lib/api";
 import { getUser } from "@/lib/auth";
 import { Card } from "@/components/ui/Card";
 import { ScoreBadge } from "@/components/ui/Badge";
-import { TrendingUp, FolderOpen, Star } from "lucide-react";
+import { TrendingUp, FolderOpen, Star }  from "lucide-react";
 
 interface RecomendacionDTO {
   id: number;
