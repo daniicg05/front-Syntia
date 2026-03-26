@@ -49,7 +49,7 @@ export const dashboardApi = {
 // ── Perfil ────────────────────────────────────────────────────────────────────
 export const perfilApi = {
     get: () => api.get("/usuario/perfil"),
-    save: (data: PerfilForm) => api.put("/usuario/perfil", data),
+    save: (data: Record<string, string>) => api.put("/usuario/perfil", data),
 };
 
 // ── Proyectos ─────────────────────────────────────────────────────────────────
