@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { adminApi } from "@/lib/api";
-import { Card } from "@/components/ui/Card";
-import { RolBadge, ScoreBadge } from "@/components/ui/Badge";
+import { adminApi } from "@/src/lib/api";
+import { Card } from "@/src/components/ui/Card";
+import { RolBadge, ScoreBadge } from "@/src/components/ui/Badge";
 
 interface UsuarioDetalle {
     usuario: { id: number; email: string; rol: string; creadoEn: string };

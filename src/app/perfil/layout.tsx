@@ -1,4 +1,5 @@
-import { Navbar } from "@/components/Navbar";
+import { Navbar } from "@/src/components/Navbar";
+
 export default function PerfilLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50">

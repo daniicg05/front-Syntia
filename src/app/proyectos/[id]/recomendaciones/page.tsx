@@ -3,11 +3,11 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { recomendacionesApi, proyectosApi } from "@/lib/api";
-import { getToken } from "@/lib/auth";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { ScoreBadge } from "@/components/ui/Badge";
+import { recomendacionesApi, proyectosApi } from "@/src/lib/api";
+import { getToken } from "@/src/lib/auth";
+import { Card } from "@/src/components/ui/Card";
+import { Button } from "@/src/components/ui/Button";
+import { ScoreBadge } from "@/src/components/ui/Badge";
 import { Sparkles, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 
 interface Recomendacion {

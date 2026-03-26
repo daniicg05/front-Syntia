@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { adminApi } from "@/lib/api";
-import { Button } from "@/components/ui/Button";
+import { adminApi } from "@/src/lib/api";
+import { Button } from "@/src/components/ui/Button";
 import { Plus, Download, Trash2, Pencil } from "lucide-react";
 
 interface Convocatoria {

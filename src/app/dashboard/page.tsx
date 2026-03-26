@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { dashboardApi } from "@/lib/api";
-import { getUser } from "@/lib/auth";
-import { Card } from "@/components/ui/Card";
-import { ScoreBadge } from "@/components/ui/Badge";
+import { dashboardApi } from "@/src/lib/api";
+import { getUser } from "@/src/lib/auth";
+import { Card } from "@/src/components/ui/Card";
+import { ScoreBadge } from "@/src/components/ui/Badge";
 import { TrendingUp, FolderOpen, Star } from "lucide-react";
 
 interface RecomendacionDTO {

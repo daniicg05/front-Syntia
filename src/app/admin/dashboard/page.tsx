@@ -5,10 +5,10 @@ import {
 } from "react";
 import {
     adminApi }
-    from "@/lib/api";
+    from "@/src/lib/api";
 import {
     Card
-} from "@/components/ui/Card";
+} from "@/src/components/ui/Card";
 import {
     Users, FolderOpen, Star, FileText
 } from "lucide-react";

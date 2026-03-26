@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { perfilApi } from "@/lib/api";
-import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+import { perfilApi } from "@/src/lib/api";
+import { Card } from "@/src/components/ui/Card";
+import { Input } from "@/src/components/ui/Input";
+import { Button } from "@/src/components/ui/Button";
 
 interface PerfilForm {
   sector: string;

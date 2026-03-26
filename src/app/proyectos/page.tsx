@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { proyectosApi } from "@/lib/api";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { proyectosApi } from "@/src/lib/api";
+import { Card } from "@/src/components/ui/Card";
+import { Button } from "@/src/components/ui/Button";
 import { FolderOpen, Plus, MapPin, Tag, Trash2, Eye, Pencil } from "lucide-react";
 
 interface Proyecto {

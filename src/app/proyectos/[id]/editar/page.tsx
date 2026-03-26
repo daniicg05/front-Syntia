@@ -5,10 +5,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useParams } from "next/navigation";
-import { proyectosApi } from "@/lib/api";
-import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+import { proyectosApi } from "@/src/lib/api";
+import { Card } from "@/src/components/ui/Card";
+import { Input } from "@/src/components/ui/Input";
+import { Button } from "@/src/components/ui/Button";
 import Link from "next/link";
 
 const schema = z.object({

@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { adminApi } from "@/lib/api";
-import { getUser } from "@/lib/auth";
-import { Button } from "@/components/ui/Button";
-import { RolBadge } from "@/components/ui/Badge";
+import { adminApi } from "@/src/lib/api";
+import { getUser } from "@/src/lib/auth";
+import { Button } from "@/src/components/ui/Button";
+import { RolBadge } from "@/src/components/ui/Badge";
 import { Eye, Trash2 } from "lucide-react";
 
 interface Usuario {

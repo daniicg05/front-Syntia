@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { logout, getUser } from "@/lib/auth";
+import { logout, getUser } from "@/src/lib/auth";
 import { clsx } from "clsx";
 import { LayoutDashboard, Users, FileText, LogOut } from "lucide-react";
 

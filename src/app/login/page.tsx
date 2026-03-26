@@ -6,9 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { login } from "@/lib/auth";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+import { login } from "@/src/lib/auth";
+import { Input } from "@/src//components/ui/Input";
+import { Button } from "@/src//components/ui/Button";
 
 const schema = z.object({
     email: z.string().email("Email inválido"),
