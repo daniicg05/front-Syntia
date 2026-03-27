@@ -12,14 +12,19 @@ interface RecomendacionDTO {
   id: number;
   puntuacion: number;
   explicacion: string;
-  convocatoria: { titulo: string };
-  proyecto: { id: number; nombre: string };
+  titulo: string;
+  tipo: string;
+  urlOficial: string;
+}
+
+interface ProyectoConRecs {
+  proyecto: { id: number; nombre: string; sector: string; ubicacion: string };
+  recomendaciones: RecomendacionDTO[];
 }
 
 interface DashboardData {
-  email: string;
   totalRecomendaciones: number;
-  topRecomendaciones: Record<string, RecomendacionDTO[]>;
+  topRecomendaciones: ProyectoConRecs[];
   roadmap: { proyecto: { id: number; nombre: string }; recomendacion: RecomendacionDTO }[];
 }
 
@@ -80,7 +85,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">
-                {Object.keys(data?.topRecomendaciones ?? {}).length}
+                {(data?.topRecomendaciones ?? []).length}
               </p>
               <p className="text-sm text-gray-500">Proyectos activos</p>
             </div>
@@ -100,7 +105,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Top recomendaciones */}
-      {data && Object.keys(data.topRecomendaciones).length > 0 && (
+      {data && data.topRecomendaciones.length > 0 && (
         <Card>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-900">Top recomendaciones por proyecto</h2>
@@ -109,21 +114,21 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="space-y-4">
-            {Object.entries(data.topRecomendaciones).map(([proyectoNombre, recs]) =>
-              recs.length > 0 ? (
-                <div key={proyectoNombre}>
+            {data.topRecomendaciones.map(({ proyecto, recomendaciones }) =>
+              recomendaciones.length > 0 ? (
+                <div key={proyecto.id}>
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                    {proyectoNombre}
+                    {proyecto.nombre}
                   </p>
                   <div className="space-y-2">
-                    {recs.map((rec) => (
+                    {recomendaciones.map((rec) => (
                       <div
                         key={rec.id}
                         className="flex items-start justify-between gap-4 p-3 bg-gray-50 rounded-lg"
                       >
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">
-                            {rec.convocatoria.titulo}
+                            {rec.titulo}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
                             {rec.explicacion}
@@ -140,7 +145,7 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {data && Object.keys(data.topRecomendaciones).length === 0 && (
+      {data && data.topRecomendaciones.length === 0 && (
         <Card>
           <div className="text-center py-8">
             <FolderOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
