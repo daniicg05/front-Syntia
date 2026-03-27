@@ -273,30 +273,66 @@ export default function RecomendacionesPage() {
                 </div>
 
                 {/* Guía expandida */}
-                {expandedRec === rec.id && guias[rec.id] && (
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <h4 className="font-semibold text-gray-900 mb-3">Guía de solicitud</h4>
-                    <div className="space-y-3 text-sm text-gray-700">
-                      {Object.entries(guias[rec.id]).map(([key, value]) => (
-                        value && typeof value !== "object" ? (
-                          <div key={key}>
-                            <span className="font-medium capitalize">{key.replace(/([A-Z])/g, " $1")}:</span>{" "}
-                            <span>{String(value)}</span>
-                          </div>
-                        ) : value && Array.isArray(value) ? (
-                          <div key={key}>
-                            <p className="font-medium capitalize mb-1">{key.replace(/([A-Z])/g, " $1")}:</p>
-                            <ul className="list-disc list-inside space-y-1 pl-2">
-                              {(value as string[]).map((item, i) => (
-                                <li key={i}>{item}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null
-                      ))}
+                {expandedRec === rec.id && guias[rec.id] && (() => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const g = guias[rec.id] as any;
+                  const summary = g?.grant_summary;
+                  const docs: string[] = g?.required_documents ?? [];
+                  const reqs: string[] = g?.universal_requirements_lgs_art13 ?? [];
+                  const methods: {method?: string; description?: string}[] = g?.application_methods ?? [];
+                  const disclaimer: string = g?.legal_disclaimer ?? "";
+                  return (
+                    <div className="mt-4 pt-4 border-t border-gray-100 space-y-4 text-sm text-gray-700">
+                      <h4 className="font-semibold text-gray-900">Guía de solicitud</h4>
+
+                      {summary && (
+                        <div className="space-y-1">
+                          {summary.title && <p><span className="font-medium">Título:</span> {summary.title}</p>}
+                          {summary.organism && <p><span className="font-medium">Organismo:</span> {summary.organism}</p>}
+                          {summary.objective && <p><span className="font-medium">Objetivo:</span> {summary.objective}</p>}
+                          {summary.who_can_apply && <p><span className="font-medium">Quién puede solicitar:</span> {summary.who_can_apply}</p>}
+                          {summary.deadline && <p><span className="font-medium">Plazo:</span> {summary.deadline}</p>}
+                          {summary.official_link && <p><span className="font-medium">Enlace oficial:</span>{" "}
+                            <a href={summary.official_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">{summary.official_link}</a>
+                          </p>}
+                        </div>
+                      )}
+
+                      {methods.length > 0 && (
+                        <div>
+                          <p className="font-medium mb-1">Métodos de solicitud:</p>
+                          <ul className="list-disc list-inside space-y-1 pl-2">
+                            {methods.map((m, i) => (
+                              <li key={i}>{m.method}{m.description ? ` — ${m.description}` : ""}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {docs.length > 0 && (
+                        <div>
+                          <p className="font-medium mb-1">Documentos requeridos:</p>
+                          <ul className="list-disc list-inside space-y-1 pl-2">
+                            {docs.map((d, i) => <li key={i}>{d}</li>)}
+                          </ul>
+                        </div>
+                      )}
+
+                      {reqs.length > 0 && (
+                        <div>
+                          <p className="font-medium mb-1">Requisitos LGS art. 13:</p>
+                          <ul className="list-disc list-inside space-y-1 pl-2">
+                            {reqs.map((r, i) => <li key={i}>{r}</li>)}
+                          </ul>
+                        </div>
+                      )}
+
+                      {disclaimer && (
+                        <p className="text-xs text-gray-500 italic border-t pt-2">{disclaimer}</p>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             </Card>
           ))}
