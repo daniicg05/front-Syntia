@@ -66,6 +66,10 @@ export const proyectosApi = {
 export const recomendacionesApi = {
     list: (proyectoId: number) =>
         api.get(`/usuario/proyectos/${proyectoId}/recomendaciones`),
+    buscar: (proyectoId: number) =>
+        api.post<{ candidatas: number; mensaje: string }>(
+            `/usuario/proyectos/${proyectoId}/recomendaciones/buscar`
+        ),
     generar: (proyectoId: number) =>
         api.post(`/usuario/proyectos/${proyectoId}/recomendaciones/generar`),
     guiaEnriquecida: (proyectoId: number, recId: number) =>
