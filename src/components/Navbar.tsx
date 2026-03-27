@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { logout, getUser } from "@/src/lib/auth";
 import { clsx } from "clsx";
 import { LayoutDashboard, FolderOpen, User, LogOut } from "lucide-react";
@@ -14,7 +15,11 @@ const links = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const user = getUser();
+  const [user, setUser] = useState<{ sub?: string } | null>(null);
+
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
   return (
     <nav className="bg-white border-b border-gray-200 px-4 py-3">
