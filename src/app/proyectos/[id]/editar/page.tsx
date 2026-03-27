@@ -49,7 +49,7 @@ export default function EditarProyectoPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">Descripción</label>
-            <textarea rows={5} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" {...register("descripcion")} />
+            <textarea rows={5} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" {...register("descripcion")} />
           </div>
           <div className="flex justify-end gap-3">
             <Link href="/proyectos"><Button variant="secondary" type="button">Cancelar</Button></Link>

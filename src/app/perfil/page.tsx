@@ -56,15 +56,15 @@ export default function PerfilPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">Objetivos</label>
-            <textarea rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Describe los objetivos de tu entidad..." {...register("objetivos")} />
+            <textarea rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Describe los objetivos de tu entidad..." {...register("objetivos")} />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">Necesidades de financiación</label>
-            <textarea rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="¿Para qué necesitas financiación?" {...register("necesidadesFinanciacion")} />
+            <textarea rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="¿Para qué necesitas financiación?" {...register("necesidadesFinanciacion")} />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">Descripción libre</label>
-            <textarea rows={4} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cualquier información adicional relevante..." {...register("descripcionLibre")} />
+            <textarea rows={4} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cualquier información adicional relevante..." {...register("descripcionLibre")} />
           </div>
           <div className="flex justify-end">
             <Button type="submit" loading={isSubmitting}>Guardar perfil</Button>
