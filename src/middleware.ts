@@ -31,13 +31,16 @@ export function middleware(request: NextRequest) {
 
     const token = request.cookies.get("syntia_token")?.value;
 
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+
     if (!token) {
-        return NextResponse.redirect(new URL("/login", request.url));
+        return NextResponse.redirect(loginUrl);
     }
 
     const payload = decodeTokenPayload(token);
     if (!payload || payload.exp * 1000 < Date.now()) {
-        const res = NextResponse.redirect(new URL("/login", request.url));
+        const res = NextResponse.redirect(loginUrl);
         res.cookies.delete("syntia_token");
         return res;
     }

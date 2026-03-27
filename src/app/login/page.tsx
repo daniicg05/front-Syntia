@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { login } from "@/src/lib/auth";
 import { Input } from "@/src//components/ui/Input";
 import { Button } from "@/src//components/ui/Button";
@@ -19,6 +19,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [error, setError] = useState("");
     const {
         register,
@@ -30,7 +31,8 @@ export default function LoginPage() {
         try {
             setError("");
             const { rol } = await login(data.email, data.password);
-            router.push(rol === "ADMIN" ? "/admin/dashboard" : "/dashboard");
+            const redirect = searchParams.get("redirect");
+            router.push(redirect || (rol === "ADMIN" ? "/admin/dashboard" : "/dashboard"));
         } catch {
             setError("Email o contraseña incorrectos");
         }
@@ -44,7 +46,10 @@ export default function LoginPage() {
                     <h1 className="mt-4 text-2xl font-bold text-gray-900">Iniciar sesión</h1>
                     <p className="mt-1 text-sm text-gray-600">
                         ¿No tienes cuenta?{" "}
-                        <Link href="/registro" className="text-blue-600 hover:underline font-medium">
+                        <Link
+                            href={searchParams.get("redirect") ? `/registro?redirect=${searchParams.get("redirect")}` : "/registro"}
+                            className="text-blue-600 hover:underline font-medium"
+                        >
                             Registrarse
                         </Link>
                     </p>

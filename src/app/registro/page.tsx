@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { registro } from "@/src/lib/auth";
 import { Input } from "@/src/components/ui/Input";
 import { Button } from "@/src/components/ui/Button";
@@ -25,6 +25,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function RegistroPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [error, setError] = useState("");
     const {
         register,
@@ -36,7 +37,8 @@ export default function RegistroPage() {
         try {
             setError("");
             await registro(data.email, data.password, data.confirmarPassword);
-            router.push("/dashboard");
+            const redirect = searchParams.get("redirect");
+            router.push(redirect || "/dashboard");
         } catch (err: unknown) {
             const msg =
                 (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
@@ -53,7 +55,10 @@ export default function RegistroPage() {
                     <h1 className="mt-4 text-2xl font-bold text-gray-900">Crear cuenta</h1>
                     <p className="mt-1 text-sm text-gray-600">
                         ¿Ya tienes cuenta?{" "}
-                        <Link href="/login" className="text-blue-600 hover:underline font-medium">
+                        <Link
+                            href={searchParams.get("redirect") ? `/login?redirect=${searchParams.get("redirect")}` : "/login"}
+                            className="text-blue-600 hover:underline font-medium"
+                        >
                             Iniciar sesión
                         </Link>
                     </p>
