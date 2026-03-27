@@ -14,12 +14,13 @@ async function handler(
     const headers = new Headers(request.headers);
     headers.delete("host");
 
+    const hasBody = !["GET", "HEAD"].includes(request.method);
+    const body = hasBody ? await request.text() : undefined;
+
     const proxyRequest = new Request(url, {
         method: request.method,
         headers,
-        body: ["GET", "HEAD"].includes(request.method) ? undefined : request.body,
-        // @ts-ignore
-        duplex: "half",
+        body,
     });
 
     return fetch(proxyRequest);
