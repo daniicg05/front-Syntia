@@ -14,8 +14,15 @@ interface Recomendacion {
   id: number;
   puntuacion: number;
   explicacion: string;
-  convocatoria: { id: number; titulo: string; tipo: string; sector: string; urlOficial: string };
-  guia?: Record<string, unknown>;
+  guia?: string;
+  convocatoriaId: number;
+  titulo: string;
+  tipo: string;
+  sector: string;
+  ubicacion: string;
+  urlOficial: string;
+  fuente: string;
+  vigente: boolean;
 }
 
 interface SseEvent {
@@ -152,7 +159,7 @@ export default function RecomendacionesPage() {
   };
 
   const recsFiltradas = recs.filter((r) =>
-    !busqueda || r.convocatoria.titulo.toLowerCase().includes(busqueda.toLowerCase())
+    !busqueda || r.titulo?.toLowerCase().includes(busqueda.toLowerCase())
   );
 
   if (loading) return (
@@ -230,19 +237,19 @@ export default function RecomendacionesPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-2">
                       <ScoreBadge score={rec.puntuacion} />
-                      {rec.convocatoria.tipo && (
-                        <span className="text-xs text-gray-500">{rec.convocatoria.tipo}</span>
+                      {rec.tipo && (
+                        <span className="text-xs text-gray-500">{rec.tipo}</span>
                       )}
                     </div>
                     <h3 className="font-semibold text-gray-900 mb-1">
-                      {rec.convocatoria.titulo}
+                      {rec.titulo}
                     </h3>
                     <p className="text-sm text-gray-600 line-clamp-3">{rec.explicacion}</p>
                   </div>
                   <div className="flex flex-col gap-2 flex-shrink-0">
-                    {rec.convocatoria.urlOficial && (
+                    {rec.urlOficial && (
                       <a
-                        href={rec.convocatoria.urlOficial}
+                        href={rec.urlOficial}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-blue-600 hover:underline"
