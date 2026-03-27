@@ -47,7 +47,7 @@ export function Navbar() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden sm:block text-sm text-gray-500">{user?.sub}</span>
+          <span suppressHydrationWarning className="hidden sm:block text-sm text-gray-500">{user?.sub}</span>
           <button
             onClick={logout}
             className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-red-600 transition-colors"
