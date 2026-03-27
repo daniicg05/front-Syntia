@@ -42,8 +42,8 @@ export function middleware(request: NextRequest) {
         return res;
     }
 
-    if (isAdminRoute &&payload.rol !== "admin"){
-    return NextResponse.redirect(new URL("/admin", request.url));
+    if (isAdminRoute && payload.rol !== "ADMIN") {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
     return NextResponse.next();
