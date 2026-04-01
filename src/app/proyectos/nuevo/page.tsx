@@ -1,53 +1,184 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { proyectosApi } from "@/src/lib/api";
-import { Card } from "@/src/components/ui/Card";
-import { Input } from "@/src/components/ui/Input";
-import { Button } from "@/src/components/ui/Button";
 import Link from "next/link";
+import { proyectosApi } from "@/lib/api";
+import { Card } from "@/components/ui/Card";
+import { Input, Textarea } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import { ArrowLeft, Sparkles, FileText, Tag, Euro } from "lucide-react";
 
-const schema = z.object({
-  nombre: z.string().min(1, "El nombre es obligatorio"),
-  sector: z.string().optional(),
-  ubicacion: z.string().optional(),
-  descripcion: z.string().optional(),
-});
-
-type FormData = z.infer<typeof schema>;
+const SECTORES = [
+  "Tecnología e IA",
+  "Salud y biotecnología",
+  "Energía y sostenibilidad",
+  "Industria y manufactura",
+  "Agricultura y alimentación",
+  "Cultura y artes",
+  "Educación y formación",
+  "Turismo",
+  "Comercio y servicios",
+  "Otro",
+];
 
 export default function NuevoProyectoPage() {
   const router = useRouter();
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({ resolver: zodResolver(schema) });
+  const toast = useToast();
+  const [form, setForm] = useState({
+    nombre: "",
+    descripcion: "",
+    sector: "",
+    presupuesto: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const onSubmit = async (data: FormData) => {
-    await proyectosApi.create(data as Record<string, string>);
-    router.push("/proyectos");
-  };
+  function validate() {
+    const errors: Record<string, string> = {};
+    if (!form.nombre.trim()) errors.nombre = "El nombre es obligatorio";
+    if (form.descripcion.trim().length < 30)
+      errors.descripcion = "Describe tu proyecto con al menos 30 caracteres";
+    return errors;
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const errors = validate();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toast.error("Por favor, completa los campos requeridos");
+      return;
+    }
+    setLoading(true);
+    const loadingId = toast.loading("Creando proyecto y analizando con IA...");
+    try {
+      const payload: Record<string, string> = {
+        nombre: form.nombre,
+        descripcion: form.descripcion,
+        ...(form.sector ? { sector: form.sector } : {}),
+        ...(form.presupuesto ? { presupuesto: form.presupuesto } : {}),
+      };
+      const { data } = await proyectosApi.create(payload);
+      const proyecto = data as { id: number };
+      toast.update(loadingId, "success", "Proyecto creado correctamente");
+      router.push(`/proyectos/${proyecto.id}/recomendaciones`);
+    } catch (err: unknown) {
+      toast.update(
+        loadingId,
+        "error",
+        err instanceof Error
+          ? err.message
+          : "No se pudo crear el proyecto. Inténtalo de nuevo."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="mb-6">
-        <Link href="/proyectos" className="text-sm text-blue-600 hover:underline">← Volver a proyectos</Link>
-        <h1 className="text-2xl font-bold text-gray-900 mt-2">Nuevo proyecto</h1>
+      {/* Header */}
+      <div className="mb-7">
+        <Link
+          href="/proyectos"
+          className="inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground mb-4 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Volver a proyectos
+        </Link>
+        <h1 className="text-2xl font-bold text-foreground">Nuevo proyecto</h1>
+        <p className="text-foreground-muted mt-1">
+          Describe tu proyecto con detalle para obtener mejores recomendaciones
+        </p>
       </div>
+
+      {/* Tip */}
+      <div className="flex items-start gap-3 bg-primary-light border border-primary/20 rounded-xl p-4 mb-6">
+        <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+        <p className="text-sm text-primary/90 leading-relaxed">
+          <strong>Consejo:</strong> Cuanto más detallada sea la descripción de tu proyecto
+          (objetivos, tecnologías, público objetivo, impacto), mejores serán los resultados
+          del matching con IA.
+        </p>
+      </div>
+
       <Card>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Input label="Nombre del proyecto" placeholder="Ej: Plataforma de energía solar..." error={errors.nombre?.message} {...register("nombre")} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Sector" placeholder="Ej: Energía, Tecnología..." {...register("sector")} />
-            <Input label="Ubicación" placeholder="Ej: Madrid, Andalucía..." {...register("ubicacion")} />
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+          <Input
+            label="Nombre del proyecto"
+            placeholder="Ej: Plataforma de telemedicina rural"
+            value={form.nombre}
+            onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+            leftIcon={<FileText className="w-4 h-4" />}
+            error={fieldErrors.nombre}
+            required
+          />
+
+          <Textarea
+            label="Descripción del proyecto"
+            placeholder="Describe en detalle qué hace tu proyecto, sus objetivos, tecnologías que usa, impacto esperado, público objetivo, etc. Cuanta más información, mejores serán las recomendaciones."
+            value={form.descripcion}
+            onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+            error={fieldErrors.descripcion}
+            helper={`${form.descripcion.length} caracteres (mínimo 30)`}
+            rows={5}
+            required
+          />
+
+          <div>
+            <label
+              htmlFor="sector"
+              className="block text-sm font-medium text-foreground mb-1.5"
+            >
+              Sector (opcional)
+            </label>
+            <div className="relative">
+              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted pointer-events-none" />
+              <select
+                id="sector"
+                value={form.sector}
+                onChange={(e) => setForm({ ...form, sector: e.target.value })}
+                className="w-full rounded-xl border border-border bg-surface text-foreground text-sm py-2.5 pl-10 pr-3 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary hover:border-foreground-subtle transition-colors appearance-none"
+              >
+                <option value="">Selecciona un sector</option>
+                {SECTORES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Descripción</label>
-            <textarea rows={5} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Describe brevemente tu proyecto..." {...register("descripcion")} />
-          </div>
-          <div className="flex justify-end gap-3">
-            <Link href="/proyectos"><Button variant="secondary" type="button">Cancelar</Button></Link>
-            <Button type="submit" loading={isSubmitting}>Crear proyecto</Button>
+
+          <Input
+            label="Presupuesto estimado (€) (opcional)"
+            type="number"
+            placeholder="Ej: 150000"
+            value={form.presupuesto}
+            onChange={(e) => setForm({ ...form, presupuesto: e.target.value })}
+            leftIcon={<Euro className="w-4 h-4" />}
+            helper="Ayuda a filtrar convocatorias con cuantías adecuadas"
+          />
+
+          <div className="flex items-center gap-3 pt-2">
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              loading={loading}
+              icon={<Sparkles className="w-4 h-4" />}
+              className="flex-1 justify-center"
+            >
+              {loading ? "Analizando con IA..." : "Crear proyecto y buscar subvenciones"}
+            </Button>
+            <Link
+              href="/proyectos"
+              className="px-4 py-3 rounded-xl border border-border text-sm font-medium text-foreground-muted hover:bg-surface-muted transition-colors"
+            >
+              Cancelar
+            </Link>
           </div>
         </form>
       </Card>

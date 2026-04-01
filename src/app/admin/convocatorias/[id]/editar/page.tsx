@@ -5,10 +5,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useParams } from "next/navigation";
-import { adminApi } from "@/src/lib/api";
-import { Card } from "@/src/components/ui/Card";
-import { Input } from "@/src/components/ui/Input";
-import { Button } from "@/src/components/ui/Button";
+import { adminApi } from "@/lib/api";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 
 const schema = z.object({
@@ -45,8 +45,10 @@ export default function EditarConvocatoriaPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
-        <Link href="/admin/convocatorias" className="text-sm text-blue-600 hover:underline">← Volver a convocatorias</Link>
-        <h1 className="text-2xl font-bold text-gray-900 mt-2">Editar convocatoria</h1>
+        <Link href="/admin/convocatorias" className="text-sm text-primary hover:underline">
+          ← Volver a convocatorias
+        </Link>
+        <h1 className="text-2xl font-bold text-foreground mt-2">Editar convocatoria</h1>
       </div>
       <Card>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -62,7 +64,9 @@ export default function EditarConvocatoriaPage() {
           </div>
           <Input label="URL oficial" type="url" {...register("urlOficial")} />
           <div className="flex justify-end gap-3">
-            <Link href="/admin/convocatorias"><Button variant="secondary" type="button">Cancelar</Button></Link>
+            <Link href="/admin/convocatorias">
+              <Button variant="secondary" type="button">Cancelar</Button>
+            </Link>
             <Button type="submit" loading={isSubmitting}>Guardar cambios</Button>
           </div>
         </form>

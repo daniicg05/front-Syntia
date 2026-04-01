@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/USUARIO/IdeaProjects/backend-Syntia -name \"SecurityConfig*\" -o -name \"*SecurityConfig*\" 2>/dev/null | head -20)",
+      "Bash(find /c/Users/USUARIO/IdeaProjects/backend-Syntia/src -name \"*.java\" | xargs grep -l \"registro\\\\|registro\" 2>/dev/null)",
+      "Bash(find /c/Users/USUARIO/IdeaProjects/backend-Syntia/src -name \"*.java\" | xargs grep -l \"CorsConfiguration\\\\|corsConfigurationSource\\\\|CrossOrigin\\\\|WebMvcConfigurer\" 2>/dev/null)",
+      "Bash(find /c/Users/USUARIO/IdeaProjects/backend-Syntia/src -name \"*.java\" | xargs grep -l \"Filter\\\\|filter\" 2>/dev/null | grep -v \"JwtAuthentication\")",
+      "Bash(find /c/Users/USUARIO/IdeaProjects/backend-Syntia/src -name \"Rol.java\" 2>/dev/null | xargs cat)",
+      "Bash(find /c/Users/USUARIO/IdeaProjects/backend-Syntia/src -name \"*.java\" | xargs grep -l \"ExceptionHandler\\\\|ControllerAdvice\" 2>/dev/null)",
+      "Bash(find /c/Users/USUARIO/IdeaProjects/backend-Syntia/src -name \"UsuarioService.java\" 2>/dev/null | xargs cat)",
+      "Bash(find /c/Users/USUARIO/IdeaProjects/backend-Syntia/src -name \"JwtService.java\" 2>/dev/null | xargs cat)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -X POST http://localhost:8080/api/auth/registro -H \"Content-Type: application/json\" -d '{\"email\":\"test@test.com\",\"password\":\"test123\",\"confirmarPassword\":\"test123\"}' 2>/dev/null)",
+      "Bash(find /c/Users/USUARIO/IdeaProjects/front-Syntia/node_modules/next/dist/docs -name \"*.md\" | xargs grep -l \"rewrite\\\\|proxy\\\\|403\\\\|api\" -i 2>/dev/null | head -10)",
+      "Bash(find /c/Users/USUARIO/IdeaProjects/front-Syntia/node_modules/next/dist/docs -name \"*.md\" | xargs grep -l \"rewrite\" -i 2>/dev/null)",
+      "Bash(grep -r \"403\\\\|Forbidden\" /c/Users/USUARIO/IdeaProjects/front-Syntia/node_modules/next/dist/server/ --include=\"*.js\" -l 2>/dev/null | grep -v \".map\" | head -15)",
+      "Bash(find /c/Users/USUARIO/IdeaProjects/front-Syntia -maxdepth 2 -name \"proxy*\" -o -maxdepth 2 -name \"middleware*\" 2>/dev/null | grep -v node_modules | grep -v \".next\")",
+      "Bash(cat /c/Users/USUARIO/IdeaProjects/front-Syntia/.next/dev/server/middleware-manifest.json 2>/dev/null | python3 -m json.tool 2>/dev/null | head -50)",
+      "Bash(find /c/Users/USUARIO/IdeaProjects/front-Syntia/.next -name \"*.json\" | xargs grep -l \"rewrite\" 2>/dev/null | head -5)",
+      "Bash(cp -r /c/Users/USUARIO/IdeaProjects/prueba-front-Syntia/public/images /c/Users/USUARIO/IdeaProjects/front-Syntia/public/ && cp -r /c/Users/USUARIO/IdeaProjects/prueba-front-Syntia/public/guides /c/Users/USUARIO/IdeaProjects/front-Syntia/public/ && cp /c/Users/USUARIO/IdeaProjects/prueba-front-Syntia/public/hero-bg.jpg /c/Users/USUARIO/IdeaProjects/front-Syntia/public/)",
+      "Bash(npm install:*)",
+      "Bash(cd \"C:/Users/USUARIO/IdeaProjects/front-Syntia\" && npm run dev)",
+      "Bash(taskkill /PID 3260 /F 2>&1)",
+      "Bash(cmd.exe /c \"taskkill /PID 3260 /F\")",
+      "Bash(cmd.exe /c \"taskkill /F /IM node.exe\" 2>&1)",
+      "Bash(cmd.exe /c \"taskkill /F /IM node.exe 2>&1 && echo done\")",
+      "Bash(powershell.exe -Command \"Stop-Process -Name node -Force -ErrorAction SilentlyContinue; Write-Host 'done'\")",
+      "Bash(cd \"C:\\\\Users\\\\USUARIO\\\\IdeaProjects\\\\front-Syntia\" && npm run build 2>&1 | tail -40)"
+    ]
+  }
+}
