@@ -70,7 +70,7 @@ export default function RegistroPage() {
             alt="Syntia Grants"
             width={140}
             height={48}
-            className="h-10 w-auto brightness-0 invert"
+            className="h-16 w-auto brightness-0 invert"
           />
         </Link>
 
@@ -102,7 +102,7 @@ export default function RegistroPage() {
             alt="Syntia Grants"
             width={140}
             height={48}
-            className="h-10 w-auto"
+            className="h-16 w-auto"
             priority
           />
         </Link>

@@ -51,7 +51,7 @@ export default function LoginPage() {
           alt="Syntia Grants"
           width={160}
           height={54}
-          className="h-12 w-auto"
+          className="h-18 w-auto"
           priority
         />
       </Link>
