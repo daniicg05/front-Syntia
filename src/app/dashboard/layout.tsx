@@ -1,10 +1,10 @@
-import { Navbar } from "@/src/components/Navbar";
+import { Navbar } from "@/components/Navbar";
 
-export default function UsuarioLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 py-8">{children}</main>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">{children}</main>
     </div>
   );
 }

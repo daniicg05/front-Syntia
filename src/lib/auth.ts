@@ -1,7 +1,17 @@
 "use client";
 
 import Cookies from "js-cookie";
+import axios from "axios";
 import { authApi } from "./api";
+
+function extractBackendError(err: unknown, fallback: string): Error {
+    if (axios.isAxiosError(err)) {
+        const msg = err.response?.data?.error ?? err.response?.data?.message;
+        if (msg) return new Error(msg);
+    }
+    if (err instanceof Error) return err;
+    return new Error(fallback);
+}
 
 export interface JwtPayload {
     sub: string;
@@ -45,14 +55,18 @@ export function isAdmin(): boolean {
 }
 
 export async function login(email: string, password: string) {
-    const res = await authApi.login(email, password);
-    const { token, rol } = res.data;
-    Cookies.set("syntia_token", token, {
-        expires: 1,
-        sameSite: "Lax",
-        secure: process.env.NODE_ENV === "production",
-    });
-    return { token, rol, email: res.data.email };
+    try {
+        const res = await authApi.login(email, password);
+        const { token, rol } = res.data;
+        Cookies.set("syntia_token", token, {
+            expires: 1,
+            sameSite: "Lax",
+            secure: process.env.NODE_ENV === "production",
+        });
+        return { token, rol, email: res.data.email };
+    } catch (err) {
+        throw extractBackendError(err, "No se pudo iniciar sesión. Inténtalo de nuevo.");
+    }
 }
 
 export async function registro(
@@ -60,14 +74,18 @@ export async function registro(
     password: string,
     confirmarPassword: string
 ) {
-    const res = await authApi.registro(email, password, confirmarPassword);
-    const { token } = res.data;
-    Cookies.set("syntia_token", token, {
-        expires: 1,
-        sameSite: "Lax",
-        secure: process.env.NODE_ENV === "production",
-    });
-    return res.data;
+    try {
+        const res = await authApi.registro(email, password, confirmarPassword);
+        const { token } = res.data;
+        Cookies.set("syntia_token", token, {
+            expires: 1,
+            sameSite: "Lax",
+            secure: process.env.NODE_ENV === "production",
+        });
+        return res.data;
+    } catch (err) {
+        throw extractBackendError(err, "No se pudo crear la cuenta. Inténtalo de nuevo.");
+    }
 }
 
 export function logout() {

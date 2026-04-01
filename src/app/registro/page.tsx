@@ -1,103 +1,183 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useState, FormEvent } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { registro } from "@/src/lib/auth";
-import { Input } from "@/src/components/ui/Input";
-import { Button } from "@/src/components/ui/Button";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Mail, Lock, ArrowRight, CheckCircle2 } from "lucide-react";
+import { registro } from "@/lib/auth";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
-const schema = z
-    .object({
-        email: z.string().email("Email inválido"),
-        password: z.string().min(4, "Mínimo 4 caracteres"),
-        confirmarPassword: z.string().min(1, "Confirma tu contraseña"),
-    })
-    .refine((d) => d.password === d.confirmarPassword, {
-        message: "Las contraseñas no coinciden",
-        path: ["confirmarPassword"],
-    });
-
-type FormData = z.infer<typeof schema>;
+const BENEFITS = [
+  "Matching automático con más de 12.000 convocatorias",
+  "Datos actualizados desde la BDNS oficial",
+  "Guías de solicitud personalizadas",
+  "Completamente gratis para empezar",
+];
 
 export default function RegistroPage() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const [error, setError] = useState("");
-    const {
-        register,
-        handleSubmit,
-        formState: { errors, isSubmitting },
-    } = useForm<FormData>({ resolver: zodResolver(schema) });
+  const router = useRouter();
+  const toast = useToast();
+  const [form, setForm] = useState({ email: "", password: "", confirmarPassword: "" });
+  const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-    const onSubmit = async (data: FormData) => {
-        try {
-            setError("");
-            await registro(data.email, data.password, data.confirmarPassword);
-            const redirect = searchParams.get("redirect");
-            router.push(redirect || "/dashboard");
-        } catch (err: unknown) {
-            const msg =
-                (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
-                "No se pudo crear la cuenta. Inténtalo de nuevo.";
-            setError(msg);
-        }
-    };
+  function validate() {
+    const errors: Record<string, string> = {};
+    if (!form.email.includes("@")) errors.email = "Introduce un correo válido";
+    if (form.password.length < 6) errors.password = "Mínimo 6 caracteres";
+    if (form.password !== form.confirmarPassword)
+      errors.confirmarPassword = "Las contraseñas no coinciden";
+    return errors;
+  }
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div className="w-full max-w-md">
-                <div className="text-center mb-8">
-                    <Link href="/" className="text-blue-600 font-bold text-2xl">Syntia</Link>
-                    <h1 className="mt-4 text-2xl font-bold text-gray-900">Crear cuenta</h1>
-                    <p className="mt-1 text-sm text-gray-600">
-                        ¿Ya tienes cuenta?{" "}
-                        <Link
-                            href={searchParams.get("redirect") ? `/login?redirect=${searchParams.get("redirect")}` : "/login"}
-                            className="text-blue-600 hover:underline font-medium"
-                        >
-                            Iniciar sesión
-                        </Link>
-                    </p>
-                </div>
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const errors = validate();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toast.error("Por favor, corrige los errores en el formulario");
+      return;
+    }
+    setLoading(true);
+    const loadingId = toast.loading("Creando tu cuenta...");
+    try {
+      await registro(form.email, form.password, form.confirmarPassword);
+      toast.update(loadingId, "success", "Cuenta creada correctamente. ¡Bienvenido!");
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      toast.update(
+        loadingId,
+        "error",
+        err instanceof Error
+          ? err.message
+          : "No se pudo crear la cuenta. Inténtalo de nuevo."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-                    {error && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
-                            {error}
-                        </div>
-                    )}
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                        <Input
-                            label="Email"
-                            type="email"
-                            placeholder="tu@email.com"
-                            error={errors.email?.message}
-                            {...register("email")}
-                        />
-                        <Input
-                            label="Contraseña"
-                            type="password"
-                            placeholder="Mínimo 4 caracteres"
-                            error={errors.password?.message}
-                            {...register("password")}
-                        />
-                        <Input
-                            label="Confirmar contraseña"
-                            type="password"
-                            placeholder="Repite la contraseña"
-                            error={errors.confirmarPassword?.message}
-                            {...register("confirmarPassword")}
-                        />
-                        <Button type="submit" loading={isSubmitting} className="w-full" size="lg">
-                            Crear cuenta
-                        </Button>
-                    </form>
-                </div>
-            </div>
+  return (
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+      {/* Left panel */}
+      <div className="hidden lg:flex flex-col justify-between w-[420px] shrink-0 bg-primary px-12 py-16">
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/images/syntia-grants-logo.png"
+            alt="Syntia Grants"
+            width={140}
+            height={48}
+            className="h-10 w-auto brightness-0 invert"
+          />
+        </Link>
+
+        <div>
+          <h2 className="text-3xl font-bold text-white leading-snug mb-6">
+            Encuentra financiación pública para tu proyecto
+          </h2>
+          <ul className="space-y-3">
+            {BENEFITS.map((b) => (
+              <li key={b} className="flex items-start gap-3 text-white/90 text-sm">
+                <CheckCircle2 className="w-4 h-4 mt-0.5 text-white shrink-0" />
+                {b}
+              </li>
+            ))}
+          </ul>
         </div>
-    );
+
+        <p className="text-white/50 text-xs">
+          © {new Date().getFullYear()} Syntia. Todos los derechos reservados.
+        </p>
+      </div>
+
+      {/* Right panel */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 lg:px-12">
+        {/* Mobile logo */}
+        <Link href="/" className="flex items-center mb-8 lg:hidden">
+          <Image
+            src="/images/syntia-grants-logo.png"
+            alt="Syntia Grants"
+            width={140}
+            height={48}
+            className="h-10 w-auto"
+            priority
+          />
+        </Link>
+
+        <div className="w-full max-w-sm">
+          <div className="mb-7">
+            <h1 className="text-2xl font-bold text-foreground mb-1">Crear cuenta gratis</h1>
+            <p className="text-sm text-foreground-muted">
+              Empieza a encontrar subvenciones en minutos
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+            <Input
+              label="Correo electrónico"
+              type="email"
+              placeholder="tu@empresa.es"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              leftIcon={<Mail className="w-4 h-4" />}
+              error={fieldErrors.email}
+              required
+              autoComplete="email"
+            />
+            <Input
+              label="Contraseña"
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              leftIcon={<Lock className="w-4 h-4" />}
+              error={fieldErrors.password}
+              helper="Mínimo 6 caracteres"
+              required
+            />
+            <Input
+              label="Confirmar contraseña"
+              type="password"
+              placeholder="Repite tu contraseña"
+              value={form.confirmarPassword}
+              onChange={(e) => setForm({ ...form, confirmarPassword: e.target.value })}
+              leftIcon={<Lock className="w-4 h-4" />}
+              error={fieldErrors.confirmarPassword}
+              required
+            />
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              loading={loading}
+              icon={<ArrowRight className="w-4 h-4" />}
+              className="mt-2 w-full justify-center"
+            >
+              {loading ? "Creando cuenta..." : "Crear cuenta gratis"}
+            </Button>
+          </form>
+
+          <p className="mt-4 text-xs text-center text-foreground-subtle">
+            Al registrarte aceptas nuestro{" "}
+            <Link href="/aviso-legal" className="underline hover:text-foreground">
+              aviso legal
+            </Link>
+          </p>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-foreground-muted">
+              ¿Ya tienes cuenta?{" "}
+              <Link href="/login" className="text-primary font-semibold hover:underline">
+                Iniciar sesión
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
