@@ -11,7 +11,7 @@ export function Footer() {
             alt="Syntia Grants"
             width={100}
             height={34}
-            className="h-7 w-auto"
+            className="h-16 w-auto"
           />
           <span className="text-foreground-subtle text-sm">
             — IA para subvenciones públicas
