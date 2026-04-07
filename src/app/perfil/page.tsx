@@ -37,13 +37,38 @@ type NotificacionKey =
   | "notificacionesRecordatorios"
   | "notificacionesNovedades";
 
-const NOTIFICACIONES_SESSION_KEY = "syntia_perfil_notificaciones";
+const NOTIFICACIONES_STORAGE_KEY = "syntia_perfil_notificaciones";
 
 const DEFAULT_NOTIFICACIONES: Record<NotificacionKey, boolean> = {
   notificacionesConvocatorias: true,
   notificacionesRecordatorios: true,
   notificacionesNovedades: true,
 };
+
+function leerNotificacionesGuardadas(): Partial<Record<NotificacionKey, boolean>> {
+  const raw = localStorage.getItem(NOTIFICACIONES_STORAGE_KEY);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as Partial<Record<NotificacionKey, boolean>>;
+    return {
+      notificacionesConvocatorias:
+        typeof parsed.notificacionesConvocatorias === "boolean"
+          ? parsed.notificacionesConvocatorias
+          : undefined,
+      notificacionesRecordatorios:
+        typeof parsed.notificacionesRecordatorios === "boolean"
+          ? parsed.notificacionesRecordatorios
+          : undefined,
+      notificacionesNovedades:
+        typeof parsed.notificacionesNovedades === "boolean"
+          ? parsed.notificacionesNovedades
+          : undefined,
+    };
+  } catch {
+    localStorage.removeItem(NOTIFICACIONES_STORAGE_KEY);
+    return {};
+  }
+}
 
 function extraerNotificaciones(perfil: PerfilData): Record<NotificacionKey, boolean> {
   return {
@@ -222,7 +247,13 @@ export default function PerfilPage() {
       .get()
       .then((res) => {
         const d = res.data as PerfilData;
-        setForm((prev) => ({ ...prev, ...DEFAULT_NOTIFICACIONES, ...d }));
+        const notificacionesGuardadas = leerNotificacionesGuardadas();
+        setForm((prev) => ({
+          ...prev,
+          ...DEFAULT_NOTIFICACIONES,
+          ...d,
+          ...notificacionesGuardadas,
+        }));
       })
       .catch(() => {
         // If perfil endpoint not available, use JWT info only
@@ -231,19 +262,8 @@ export default function PerfilPage() {
   }, []);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem(NOTIFICACIONES_SESSION_KEY);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw) as Partial<Record<NotificacionKey, boolean>>;
-      setForm((prev) => ({
-        ...prev,
-        notificacionesConvocatorias: Boolean(parsed.notificacionesConvocatorias),
-        notificacionesRecordatorios: Boolean(parsed.notificacionesRecordatorios),
-        notificacionesNovedades: Boolean(parsed.notificacionesNovedades),
-      }));
-    } catch {
-      sessionStorage.removeItem(NOTIFICACIONES_SESSION_KEY);
-    }
+    const notificacionesGuardadas = leerNotificacionesGuardadas();
+    setForm((prev) => ({ ...prev, ...notificacionesGuardadas }));
   }, []);
 
   const set = (key: keyof PerfilData) => (value: string) =>
@@ -269,8 +289,8 @@ export default function PerfilPage() {
     const loadingId = toast.loading("Guardando cambios...");
     try {
       await perfilApi.save(form as Record<string, unknown>);
-      sessionStorage.setItem(
-        NOTIFICACIONES_SESSION_KEY,
+      localStorage.setItem(
+        NOTIFICACIONES_STORAGE_KEY,
         JSON.stringify(extraerNotificaciones(form))
       );
       toast.update(loadingId, "success", "Cambios guardados correctamente");
