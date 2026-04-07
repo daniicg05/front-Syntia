@@ -28,7 +28,7 @@ export default function AvisoLegalPage() {
     <div className="min-h-screen bg-background px-6 py-12">
       <div className="mx-auto max-w-3xl">
 
-        {/* `button` en lugar de `href` para volver al historial real; `href` era navegación fija. */}
+        {/* `button` en lugar de `href` para volver al historial real; `href` era navegación fija.  */}
         <button
             type="button"
             onClick={handleBack}
