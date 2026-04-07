@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getUser, logout } from "@/lib/auth";
 import Image from "next/image";
 import {
@@ -28,9 +28,13 @@ const NAV_LINKS = [
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const user = getUser();
+  const [user, setUser] = useState<ReturnType<typeof getUser>>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, toggleTheme, mounted } = useTheme();
+
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
   function handleLogout() {
     logout();
