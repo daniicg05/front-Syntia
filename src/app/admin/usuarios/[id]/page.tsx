@@ -19,7 +19,31 @@ export default function AdminUsuarioDetallePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    adminApi.usuarios.get(Number(id)).then((r) => setData(r.data)).finally(() => setLoading(false));
+    adminApi.usuarios.get(Number(id)).then((r) => {
+      const raw = r.data;
+      const wrapper = raw?.usuario ? raw : null;
+      const usuarioBase = wrapper ? wrapper.usuario : raw;
+
+      if (!usuarioBase?.email) {
+        setData(null);
+        return;
+      }
+
+      setData({
+        usuario: {
+          id: Number(usuarioBase.id ?? id),
+          email: String(usuarioBase.email ?? ""),
+          rol: String(usuarioBase.rol ?? "USUARIO"),
+          creadoEn: String(usuarioBase.creadoEn ?? ""),
+        },
+        proyectos: Array.isArray(wrapper?.proyectos)
+          ? wrapper.proyectos
+          : Array.isArray(raw?.proyectos)
+            ? raw.proyectos
+            : [],
+        recsPerProyecto: wrapper?.recsPerProyecto ?? raw?.recsPerProyecto ?? {},
+      });
+    }).finally(() => setLoading(false));
   }, [id]);
 
   if (loading) return (
