@@ -1,21 +1,46 @@
-import Link from "next/link";
+"use client";
 
+import { useRouter } from "next/navigation";
+import { getUser } from "@/lib/auth";
+
+/**
+ * Cambio: se reemplaza enlace fijo por botón para volver al origen real.
+ * - Si hay historial: `router.back()`
+ * - Si no hay historial: fallback por sesión (`/dashboard` o `/`)
+ */
 export default function AvisoLegalPage() {
+
+  /** Ruta de respaldo cuando el usuario entra directo y no hay "back" útil. */
+  const router = useRouter();
+
+  /** Vuelve a la página anterior; si no existe, navega al fallback. */
+  const fallbackHref = getUser() ? "/dashboard" : "/";
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push(fallbackHref);
+  };
+
   return (
     <div className="min-h-screen bg-background px-6 py-12">
       <div className="mx-auto max-w-3xl">
-        <Link
-          href="/"
-          className="mb-8 inline-block text-sm text-primary hover:underline"
+        <button
+            type="button"
+            onClick={handleBack}
+            className="mb-8 inline-block text-sm text-primary hover:underline"
         >
-          ← Volver al inicio
-        </Link>
+          ← Volver
+        </button>
 
         <h1 className="mb-8 text-3xl font-bold text-foreground">Aviso Legal</h1>
 
         <div className="space-y-6 text-foreground-muted">
           <section>
-            <h2 className="mb-3 text-xl font-semibold text-foreground">1. Responsable del sitio e información de contacto</h2>
+            <h2 className="mb-3 text-xl font-semibold text-foreground">
+              1. Responsable del sitio e información de contacto</h2>
             <p>
               <strong className="text-foreground">Titular:</strong> NOMBRE O RAZÓN SOCIAL
             </p>
