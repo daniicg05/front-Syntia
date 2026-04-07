@@ -102,4 +102,9 @@ export const adminApi = {
         importarBdns: (pagina = 0, tamano = 20) =>
             api.post(`/admin/convocatorias/importar-bdns?pagina=${pagina}&tamano=${tamano}`),
     },
+    bdns: {
+        importar: () => api.post("/admin/bdns/importar"),
+        estado: () => api.get("/admin/bdns/estado"),
+        ultimaImportacion: () => api.get("/admin/bdns/ultima-importacion"),
+    },
 };

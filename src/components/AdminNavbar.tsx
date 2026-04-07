@@ -5,12 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { JwtPayload } from "@/lib/auth";
 import { logout, getUser } from "@/lib/auth";
-import { LayoutDashboard, Users, FileText, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, FileText, LogOut, Database } from "lucide-react";
 
 const links = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/usuarios", label: "Usuarios", icon: Users },
   { href: "/admin/convocatorias", label: "Convocatorias", icon: FileText },
+  { href: "/admin/bdns", label: "BDNS", icon: Database },
 ];
 
 export function AdminNavbar() {
