@@ -4,14 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { adminApi } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { RefreshCw, Database, CheckCircle, XCircle, Clock } from "lucide-react";
+import { RefreshCw, Database, CheckCircle, XCircle, Clock, MapPin } from "lucide-react";
 
 type EstadoImportacion = "INACTIVO" | "EN_CURSO" | "COMPLETADO" | "FALLIDO";
 
 interface EstadoJob {
   estado: EstadoImportacion;
-  paginaActual: number;
   registrosImportados: number;
+  ejeActual: string | null;
   iniciadoEn: string | null;
   finalizadoEn: string | null;
   error: string | null;
@@ -146,14 +146,17 @@ export default function BdnsPage() {
           {estadoJob.estado === "EN_CURSO" && (
             <div className="space-y-2">
               <p className="text-sm text-foreground-muted">
-                Página{" "}
-                <span className="font-semibold text-foreground">{estadoJob.paginaActual}</span>
-                {" · "}
                 <span className="font-semibold text-foreground">
                   {estadoJob.registrosImportados.toLocaleString()}
                 </span>{" "}
                 registros nuevos importados
               </p>
+              {estadoJob.ejeActual && (
+                <p className="flex items-center gap-1.5 text-sm text-foreground-muted">
+                  <MapPin className="h-3.5 w-3.5 shrink-0" />
+                  {estadoJob.ejeActual}
+                </p>
+              )}
               <div className="w-full bg-surface-muted rounded-full h-2 overflow-hidden">
                 <div className="bg-primary h-2 rounded-full animate-pulse w-full" />
               </div>
@@ -165,11 +168,7 @@ export default function BdnsPage() {
               <span className="font-semibold text-foreground">
                 {estadoJob.registrosImportados.toLocaleString()}
               </span>{" "}
-              registros nuevos en{" "}
-              <span className="font-semibold text-foreground">
-                {estadoJob.paginaActual + 1}
-              </span>{" "}
-              páginas procesadas.
+              registros nuevos importados correctamente.
             </p>
           )}
 
