@@ -5,6 +5,7 @@ import { getUser, logout } from "@/lib/auth";
 import { perfilApi } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import Cookies from "js-cookie";
 import {
   User,
   Mail,
@@ -16,6 +17,8 @@ import {
   Shield,
   Bell,
   ChevronRight,
+  Pencil,
+  X,
 } from "lucide-react";
 
 interface PerfilData {
@@ -102,6 +105,9 @@ export default function PerfilPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [emailModal, setEmailModal] = useState(false);
+  const [emailForm, setEmailForm] = useState({ nuevoEmail: "", passwordActual: "" });
+  const [emailSaving, setEmailSaving] = useState(false);
 
   useEffect(() => {
     perfilApi
@@ -118,6 +124,35 @@ export default function PerfilPage() {
 
   const set = (key: keyof PerfilData) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleCambiarEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailSaving(true);
+    try {
+      const res = await perfilApi.cambiarEmail(emailForm);
+      Cookies.set("syntia_token", res.data.token, {
+        expires: 1,
+        sameSite: "Lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+      setForm((prev) => ({ ...prev, email: res.data.email }));
+      setEmailModal(false);
+      setEmailForm({ nuevoEmail: "", passwordActual: "" });
+      toast.success("Email actualizado correctamente");
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number; data?: { message?: string } } })?.response?.status;
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      if (status === 409) {
+        toast.error("Este email ya está en uso");
+      } else if (status === 400) {
+        toast.error(msg ?? "Contraseña incorrecta o email inválido");
+      } else {
+        toast.error("Error al cambiar el email. Inténtalo de nuevo.");
+      }
+    } finally {
+      setEmailSaving(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,13 +204,32 @@ export default function PerfilPage() {
               onChange={set("nombre")}
               icon={<User className="w-4 h-4" />}
             />
-            <Field
-              label="Correo electrónico"
-              value={form.email}
-              type="email"
-              disabled
-              icon={<Mail className="w-4 h-4" />}
-            />
+            <div>
+              <label className="block text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-1.5">
+                Correo electrónico
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted">
+                    <Mail className="w-4 h-4" />
+                  </span>
+                  <input
+                    type="email"
+                    value={form.email}
+                    disabled
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border bg-surface-muted text-sm text-foreground-muted cursor-not-allowed border-border/50"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEmailModal(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-border text-sm text-foreground hover:text-primary hover:border-primary transition-colors shrink-0"
+                  title="Cambiar email"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
             <Field
               label="Empresa u organización"
               value={form.empresa ?? ""}
@@ -284,6 +338,75 @@ export default function PerfilPage() {
           </button>
         </div>
       </form>
+
+      {/* Modal cambiar email */}
+      {emailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-surface rounded-2xl border border-border shadow-xl p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-semibold text-foreground">Cambiar email</h2>
+              <button
+                type="button"
+                onClick={() => { setEmailModal(false); setEmailForm({ nuevoEmail: "", passwordActual: "" }); }}
+                className="text-foreground-muted hover:text-foreground transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleCambiarEmail} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-1.5">
+                  Nuevo email
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={emailForm.nuevoEmail}
+                  onChange={(e) => setEmailForm((prev) => ({ ...prev, nuevoEmail: e.target.value }))}
+                  className="w-full pl-3 pr-3 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                  placeholder="nuevo@email.com"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-1.5">
+                  Contraseña actual
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={emailForm.passwordActual}
+                  onChange={(e) => setEmailForm((prev) => ({ ...prev, passwordActual: e.target.value }))}
+                  className="w-full pl-3 pr-3 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                  placeholder="Tu contraseña actual"
+                />
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => { setEmailModal(false); setEmailForm({ nuevoEmail: "", passwordActual: "" }); }}
+                  className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-surface-muted transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={emailSaving}
+                  className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {emailSaving ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Guardando...
+                    </span>
+                  ) : (
+                    "Confirmar cambio"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
