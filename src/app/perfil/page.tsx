@@ -224,7 +224,7 @@ export default function PerfilPage() {
     setSaving(true);
     const loadingId = toast.loading("Guardando cambios...");
     try {
-      await perfilApi.save(form as Record<string, string>);
+      await perfilApi.save(form as unknown as Record<string, string>);
       toast.update(loadingId, "success", "Cambios guardados correctamente");
     } catch {
       toast.update(loadingId, "error", "No se pudieron guardar los cambios. Inténtalo de nuevo.");
