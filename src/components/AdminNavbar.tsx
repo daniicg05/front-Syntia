@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { JwtPayload } from "@/lib/auth";
 import { logout, getUser } from "@/lib/auth";
 import { LayoutDashboard, Users, FileText, LogOut } from "lucide-react";
 
@@ -13,7 +15,11 @@ const links = [
 
 export function AdminNavbar() {
   const pathname = usePathname();
-  const user = getUser();
+  const [user, setUser] = useState<JwtPayload | null>(null);
+
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
   return (
     <nav className="bg-foreground text-background px-4 py-3">
