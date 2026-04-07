@@ -49,7 +49,7 @@ export const dashboardApi = {
 // ── Perfil ────────────────────────────────────────────────────────────────────
 export const perfilApi = {
     get: () => api.get("/usuario/perfil"),
-    save: (data: Record<string, string>) => api.put("/usuario/perfil", data),
+    save: (data: Record<string, unknown>) => api.put("/usuario/perfil", data),
     cambiarEmail: (data: { nuevoEmail: string; passwordActual: string }) =>
         api.put<{ token: string; email: string; rol: string; expiration: number }>(
             "/usuario/perfil/email",

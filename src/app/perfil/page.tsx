@@ -27,7 +27,15 @@ interface PerfilData {
   provincia?: string;
   telefono?: string;
   rol?: string;
+  notificacionesConvocatorias?: boolean;
+  notificacionesRecordatorios?: boolean;
+  notificacionesNovedades?: boolean;
 }
+
+type NotificacionKey =
+  | "notificacionesConvocatorias"
+  | "notificacionesRecordatorios"
+  | "notificacionesNovedades";
 
 function Section({
   icon,
@@ -187,6 +195,9 @@ export default function PerfilPage() {
     provincia: "",
     telefono: "",
     rol: jwtUser?.rol ?? "",
+    notificacionesConvocatorias: true,
+    notificacionesRecordatorios: true,
+    notificacionesNovedades: true,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -208,6 +219,9 @@ export default function PerfilPage() {
   const set = (key: keyof PerfilData) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
+  const setNotificacion = (key: NotificacionKey) => (checked: boolean) =>
+    setForm((prev) => ({ ...prev, [key]: checked }));
+
   const handleEmailSuccess = (nuevoEmail: string, token: string) => {
     Cookies.set("syntia_token", token, {
       expires: 1,
@@ -224,7 +238,7 @@ export default function PerfilPage() {
     setSaving(true);
     const loadingId = toast.loading("Guardando cambios...");
     try {
-      await perfilApi.save(form as unknown as Record<string, string>);
+      await perfilApi.save(form as Record<string, unknown>);
       toast.update(loadingId, "success", "Cambios guardados correctamente");
     } catch {
       toast.update(loadingId, "error", "No se pudieron guardar los cambios. Inténtalo de nuevo.");
@@ -352,21 +366,29 @@ export default function PerfilPage() {
           <div className="space-y-4">
             {[
               {
+                key: "notificacionesConvocatorias",
                 label: "Nuevas convocatorias compatibles",
                 description: "Recibe un aviso cuando aparezca una subvención que coincida con tus proyectos",
               },
               {
+                key: "notificacionesRecordatorios",
                 label: "Recordatorios de plazo",
                 description: "Alertas antes de que cierren las convocatorias en las que estás interesado",
               },
               {
+                key: "notificacionesNovedades",
                 label: "Novedades de Syntia",
                 description: "Actualizaciones del producto, nuevas funcionalidades y mejoras",
               },
-            ].map(({ label, description }) => (
+            ].map(({ key, label, description }) => (
               <label key={label} className="flex items-start gap-3 cursor-pointer group">
                 <div className="relative mt-0.5">
-                  <input type="checkbox" defaultChecked className="sr-only peer" />
+                  <input
+                    type="checkbox"
+                    checked={Boolean(form[key as NotificacionKey])}
+                    onChange={(e) => setNotificacion(key as NotificacionKey)(e.target.checked)}
+                    className="sr-only peer"
+                  />
                   <div className="w-10 h-6 rounded-full bg-border peer-checked:bg-primary transition-colors" />
                   <div className="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4" />
                 </div>
