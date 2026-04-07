@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -21,12 +22,36 @@ type FormData = z.infer<typeof schema>;
 
 export default function NuevoProyectoPage() {
   const router = useRouter();
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string; duration: number } | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  const onSubmit = async (data: FormData) => {
-    await proyectosApi.create(data as Record<string, string>);
-    router.push("/proyectos");
+  const showToast = (type: "success" | "error", message: string, duration: number) => {
+    setToast({ type, message, duration });
+    setToastVisible(false);
+    requestAnimationFrame(() => setToastVisible(true));
   };
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      setToast(null);
+      await proyectosApi.create(data as Record<string, string>);
+      router.push("/proyectos?created=1");
+    } catch {
+      showToast("error", "No se pudo crear el proyecto. Revisa los datos e intentalo de nuevo.", 4500);
+    }
+  };
+
+  useEffect(() => {
+    if (!toast) return;
+    const hideDelay = Math.max(toast.duration - 250, 0);
+    const hideTimer = setTimeout(() => setToastVisible(false), hideDelay);
+    const removeTimer = setTimeout(() => setToast(null), toast.duration);
+    return () => {
+      clearTimeout(hideTimer);
+      clearTimeout(removeTimer);
+    };
+  }, [toast]);
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -51,6 +76,21 @@ export default function NuevoProyectoPage() {
           </div>
         </form>
       </Card>
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={[
+            "fixed bottom-4 right-4 z-50 max-w-xs rounded-xl border px-6 py-3 text-sm shadow-lg transition-all duration-300 ease-out",
+            toastVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none",
+            toast.type === "success"
+              ? "bg-green-100 border-green-300 text-green-800"
+              : "bg-red-100 border-red-300 text-red-800",
+          ].join(" ")}
+        >
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }

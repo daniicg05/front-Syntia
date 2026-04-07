@@ -18,9 +18,15 @@ interface PerfilForm {
 
 export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string; duration: number } | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<PerfilForm>();
+
+  const showToast = (type: "success" | "error", message: string, duration: number) => {
+    setToast({ type, message, duration });
+    setToastVisible(false);
+    requestAnimationFrame(() => setToastVisible(true));
+  };
 
   useEffect(() => {
     perfilApi.get()
@@ -29,14 +35,24 @@ export default function PerfilPage() {
       .finally(() => setLoading(false));
   }, [reset]);
 
+  useEffect(() => {
+    if (!toast) return;
+    const hideDelay = Math.max(toast.duration - 250, 0);
+    const hideTimer = setTimeout(() => setToastVisible(false), hideDelay);
+    const removeTimer = setTimeout(() => setToast(null), toast.duration);
+    return () => {
+      clearTimeout(hideTimer);
+      clearTimeout(removeTimer);
+    };
+  }, [toast]);
+
   const onSubmit = async (data: PerfilForm) => {
     try {
-      setError(""); setSuccess(false);
+      setToast(null);
       await perfilApi.save(data);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      showToast("success", "Perfil guardado correctamente", 3500);
     } catch {
-      setError("Error al guardar el perfil");
+      showToast("error", "No se pudo guardar el perfil. Intentalo de nuevo.", 4500);
     }
   };
 
@@ -46,8 +62,6 @@ export default function PerfilPage() {
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Mi perfil</h1>
       <Card>
-        {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg">Perfil guardado correctamente</div>}
-        {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{error}</div>}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Sector" placeholder="Ej: Tecnología, Agricultura..." {...register("sector")} />
@@ -71,6 +85,21 @@ export default function PerfilPage() {
           </div>
         </form>
       </Card>
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={[
+            "fixed bottom-4 right-4 z-50 max-w-xs rounded-xl border px-6 py-3 text-sm shadow-lg transition-all duration-300 ease-out",
+            toastVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none",
+            toast.type === "success"
+              ? "bg-green-100 border-green-300 text-green-800"
+              : "bg-red-100 border-red-300 text-red-800",
+          ].join(" ")}
+        >
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }

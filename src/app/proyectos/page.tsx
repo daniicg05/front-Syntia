@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { proyectosApi } from "@/src/lib/api";
 import { Card } from "@/src/components/ui/Card";
 import { Button } from "@/src/components/ui/Button";
@@ -18,6 +19,15 @@ interface Proyecto {
 export default function ProyectosPage() {
     const [proyectos, setProyectos] = useState<Proyecto[]>([]);
     const [loading, setLoading] = useState(true);
+    const [toast, setToast] = useState<{ type: "success" | "error"; message: string; duration: number } | null>(null);
+    const [toastVisible, setToastVisible] = useState(false);
+    const searchParams = useSearchParams();
+
+    const showToast = (type: "success" | "error", message: string, duration: number) => {
+        setToast({ type, message, duration });
+        setToastVisible(false);
+        setTimeout(() => setToastVisible(true), 20);
+    };
 
     const cargar = () => {
         proyectosApi.list()
@@ -27,10 +37,33 @@ export default function ProyectosPage() {
 
     useEffect(() => { cargar(); }, []);
 
+    useEffect(() => {
+        if (!toast) return;
+        const hideDelay = Math.max(toast.duration - 250, 0);
+        const hideTimer = setTimeout(() => setToastVisible(false), hideDelay);
+        const removeTimer = setTimeout(() => setToast(null), toast.duration);
+        return () => {
+            clearTimeout(hideTimer);
+            clearTimeout(removeTimer);
+        };
+    }, [toast]);
+
+    useEffect(() => {
+        if (searchParams.get("created") === "1") {
+            showToast("success", "Proyecto creado correctamente", 3500);
+        }
+        return undefined;
+    }, [searchParams]);
+
     const eliminar = async (id: number) => {
         if (!confirm("¿Eliminar este proyecto?")) return;
-        await proyectosApi.delete(id);
-        setProyectos((prev) => prev.filter((p) => p.id !== id));
+        try {
+            await proyectosApi.delete(id);
+            setProyectos((prev) => prev.filter((p) => p.id !== id));
+            showToast("success", "Proyecto eliminado correctamente", 3500);
+        } catch {
+            showToast("error", "No se pudo eliminar el proyecto. Intentalo de nuevo.", 4500);
+        }
     };
 
     if (loading) return <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
@@ -82,6 +115,21 @@ export default function ProyectosPage() {
                             </div>
                         </Card>
                     ))}
+                </div>
+            )}
+            {toast && (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className={[
+                        "fixed bottom-4 right-4 z-50 max-w-xs rounded-xl border px-6 py-3 text-sm shadow-lg transition-all duration-300 ease-out",
+                        toastVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none",
+                        toast.type === "success"
+                            ? "bg-green-100 border-green-300 text-green-800"
+                            : "bg-red-100 border-red-300 text-red-800",
+                    ].join(" ")}
+                >
+                    {toast.message}
                 </div>
             )}
         </div>
