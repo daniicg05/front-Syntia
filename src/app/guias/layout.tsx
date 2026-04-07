@@ -1,6 +1,6 @@
 import { Navbar } from "@/components/Navbar";
 
-export default function ProyectosLayout({ children }: { children: React.ReactNode }) {
+export default function GuiasLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

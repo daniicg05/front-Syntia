@@ -2,14 +2,34 @@ import {
     NextRequest, NextResponse
 } from "next/server";
 
-function decodeTokenPayload(token: String) {
+type TokenPayload = {
+    exp?: number;
+    rol?: string;
+};
+
+function decodeBase64Url(value: string): string {
+    const normalized = value
+        .replace(/-/g, "+")
+        .replace(/_/g, "/")
+        .padEnd(Math.ceil(value.length / 4) * 4, "=");
+
+    if (typeof atob === "function") {
+        return atob(normalized);
+    }
+
+    return Buffer.from(normalized, "base64").toString("utf-8");
+}
+
+function decodeTokenPayload(token: string): TokenPayload | null {
     try {
-        const payload = token.split(".")[1];
-        const decoded = Buffer.from(
-            payload.replace(/-/g, "+").replace(/_/g, "/"),
-            "base64"
-        ).toString("utf-8");
-        return JSON.parse(decoded);
+        const parts = token.split(".");
+        if (parts.length < 2) return null;
+
+        const payload = parts[1];
+        if (!payload) return null;
+
+        const decoded = decodeBase64Url(payload);
+        return JSON.parse(decoded) as TokenPayload;
     } catch {
         return null;
     }
@@ -17,9 +37,8 @@ function decodeTokenPayload(token: String) {
 
 const PROTECTED_USER = ["/dashboard", "/perfil", "/proyectos"];
 const PROTECTED_ADMIN = ["/admin"];
-const PUBLIC = ["/", "/login", "/registro", "/aviso-legal"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     const {
         pathname
     } = request.nextUrl;
@@ -36,14 +55,14 @@ export function middleware(request: NextRequest) {
     }
 
     const payload = decodeTokenPayload(token);
-    if (!payload || payload.exp * 1000 < Date.now()) {
+    if (!payload || typeof payload.exp !== "number" || payload.exp * 1000 < Date.now()) {
         const res = NextResponse.redirect(new URL("/login", request.url));
         res.cookies.delete("syntia_token");
         return res;
     }
 
-    if (isAdminRoute &&payload.rol !== "admin"){
-    return NextResponse.redirect(new URL("/admin", request.url));
+    if (isAdminRoute && payload.rol !== "ADMIN") {
+        return NextResponse.redirect(new URL("/login", request.url));
     }
 
     return NextResponse.next();
