@@ -5,6 +5,7 @@ import { getUser, logout } from "@/lib/auth";
 import { perfilApi } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import Cookies from "js-cookie";
 import {
   User,
   Mail,
@@ -16,6 +17,7 @@ import {
   Shield,
   Bell,
   ChevronRight,
+  X,
 } from "lucide-react";
 
 interface PerfilData {
@@ -89,6 +91,92 @@ function Field({
   );
 }
 
+function ModalCambiarEmail({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess: (nuevoEmail: string, token: string) => void;
+}) {
+  const toast = useToast();
+  const [nuevoEmail, setNuevoEmail] = useState("");
+  const [passwordActual, setPasswordActual] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const res = await perfilApi.cambiarEmail({ nuevoEmail, passwordActual });
+      onSuccess(res.data.email, res.data.token);
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 409) toast.error("Este email ya está en uso");
+      else if (status === 401) toast.error("Contraseña incorrecta");
+      else toast.error("Error al cambiar el email");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="bg-surface rounded-2xl border border-border shadow-xl w-full max-w-sm p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-semibold text-foreground">Cambiar email</h3>
+          <button type="button" onClick={onClose} className="text-foreground-muted hover:text-foreground transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-1.5">
+              Nuevo email
+            </label>
+            <input
+              type="email"
+              required
+              value={nuevoEmail}
+              onChange={(e) => setNuevoEmail(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              placeholder="nuevo@ejemplo.com"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-1.5">
+              Contraseña actual
+            </label>
+            <input
+              type="password"
+              required
+              value={passwordActual}
+              onChange={(e) => setPasswordActual(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              placeholder="Tu contraseña actual"
+            />
+          </div>
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-surface-muted transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {submitting ? "Confirmando..." : "Confirmar"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function PerfilPage() {
   const jwtUser = getUser();
   const toast = useToast();
@@ -102,6 +190,7 @@ export default function PerfilPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
   useEffect(() => {
     perfilApi
@@ -119,12 +208,23 @@ export default function PerfilPage() {
   const set = (key: keyof PerfilData) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
+  const handleEmailSuccess = (nuevoEmail: string, token: string) => {
+    Cookies.set("syntia_token", token, {
+      expires: 1,
+      sameSite: "Lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+    setForm((prev) => ({ ...prev, email: nuevoEmail }));
+    setShowEmailModal(false);
+    toast.success("Email actualizado correctamente");
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     const loadingId = toast.loading("Guardando cambios...");
     try {
-      await perfilApi.save(form as Record<string, string>);
+      await perfilApi.save(form as unknown as Record<string, string>);
       toast.update(loadingId, "success", "Cambios guardados correctamente");
     } catch {
       toast.update(loadingId, "error", "No se pudieron guardar los cambios. Inténtalo de nuevo.");
@@ -145,6 +245,12 @@ export default function PerfilPage() {
 
   return (
     <div>
+      {showEmailModal && (
+        <ModalCambiarEmail
+          onClose={() => setShowEmailModal(false)}
+          onSuccess={handleEmailSuccess}
+        />
+      )}
       {/* Header */}
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
@@ -169,13 +275,31 @@ export default function PerfilPage() {
               onChange={set("nombre")}
               icon={<User className="w-4 h-4" />}
             />
-            <Field
-              label="Correo electrónico"
-              value={form.email}
-              type="email"
-              disabled
-              icon={<Mail className="w-4 h-4" />}
-            />
+            <div>
+              <label className="block text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-1.5">
+                Correo electrónico
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted">
+                    <Mail className="w-4 h-4" />
+                  </span>
+                  <input
+                    type="email"
+                    value={form.email}
+                    disabled
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border bg-surface-muted text-sm text-foreground-muted cursor-not-allowed border-border/50"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowEmailModal(true)}
+                  className="px-3 py-2.5 rounded-xl border border-border text-xs font-medium text-foreground hover:bg-surface-muted transition-colors whitespace-nowrap"
+                >
+                  Cambiar
+                </button>
+              </div>
+            </div>
             <Field
               label="Empresa u organización"
               value={form.empresa ?? ""}
