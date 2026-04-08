@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import {
   RefreshCw, Database, CheckCircle, XCircle, Clock,
-  MapPin, ChevronDown, ChevronRight, AlertTriangle,
+  MapPin, ChevronDown, ChevronRight, AlertTriangle, StopCircle,
 } from "lucide-react";
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
@@ -129,6 +129,7 @@ export default function BdnsPage() {
   const [cobertura, setCobertura]         = useState<CoberturaDTO | null>(null);
   const [loading, setLoading]             = useState(true);
   const [lanzando, setLanzando]           = useState(false);
+  const [cancelando, setCancelando]       = useState(false);
   const [confirmando, setConfirmando]     = useState(false);
   const [modo, setModo]                   = useState<ModoImportacion>("FULL");
   const [historialAbierto, setHistorialAbierto] = useState(false);
@@ -181,6 +182,17 @@ export default function BdnsPage() {
     };
   }, [estadoJob?.estado]);
 
+  const handleCancelar = async () => {
+    setCancelando(true);
+    try {
+      await adminApi.bdns.cancelar();
+    } catch {
+      // ignorar error si no había job en curso
+    } finally {
+      setCancelando(false);
+    }
+  };
+
   const handleConfirmar = async () => {
     setConfirmando(false);
     setLanzando(true);
@@ -219,14 +231,25 @@ export default function BdnsPage() {
           >
             Refrescar
           </Button>
-          <Button
-            onClick={() => setConfirmando(true)}
-            disabled={enCurso || lanzando}
-            loading={lanzando}
-            icon={<RefreshCw className="h-4 w-4" />}
-          >
-            {enCurso ? "Importando..." : "Actualizar BDNS"}
-          </Button>
+          {enCurso ? (
+            <Button
+              variant="secondary"
+              onClick={handleCancelar}
+              loading={cancelando}
+              icon={<StopCircle className="h-4 w-4" />}
+            >
+              Cancelar importación
+            </Button>
+          ) : (
+            <Button
+              onClick={() => setConfirmando(true)}
+              disabled={lanzando}
+              loading={lanzando}
+              icon={<RefreshCw className="h-4 w-4" />}
+            >
+              Actualizar BDNS
+            </Button>
+          )}
         </div>
       </div>
 
