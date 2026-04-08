@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Fraunces } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { GlobalUserNavbar } from "@/components/GlobalUserNavbar";
 import { ToastProvider } from "@/components/ui/Toast";
 import { GlobalFooter } from "@/components/GlobalFooter";
 import "./globals.css";
@@ -45,6 +46,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans" suppressHydrationWarning>
         <ThemeProvider>
           <ToastProvider>
+            <GlobalUserNavbar />
             {/** Contenedor principal con espacio inferior para que el contenido no quede pegado al footer */}
             <main className="flex-1 pb-8">{children}</main>
             {/** Footer global único para toda la app (con exclusiones definidas en GlobalFooter) */}
