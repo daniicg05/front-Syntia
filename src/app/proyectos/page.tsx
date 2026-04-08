@@ -138,6 +138,16 @@ export default function ProyectosPage() {
                     {new Date(proyecto.fechaCreacion).toLocaleDateString("es-ES")}
                   </span>
                 )}
+
+                <Link
+                    href={`/proyectos/${proyecto.id}/editar`}
+                    className="text-sm font-medium text-foreground-muted hover:text-foreground transition-colors"
+                >
+                  Editar
+                </Link>
+
+                {/* Fix UI (2026-04-07): se agrega la acción "Editar" en cada tarjeta de proyecto,
+                enlazando a /proyectos/[id]/editar. */}
                 <Link
                   href={`/proyectos/${proyecto.id}/recomendaciones`}
                   className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline ml-auto"
