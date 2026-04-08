@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { getUser, logout } from "@/lib/auth";
 import { perfilApi } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
@@ -235,10 +236,15 @@ function ModalCambiarPassword({
   onSuccess: () => void;
 }) {
   const toast = useToast();
+  const [isMounted, setIsMounted] = useState(false);
   const [passwordActual, setPasswordActual] = useState("");
   const [nuevaPassword, setNuevaPassword] = useState("");
   const [confirmarPassword, setConfirmarPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -271,7 +277,7 @@ function ModalCambiarPassword({
     }
   };
 
-  return (
+  const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div className="bg-surface rounded-2xl border border-border shadow-xl w-full max-w-sm p-6">
         <div className="flex items-center justify-between mb-5">
@@ -342,6 +348,10 @@ function ModalCambiarPassword({
       </div>
     </div>
   );
+
+  if (!isMounted) return null;
+
+  return createPortal(modalContent, document.body);
 }
 
 export default function PerfilPage() {

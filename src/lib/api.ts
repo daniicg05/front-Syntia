@@ -1,6 +1,8 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
+const SKIP_AUTH_REDIRECT_HEADER = "x-skip-auth-redirect";
+
 const api = axios.create({
     baseURL: "/api",
     headers: { "Content-Type": "application/json" },
@@ -17,7 +19,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (res) => res,
     (error) => {
-        if (error.response?.status === 401 && typeof window !== "undefined") {
+        const skipAuthRedirect =
+            String(error.config?.headers?.[SKIP_AUTH_REDIRECT_HEADER] ?? "").toLowerCase() === "true";
+
+        if (
+            error.response?.status === 401 &&
+            !skipAuthRedirect &&
+            typeof window !== "undefined"
+        ) {
             Cookies.remove("syntia_token");
             window.location.href = "/login";
         }
@@ -53,10 +62,19 @@ export const perfilApi = {
     cambiarEmail: (data: { nuevoEmail: string; passwordActual: string }) =>
         api.put<{ token: string; email: string; rol: string; expiration: number }>(
             "/usuario/perfil/email",
-            data
+            data,
+            {
+                headers: {
+                    [SKIP_AUTH_REDIRECT_HEADER]: "true",
+                },
+            }
         ),
     cambiarPassword: (data: { passwordActual: string; nuevaPassword: string; confirmarPassword: string }) =>
-        api.put("/usuario/perfil/password", data),
+        api.put("/usuario/perfil/password", data, {
+            headers: {
+                [SKIP_AUTH_REDIRECT_HEADER]: "true",
+            },
+        }),
 };
 
 // ── Proyectos ─────────────────────────────────────────────────────────────────
