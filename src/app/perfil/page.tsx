@@ -289,8 +289,7 @@ export default function PerfilPage() {
     const loadingId = toast.loading("Guardando cambios...");
     try {
       await perfilApi.save(form as unknown as Record<string, string>);
-=======
-      await perfilApi.save(form as Record<string, unknown>);
+      await perfilApi.save(form as unknown as Record<string, unknown>);
       localStorage.setItem(
         NOTIFICACIONES_STORAGE_KEY,
         JSON.stringify(extraerNotificaciones(form))
@@ -420,7 +419,7 @@ export default function PerfilPage() {
         {/* Notifications */}
         <Section icon={<Bell className="w-4 h-4" />} title="Notificaciones">
           <div className="space-y-4">
-            {[
+            {([
               {
                 key: "notificacionesConvocatorias",
                 label: "Nuevas convocatorias compatibles",
@@ -436,7 +435,7 @@ export default function PerfilPage() {
                 label: "Novedades de Syntia",
                 description: "Actualizaciones del producto, nuevas funcionalidades y mejoras",
               },
-            ].map(({ key, label, description }: { key: NotificacionKey; label: string; description: string }) => (
+            ] satisfies Array<{ key: NotificacionKey; label: string; description: string }>).map(({ key, label, description }) => (
               <label key={label} className="flex items-start gap-3 cursor-pointer group">
                 <div className="relative mt-0.5">
                   <input
