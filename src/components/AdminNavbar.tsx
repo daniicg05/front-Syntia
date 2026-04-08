@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { usePathname, useRouter } from "next/navigation";
-import { logout, getUser } from "@/lib/auth";
+import {logout, getUser, JwtPayload} from "@/lib/auth";
 import { useTheme } from "@/components/ThemeProvider";
 import {
   LayoutDashboard,
@@ -13,12 +13,10 @@ import {
   LogOut,
   Sun,
   Moon,
+  Database,
 } from "lucide-react";
 
-import { usePathname } from "next/navigation";
-import type { JwtPayload } from "@/lib/auth";
-import { logout, getUser } from "@/lib/auth";
-import { LayoutDashboard, Users, FileText, LogOut, Database } from "lucide-react";
+
 
 
 const links = [
@@ -32,7 +30,6 @@ export function AdminNavbar() {
   const pathname = usePathname();
 
   const router = useRouter();
-  const user = getUser();
   const { theme, toggleTheme, mounted } = useTheme();
 
   function handleLogout() {

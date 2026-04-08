@@ -17,8 +17,6 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
-import { Sparkles, Database, BookOpen, ArrowRight, CheckCircle2, Zap, Shield, TrendingUp } from "lucide-react";
-
 import { motion } from "framer-motion";
 
 const FEATURES = [
