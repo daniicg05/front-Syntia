@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import {
   RefreshCw, CheckCircle, XCircle, Clock,
-  MapPin, ChevronDown, ChevronRight, StopCircle,
+  MapPin, ChevronDown, ChevronRight, PauseCircle,
 } from "lucide-react";
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
@@ -207,9 +207,9 @@ export default function BdnsPage() {
               variant="secondary"
               onClick={handleCancelar}
               loading={cancelando}
-              icon={<StopCircle className="h-4 w-4" />}
+              icon={<PauseCircle className="h-4 w-4" />}
             >
-              Cancelar importación
+              Pausar
             </Button>
           ) : (
             <Button
@@ -376,24 +376,28 @@ export default function BdnsPage() {
             <div className="mb-5">
               <p className="text-xs font-medium text-foreground-muted mb-2">Modo de importación</p>
               <div className="grid grid-cols-2 gap-2">
-                {(["FULL", "INCREMENTAL"] as ModoImportacion[]).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setModo(m)}
-                    className={`rounded-lg border px-3 py-2.5 text-left transition-colors ${
-                      modo === m
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border text-foreground-muted hover:border-foreground-muted"
-                    }`}
-                  >
-                    <p className="text-sm font-medium">{m}</p>
-                    <p className="text-xs mt-0.5 opacity-70">
-                      {m === "FULL"
-                        ? "Reimporta todos los ejes desde cero"
-                        : "Salta los ejes ya completados, reanuda los fallidos"}
-                    </p>
-                  </button>
-                ))}
+                <button
+                  onClick={() => setModo("FULL")}
+                  className={`rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                    modo === "FULL"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-foreground-muted hover:border-foreground-muted"
+                  }`}
+                >
+                  <p className="text-sm font-medium">Actualizar</p>
+                  <p className="text-xs mt-0.5 opacity-70">Busca y añade las convocatorias que faltan</p>
+                </button>
+                <button
+                  onClick={() => setModo("INCREMENTAL")}
+                  className={`rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                    modo === "INCREMENTAL"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-foreground-muted hover:border-foreground-muted"
+                  }`}
+                >
+                  <p className="text-sm font-medium">Reanudar</p>
+                  <p className="text-xs mt-0.5 opacity-70">Continúa desde donde se interrumpió</p>
+                </button>
               </div>
             </div>
 
