@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Sparkles, Database, BookOpen, ArrowRight, CheckCircle2, Zap, Shield, TrendingUp } from "lucide-react";
-import { Footer } from "@/components/Footer";
 import { motion } from "framer-motion";
 
 const FEATURES = [
@@ -447,7 +446,6 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <Footer />
     </div>
   );
 }
