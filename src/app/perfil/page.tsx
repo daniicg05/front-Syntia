@@ -288,6 +288,8 @@ export default function PerfilPage() {
     setSaving(true);
     const loadingId = toast.loading("Guardando cambios...");
     try {
+      await perfilApi.save(form as unknown as Record<string, string>);
+=======
       await perfilApi.save(form as Record<string, unknown>);
       localStorage.setItem(
         NOTIFICACIONES_STORAGE_KEY,
