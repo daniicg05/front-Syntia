@@ -125,6 +125,7 @@ export const adminApi = {
     bdns: {
         importar: (modo: "FULL" | "INCREMENTAL" = "FULL") =>
             api.post(`/admin/bdns/importar?modo=${modo}`),
+        cancelar: () => api.delete("/admin/bdns/importar"),
         estado: () => api.get("/admin/bdns/estado"),
         ultimaImportacion: () => api.get("/admin/bdns/ultima-importacion"),
         ejes: () => api.get("/admin/bdns/ejes"),
