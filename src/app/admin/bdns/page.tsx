@@ -59,7 +59,7 @@ interface CoberturaDTO {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-const TOTAL_EJES = 23;
+const TOTAL_EJES = 1;
 
 function badgeEje(estado: EstadoEje) {
   const base = "inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium";
@@ -156,22 +156,19 @@ export default function BdnsPage() {
     if (estadoJob?.estado === "EN_CURSO") {
       if (!pollingRef.current) {
         pollingRef.current = setInterval(async () => {
-          const [estadoRes, ejesRes] = await Promise.all([
+          const [estadoRes, ejesRes, coberturaRes] = await Promise.allSettled([
             adminApi.bdns.estado(),
             adminApi.bdns.ejes(),
+            adminApi.bdns.cobertura(),
           ]);
-          setEstadoJob(estadoRes.data);
-          setEjes(ejesRes.data);
-          if (estadoRes.data.estado !== "EN_CURSO") {
+          if (estadoRes.status === "fulfilled") setEstadoJob(estadoRes.value.data);
+          if (ejesRes.status === "fulfilled") setEjes(ejesRes.value.data);
+          if (coberturaRes.status === "fulfilled") setCobertura(coberturaRes.value.data);
+          if (estadoRes.status === "fulfilled" && estadoRes.value.data.estado !== "EN_CURSO") {
             clearInterval(pollingRef.current!);
             pollingRef.current = null;
-            // Recargar cobertura e historial al terminar
-            const [h, c] = await Promise.all([
-              adminApi.bdns.historial(),
-              adminApi.bdns.cobertura(),
-            ]);
+            const h = await adminApi.bdns.historial();
             setHistorial(h.data);
-            setCobertura(c.data);
           }
         }, 5000);
       }
