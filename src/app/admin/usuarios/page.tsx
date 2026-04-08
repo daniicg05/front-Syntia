@@ -20,7 +20,17 @@ export default function AdminUsuariosPage() {
   const [loading, setLoading] = useState(true);
   const me = getUser();
 
-  const cargar = () => adminApi.usuarios.list().then((r) => setUsuarios(r.data)).finally(() => setLoading(false));
+  const cargar = () => adminApi.usuarios.list().then((r) => {
+    const data = r.data;
+    const lista = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.usuarios)
+        ? data.usuarios
+        : Array.isArray(data?.content)
+          ? data.content
+          : [];
+    setUsuarios(lista);
+  }).finally(() => setLoading(false));
   useEffect(() => { cargar(); }, []);
 
   const cambiarRol = async (id: number, rolActual: string) => {

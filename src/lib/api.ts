@@ -49,7 +49,7 @@ export const dashboardApi = {
 // ── Perfil ────────────────────────────────────────────────────────────────────
 export const perfilApi = {
     get: () => api.get("/usuario/perfil"),
-    save: (data: Record<string, string>) => api.put("/usuario/perfil", data),
+    save: (data: Record<string, unknown>) => api.put("/usuario/perfil", data),
     cambiarEmail: (data: { nuevoEmail: string; passwordActual: string }) =>
         api.put<{ token: string; email: string; rol: string; expiration: number }>(
             "/usuario/perfil/email",
@@ -101,5 +101,16 @@ export const adminApi = {
         delete: (id: number) => api.delete(`/admin/convocatorias/${id}`),
         importarBdns: (pagina = 0, tamano = 20) =>
             api.post(`/admin/convocatorias/importar-bdns?pagina=${pagina}&tamano=${tamano}`),
+    },
+    bdns: {
+        importar: (modo: "FULL" | "INCREMENTAL" = "FULL") =>
+            api.post(`/admin/bdns/importar?modo=${modo}`),
+        estado: () => api.get("/admin/bdns/estado"),
+        ultimaImportacion: () => api.get("/admin/bdns/ultima-importacion"),
+        ejes: () => api.get("/admin/bdns/ejes"),
+        historial: () => api.get("/admin/bdns/historial"),
+        historialDetalle: (ejecucionId: string) =>
+            api.get(`/admin/bdns/historial/${ejecucionId}`),
+        cobertura: () => api.get("/admin/bdns/cobertura"),
     },
 };

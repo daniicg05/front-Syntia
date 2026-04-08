@@ -27,6 +27,55 @@ interface PerfilData {
   provincia?: string;
   telefono?: string;
   rol?: string;
+  notificacionesConvocatorias?: boolean;
+  notificacionesRecordatorios?: boolean;
+  notificacionesNovedades?: boolean;
+}
+
+type NotificacionKey =
+  | "notificacionesConvocatorias"
+  | "notificacionesRecordatorios"
+  | "notificacionesNovedades";
+
+const NOTIFICACIONES_STORAGE_KEY = "syntia_perfil_notificaciones";
+
+const DEFAULT_NOTIFICACIONES: Record<NotificacionKey, boolean> = {
+  notificacionesConvocatorias: true,
+  notificacionesRecordatorios: true,
+  notificacionesNovedades: true,
+};
+
+function leerNotificacionesGuardadas(): Partial<Record<NotificacionKey, boolean>> {
+  const raw = localStorage.getItem(NOTIFICACIONES_STORAGE_KEY);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as Partial<Record<NotificacionKey, boolean>>;
+    return {
+      notificacionesConvocatorias:
+        typeof parsed.notificacionesConvocatorias === "boolean"
+          ? parsed.notificacionesConvocatorias
+          : undefined,
+      notificacionesRecordatorios:
+        typeof parsed.notificacionesRecordatorios === "boolean"
+          ? parsed.notificacionesRecordatorios
+          : undefined,
+      notificacionesNovedades:
+        typeof parsed.notificacionesNovedades === "boolean"
+          ? parsed.notificacionesNovedades
+          : undefined,
+    };
+  } catch {
+    localStorage.removeItem(NOTIFICACIONES_STORAGE_KEY);
+    return {};
+  }
+}
+
+function extraerNotificaciones(perfil: PerfilData): Record<NotificacionKey, boolean> {
+  return {
+    notificacionesConvocatorias: Boolean(perfil.notificacionesConvocatorias),
+    notificacionesRecordatorios: Boolean(perfil.notificacionesRecordatorios),
+    notificacionesNovedades: Boolean(perfil.notificacionesNovedades),
+  };
 }
 
 function Section({
@@ -187,6 +236,7 @@ export default function PerfilPage() {
     provincia: "",
     telefono: "",
     rol: jwtUser?.rol ?? "",
+    ...DEFAULT_NOTIFICACIONES,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -197,7 +247,13 @@ export default function PerfilPage() {
       .get()
       .then((res) => {
         const d = res.data as PerfilData;
-        setForm((prev) => ({ ...prev, ...d }));
+        const notificacionesGuardadas = leerNotificacionesGuardadas();
+        setForm((prev) => ({
+          ...prev,
+          ...DEFAULT_NOTIFICACIONES,
+          ...d,
+          ...notificacionesGuardadas,
+        }));
       })
       .catch(() => {
         // If perfil endpoint not available, use JWT info only
@@ -205,8 +261,16 @@ export default function PerfilPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const notificacionesGuardadas = leerNotificacionesGuardadas();
+    setForm((prev) => ({ ...prev, ...notificacionesGuardadas }));
+  }, []);
+
   const set = (key: keyof PerfilData) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const setNotificacion = (key: NotificacionKey) => (checked: boolean) =>
+    setForm((prev) => ({ ...prev, [key]: checked }));
 
   const handleEmailSuccess = (nuevoEmail: string, token: string) => {
     Cookies.set("syntia_token", token, {
@@ -225,6 +289,12 @@ export default function PerfilPage() {
     const loadingId = toast.loading("Guardando cambios...");
     try {
       await perfilApi.save(form as unknown as Record<string, string>);
+=======
+      await perfilApi.save(form as Record<string, unknown>);
+      localStorage.setItem(
+        NOTIFICACIONES_STORAGE_KEY,
+        JSON.stringify(extraerNotificaciones(form))
+      );
       toast.update(loadingId, "success", "Cambios guardados correctamente");
     } catch {
       toast.update(loadingId, "error", "No se pudieron guardar los cambios. Inténtalo de nuevo.");
@@ -352,21 +422,29 @@ export default function PerfilPage() {
           <div className="space-y-4">
             {[
               {
+                key: "notificacionesConvocatorias",
                 label: "Nuevas convocatorias compatibles",
                 description: "Recibe un aviso cuando aparezca una subvención que coincida con tus proyectos",
               },
               {
+                key: "notificacionesRecordatorios",
                 label: "Recordatorios de plazo",
                 description: "Alertas antes de que cierren las convocatorias en las que estás interesado",
               },
               {
+                key: "notificacionesNovedades",
                 label: "Novedades de Syntia",
                 description: "Actualizaciones del producto, nuevas funcionalidades y mejoras",
               },
-            ].map(({ label, description }) => (
+            ].map(({ key, label, description }: { key: NotificacionKey; label: string; description: string }) => (
               <label key={label} className="flex items-start gap-3 cursor-pointer group">
                 <div className="relative mt-0.5">
-                  <input type="checkbox" defaultChecked className="sr-only peer" />
+                  <input
+                    type="checkbox"
+                    checked={Boolean(form[key])}
+                    onChange={(e) => setNotificacion(key)(e.target.checked)}
+                    className="sr-only peer"
+                  />
                   <div className="w-10 h-6 rounded-full bg-border peer-checked:bg-primary transition-colors" />
                   <div className="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4" />
                 </div>
