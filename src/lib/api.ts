@@ -103,8 +103,14 @@ export const adminApi = {
             api.post(`/admin/convocatorias/importar-bdns?pagina=${pagina}&tamano=${tamano}`),
     },
     bdns: {
-        importar: () => api.post("/admin/bdns/importar"),
+        importar: (modo: "FULL" | "INCREMENTAL" = "FULL") =>
+            api.post(`/admin/bdns/importar?modo=${modo}`),
         estado: () => api.get("/admin/bdns/estado"),
         ultimaImportacion: () => api.get("/admin/bdns/ultima-importacion"),
+        ejes: () => api.get("/admin/bdns/ejes"),
+        historial: () => api.get("/admin/bdns/historial"),
+        historialDetalle: (ejecucionId: string) =>
+            api.get(`/admin/bdns/historial/${ejecucionId}`),
+        cobertura: () => api.get("/admin/bdns/cobertura"),
     },
 };
