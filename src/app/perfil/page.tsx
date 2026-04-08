@@ -16,6 +16,7 @@ import {
   Save,
   Shield,
   Bell,
+  KeyRound,
   ChevronRight,
   X,
 } from "lucide-react";
@@ -226,6 +227,123 @@ function ModalCambiarEmail({
   );
 }
 
+function ModalCambiarPassword({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const toast = useToast();
+  const [passwordActual, setPasswordActual] = useState("");
+  const [nuevaPassword, setNuevaPassword] = useState("");
+  const [confirmarPassword, setConfirmarPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (nuevaPassword.length < 6) {
+      toast.error("La nueva contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+
+    if (nuevaPassword !== confirmarPassword) {
+      toast.error("Las contraseñas no coinciden");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await perfilApi.cambiarPassword({
+        passwordActual,
+        nuevaPassword,
+        confirmarPassword,
+      });
+      onSuccess();
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 401) toast.error("La contraseña actual no es correcta");
+      else if (status === 404) toast.error("No se encontró el servicio para cambiar contraseña");
+      else toast.error("Error al cambiar la contraseña");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="bg-surface rounded-2xl border border-border shadow-xl w-full max-w-sm p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-semibold text-foreground">Cambiar contraseña</h3>
+          <button type="button" onClick={onClose} className="text-foreground-muted hover:text-foreground transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-1.5">
+              Contraseña actual
+            </label>
+            <input
+              type="password"
+              required
+              value={passwordActual}
+              onChange={(e) => setPasswordActual(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              placeholder="Tu contraseña actual"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-1.5">
+              Nueva contraseña
+            </label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={nuevaPassword}
+              onChange={(e) => setNuevaPassword(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              placeholder="Mínimo 6 caracteres"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-1.5">
+              Confirmar nueva contraseña
+            </label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={confirmarPassword}
+              onChange={(e) => setConfirmarPassword(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              placeholder="Repite la nueva contraseña"
+            />
+          </div>
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-surface-muted transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {submitting ? "Guardando..." : "Actualizar"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function PerfilPage() {
   const jwtUser = getUser();
   const toast = useToast();
@@ -241,6 +359,7 @@ export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   useEffect(() => {
     perfilApi
@@ -283,12 +402,18 @@ export default function PerfilPage() {
     toast.success("Email actualizado correctamente");
   };
 
+  const handlePasswordSuccess = () => {
+    setShowPasswordModal(false);
+    toast.success("Contraseña actualizada correctamente");
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     const loadingId = toast.loading("Guardando cambios...");
     try {
-      await perfilApi.save(form as Record<string, unknown>);
+      await perfilApi.save(form as unknown as Record<string, string>);
+      await perfilApi.save(form as unknown as Record<string, unknown>);
       localStorage.setItem(
         NOTIFICACIONES_STORAGE_KEY,
         JSON.stringify(extraerNotificaciones(form))
@@ -317,6 +442,12 @@ export default function PerfilPage() {
         <ModalCambiarEmail
           onClose={() => setShowEmailModal(false)}
           onSuccess={handleEmailSuccess}
+        />
+      )}
+      {showPasswordModal && (
+        <ModalCambiarPassword
+          onClose={() => setShowPasswordModal(false)}
+          onSuccess={handlePasswordSuccess}
         />
       )}
       {/* Header */}
@@ -406,10 +537,13 @@ export default function PerfilPage() {
             </div>
             <button
               type="button"
-              className="w-full flex items-center justify-between py-3 text-sm text-foreground hover:text-primary transition-colors group"
-              onClick={() => {}}
+              className="w-full flex items-center justify-between py-3 px-3 rounded-xl border border-border text-sm text-foreground hover:text-primary hover:bg-surface-muted transition-colors group cursor-pointer"
+              onClick={() => setShowPasswordModal(true)}
             >
-              <span className="font-medium">Cambiar contraseña</span>
+              <span className="font-medium inline-flex items-center gap-2">
+                <KeyRound className="w-4 h-4" />
+                Cambiar contraseña
+              </span>
               <ChevronRight className="w-4 h-4 text-foreground-subtle group-hover:text-primary transition-colors" />
             </button>
           </div>
@@ -418,7 +552,7 @@ export default function PerfilPage() {
         {/* Notifications */}
         <Section icon={<Bell className="w-4 h-4" />} title="Notificaciones">
           <div className="space-y-4">
-            {[
+            {([
               {
                 key: "notificacionesConvocatorias",
                 label: "Nuevas convocatorias compatibles",
@@ -434,7 +568,7 @@ export default function PerfilPage() {
                 label: "Novedades de Syntia",
                 description: "Actualizaciones del producto, nuevas funcionalidades y mejoras",
               },
-            ].map(({ key, label, description }: { key: NotificacionKey; label: string; description: string }) => (
+            ] satisfies Array<{ key: NotificacionKey; label: string; description: string }>).map(({ key, label, description }) => (
               <label key={label} className="flex items-start gap-3 cursor-pointer group">
                 <div className="relative mt-0.5">
                   <input
