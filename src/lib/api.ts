@@ -55,6 +55,8 @@ export const perfilApi = {
             "/usuario/perfil/email",
             data
         ),
+    cambiarPassword: (data: { passwordActual: string; nuevaPassword: string; confirmarPassword: string }) =>
+        api.put("/usuario/perfil/password", data),
 };
 
 // ── Proyectos ─────────────────────────────────────────────────────────────────
