@@ -2,8 +2,20 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles, Database, BookOpen, ArrowRight, CheckCircle2, Zap, Shield, TrendingUp } from "lucide-react";
+import {
+  Sparkles,
+  Database,
+  BookOpen,
+  ArrowRight,
+  CheckCircle2,
+  Zap,
+  Shield,
+  TrendingUp,
+  Moon,
+  Sun,
+} from "lucide-react";
 import { Footer } from "@/components/Footer";
+import { useTheme } from "@/components/ThemeProvider";
 import { motion } from "framer-motion";
 
 const FEATURES = [
@@ -103,6 +115,8 @@ const stepVariants = {
 };
 
 export default function LandingPage() {
+  const { theme, toggleTheme, mounted } = useTheme();
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -142,18 +156,38 @@ export default function LandingPage() {
               Cómo funciona
             </button>
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            {mounted && (
+                <button
+                    onClick={toggleTheme}
+                    type="button"
+                    className="group relative p-2 rounded-xl text-foreground-muted hover:text-foreground hover:bg-surface-muted/70 backdrop-blur-sm transition-all duration-200 ease-out"
+                    aria-label={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+                    title={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+                >
+                  <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-tr from-primary/10 to-transparent"></span>
+
+                  {theme === "light" ? (
+                      <Moon className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:rotate-12" />
+                  ) : (
+                      <Sun className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:rotate-12" />
+                  )}
+                </button>
+            )}
+
             <Link
-              href="/login"
-              className="text-sm font-medium text-foreground-muted hover:text-foreground transition-colors"
+                href="/login"
+                className="text-sm font-medium text-foreground-muted hover:text-foreground transition-all duration-200 hover:underline underline-offset-4"
             >
               Iniciar sesión
             </Link>
+
             <Link
-              href="/registro"
-              className="text-sm bg-primary text-white px-4 py-2 rounded-xl hover:bg-primary-hover font-semibold transition-all shadow-sm"
+                href="/registro"
+                className="relative inline-flex items-center justify-center text-sm font-semibold text-white px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
             >
-              Registrarse
+              <span className="relative z-10">Registrarse</span>
+              <span className="absolute inset-0 rounded-xl bg-gradient-to-tr from-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity"></span>
             </Link>
           </div>
         </div>
