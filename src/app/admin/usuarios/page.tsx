@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import axios from "axios";
 import { adminApi } from "@/lib/api";
 import { getUser } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
 import { RolBadge } from "@/components/ui/Badge";
+import { useToast } from "@/components/ui/Toast";
 import { Eye, Trash2 } from "lucide-react";
 
 interface Usuario {
@@ -18,7 +20,9 @@ interface Usuario {
 export default function AdminUsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const me = getUser();
+  const toast = useToast();
 
   const cargar = () => adminApi.usuarios.list().then((r) => {
     const data = r.data;
@@ -41,8 +45,41 @@ export default function AdminUsuariosPage() {
 
   const eliminar = async (id: number) => {
     if (!confirm("¿Eliminar este usuario y todos sus datos?")) return;
-    await adminApi.usuarios.delete(id);
-    setUsuarios((prev) => prev.filter((u) => u.id !== id));
+
+    setDeletingId(id);
+    try {
+      await adminApi.usuarios.delete(id);
+      setUsuarios((prev) => prev.filter((u) => u.id !== id));
+      toast.success("Usuario eliminado correctamente.");
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const backendMsg = err.response?.data?.message ?? err.response?.data?.error;
+
+        if (status === 404) {
+          toast.warning("Ese usuario ya no existe o fue eliminado.");
+          setUsuarios((prev) => prev.filter((u) => u.id !== id));
+          return;
+        }
+
+        if (status === 409) {
+          toast.error(backendMsg || "No se puede eliminar este usuario porque tiene datos asociados.");
+          return;
+        }
+
+        if (status && status >= 500) {
+          toast.error(backendMsg || "Error interno al eliminar el usuario. Revisa dependencias en backend.");
+          return;
+        }
+
+        toast.error(backendMsg || "No se pudo eliminar el usuario.");
+        return;
+      }
+
+      toast.error("No se pudo eliminar el usuario.");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   if (loading) return (
@@ -84,7 +121,13 @@ export default function AdminUsuariosPage() {
                         <Button variant="ghost" size="sm" onClick={() => cambiarRol(u.id, u.rol)}>
                           {u.rol === "ADMIN" ? "→ Usuario" : "→ Admin"}
                         </Button>
-                        <Button variant="danger" size="sm" onClick={() => eliminar(u.id)}>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => eliminar(u.id)}
+                          disabled={deletingId === u.id}
+                          loading={deletingId === u.id}
+                        >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </>
