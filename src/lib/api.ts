@@ -1,5 +1,6 @@
 import axios from "axios";
 import Cookies from "js-cookie";
+import type { ConvocatoriasPageResponse } from "@/lib/types/convocatorias";
 
 const SKIP_AUTH_REDIRECT_HEADER = "x-skip-auth-redirect";
 
@@ -112,7 +113,10 @@ export const adminApi = {
         delete: (id: number) => api.delete(`/admin/usuarios/${id}`),
     },
     convocatorias: {
-        list: () => api.get("/admin/convocatorias"),
+        list: (page = 0) =>
+            api.get<ConvocatoriasPageResponse>("/admin/convocatorias", {
+                params: { page },
+            }),
         get: (id: number) => api.get(`/admin/convocatorias/${id}`),
         create: (data: Record<string, unknown>) =>
             api.post("/admin/convocatorias", data),
