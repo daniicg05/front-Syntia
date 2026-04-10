@@ -127,8 +127,8 @@ export const adminApi = {
             api.post(`/admin/convocatorias/importar-bdns?pagina=${pagina}&tamano=${tamano}`),
     },
     bdns: {
-        importar: (modo: "FULL" | "INCREMENTAL" = "FULL") =>
-            api.post(`/admin/bdns/importar?modo=${modo}`),
+        importar: (modo: "FULL" | "INCREMENTAL" = "FULL", delayMs = -1) =>
+            api.post(`/admin/bdns/importar?modo=${modo}&delayMs=${delayMs}`),
         cancelar: () => api.delete("/admin/bdns/importar"),
         estado: () => api.get("/admin/bdns/estado"),
         ultimaImportacion: () => api.get("/admin/bdns/ultima-importacion"),
@@ -137,5 +137,7 @@ export const adminApi = {
         historialDetalle: (ejecucionId: string) =>
             api.get(`/admin/bdns/historial/${ejecucionId}`),
         cobertura: () => api.get("/admin/bdns/cobertura"),
+        setSyncStatePagina: (pagina: number) =>
+            api.put(`/admin/bdns/sync-state/pagina?pagina=${pagina}`),
     },
 };

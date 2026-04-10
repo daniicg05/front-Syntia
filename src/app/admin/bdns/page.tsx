@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import {
   RefreshCw, CheckCircle, XCircle, Clock,
-  MapPin, ChevronDown, ChevronRight, PauseCircle,
+  MapPin, ChevronDown, ChevronRight, PauseCircle, Zap, SkipForward,
 } from "lucide-react";
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
@@ -107,6 +107,10 @@ export default function BdnsPage() {
   const [cancelando, setCancelando]       = useState(false);
   const [confirmando, setConfirmando]     = useState(false);
   const [modo, setModo]                   = useState<ModoImportacion>("FULL");
+  const [turbo, setTurbo]                 = useState(false);
+  const [paginaSalto, setPaginaSalto]     = useState("");
+  const [estableciendo, setEstableciendo] = useState(false);
+  const [saltadoOk, setSaltadoOk]         = useState(false);
   const [historialAbierto, setHistorialAbierto] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -164,11 +168,24 @@ export default function BdnsPage() {
     }
   };
 
+  const handleEstablecerPagina = async () => {
+    const n = parseInt(paginaSalto, 10);
+    if (isNaN(n) || n < 0) return;
+    setEstableciendo(true);
+    try {
+      await adminApi.bdns.setSyncStatePagina(n);
+      setSaltadoOk(true);
+      setTimeout(() => setSaltadoOk(false), 3000);
+    } finally {
+      setEstableciendo(false);
+    }
+  };
+
   const handleConfirmar = async () => {
     setConfirmando(false);
     setLanzando(true);
     try {
-      await adminApi.bdns.importar(modo);
+      await adminApi.bdns.importar(modo, turbo ? 0 : -1);
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status !== 409) { setLanzando(false); return; }
@@ -298,6 +315,43 @@ export default function BdnsPage() {
         )}
       </Card>
 
+      {/* ── Saltar a página ───────────────────────────────────────────────── */}
+      {!enCurso && (
+        <Card>
+          <div className="flex items-center gap-2 mb-3">
+            <SkipForward className="h-5 w-5 text-foreground-muted" />
+            <h2 className="font-semibold text-foreground">Saltar a página</h2>
+          </div>
+          <p className="text-xs text-foreground-muted mb-3">
+            Establece el punto de reanudación directamente. La siguiente importación INCREMENTAL empezará desde la página siguiente.
+          </p>
+          <div className="flex gap-2 items-center">
+            <input
+              type="number"
+              min={0}
+              value={paginaSalto}
+              onChange={(e) => setPaginaSalto(e.target.value)}
+              placeholder="ej. 9999"
+              className="w-36 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            <Button
+              variant="secondary"
+              onClick={handleEstablecerPagina}
+              loading={estableciendo}
+              disabled={estableciendo || paginaSalto === ""}
+              icon={<SkipForward className="h-4 w-4" />}
+            >
+              Establecer
+            </Button>
+            {saltadoOk && (
+              <span className="flex items-center gap-1 text-xs text-emerald-500">
+                <CheckCircle className="h-3.5 w-3.5" /> Guardado
+              </span>
+            )}
+          </div>
+        </Card>
+      )}
+
       {/* ── Historial de ejecuciones ───────────────────────────────────────── */}
       <Card>
         <button
@@ -401,11 +455,38 @@ export default function BdnsPage() {
               </div>
             </div>
 
+            {/* Modo turbo */}
+            <button
+              type="button"
+              onClick={() => setTurbo((v) => !v)}
+              className={`w-full flex items-center justify-between rounded-lg border px-3 py-2.5 mb-5 transition-colors ${
+                turbo
+                  ? "border-amber-500 bg-amber-500/10 text-amber-500"
+                  : "border-border text-foreground-muted hover:border-foreground-muted"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Zap className={`h-4 w-4 ${turbo ? "text-amber-500" : "text-foreground-muted"}`} />
+                <div className="text-left">
+                  <p className="text-sm font-medium">Modo turbo</p>
+                  <p className="text-xs mt-0.5 opacity-70">Sin espera entre páginas — llega más rápido</p>
+                </div>
+              </div>
+              <div className={`w-9 h-5 rounded-full transition-colors ${turbo ? "bg-amber-500" : "bg-surface-muted"}`}>
+                <div className={`w-4 h-4 bg-white rounded-full mt-0.5 shadow transition-transform ${turbo ? "translate-x-4" : "translate-x-0.5"}`} />
+              </div>
+            </button>
+
             <div className="flex gap-3 justify-end">
               <Button variant="secondary" onClick={() => setConfirmando(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleConfirmar}>Confirmar</Button>
+              <Button
+                onClick={handleConfirmar}
+                icon={turbo ? <Zap className="h-4 w-4" /> : undefined}
+              >
+                {turbo ? "Confirmar en turbo" : "Confirmar"}
+              </Button>
             </div>
           </Card>
         </div>
