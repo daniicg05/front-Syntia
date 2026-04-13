@@ -7,6 +7,19 @@ interface Props {
     convocatoria: ConvocatoriaPublica;
     onAccesoRequerido?: () => void;
     autenticado: boolean;
+    showMatch?: boolean;
+}
+
+function MatchBadge({ score }: { score: number }) {
+    const color =
+        score >= 70 ? "bg-green-50 text-green-700 border-green-200" :
+        score >= 40 ? "bg-amber-50 text-amber-700 border-amber-200" :
+                      "bg-surface-muted text-foreground-muted border-border";
+    return (
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-bold ${color}`}>
+            <span className="text-[10px]">⬥</span> {score}% match
+        </span>
+    );
 }
 
 function formatFecha(fecha?: string): string {
@@ -35,7 +48,7 @@ function sectoresBadgeColor(sector?: string): string {
     return "bg-surface-muted text-foreground-muted";
 }
 
-export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autenticado }: Props) {
+export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autenticado, showMatch = false }: Props) {
     const esCerrada = c.abierto === false;
 
     function handleClick() {
@@ -54,8 +67,8 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                 esCerrada ? "opacity-70" : ""
             }`}
         >
-            {/* Sector badge */}
-            <div className="flex items-start justify-between gap-2">
+            {/* Sector badge + match */}
+            <div className="flex items-start justify-between gap-2 flex-wrap">
                 {c.sector ? (
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${sectoresBadgeColor(c.sector)}`}>
                         {c.sector}
@@ -63,16 +76,21 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                 ) : (
                     <span />
                 )}
-                {esCerrada && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-600">
-                        Cerrada
-                    </span>
-                )}
-                {c.abierto === true && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-600">
-                        Abierta
-                    </span>
-                )}
+                <div className="flex items-center gap-1 shrink-0">
+                    {showMatch && c.matchScore != null && (
+                        <MatchBadge score={c.matchScore} />
+                    )}
+                        {esCerrada && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-600">
+                            Cerrada
+                        </span>
+                    )}
+                    {c.abierto === true && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-600">
+                            Abierta
+                        </span>
+                    )}
+                </div>
             </div>
 
             {/* Título */}
@@ -101,6 +119,13 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                     </div>
                 )}
             </div>
+
+            {/* Match razon */}
+            {showMatch && c.matchRazon && (
+                <p className="text-xs text-foreground-subtle italic truncate">
+                    {c.matchRazon}
+                </p>
+            )}
 
             {/* CTA */}
             <button

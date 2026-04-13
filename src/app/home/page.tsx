@@ -6,7 +6,7 @@ import { Search, ArrowRight, Sparkles } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
 import { ModalAccesoRequerido } from "@/components/ModalAccesoRequerido";
 import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
-import { convocatoriasPublicasApi, ConvocatoriaPublica } from "@/lib/api";
+import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica } from "@/lib/api";
 
 const SECTORES = [
     { id: "tecnologia", label: "Tecnología e Innovación", icon: "💻", color: "bg-blue-50 border-blue-100 hover:border-blue-300 text-blue-700", iconBg: "bg-blue-100" },
@@ -28,11 +28,15 @@ export default function HomePage() {
     const autenticado = isAuthenticated();
 
     useEffect(() => {
-        convocatoriasPublicasApi.destacadas()
+        const fetchDestacadas = autenticado
+            ? convocatoriasUsuarioApi.recomendadas({ size: 16 })
+            : convocatoriasPublicasApi.destacadas();
+
+        fetchDestacadas
             .then((res) => setDestacadas(res.data))
             .catch(() => {})
             .finally(() => setLoadingDestacadas(false));
-    }, []);
+    }, [autenticado]);
 
     function handleSearch(e: FormEvent) {
         e.preventDefault();
@@ -131,7 +135,7 @@ export default function HomePage() {
                         <div className="flex items-center gap-2">
                             <Sparkles className="w-5 h-5 text-primary" />
                             <h2 className="text-lg font-semibold text-foreground">
-                                {autenticado ? "Convocatorias recientes" : "Convocatorias disponibles"}
+                                {autenticado ? "Recomendadas para ti" : "Convocatorias disponibles"}
                             </h2>
                         </div>
                         <button
@@ -155,6 +159,7 @@ export default function HomePage() {
                                     key={c.id}
                                     convocatoria={c}
                                     autenticado={autenticado}
+                                    showMatch={autenticado && c.matchScore != null}
                                     onAccesoRequerido={() => setModalAcceso(true)}
                                 />
                             ))}

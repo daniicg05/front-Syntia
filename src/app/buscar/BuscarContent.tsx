@@ -4,7 +4,7 @@ import { useState, FormEvent, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, ArrowRight, SlidersHorizontal, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
-import { convocatoriasPublicasApi, ConvocatoriaPublica, BusquedaPublicaResponse } from "@/lib/api";
+import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica, BusquedaPublicaResponse } from "@/lib/api";
 import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
 import { ModalAccesoRequerido } from "@/components/ModalAccesoRequerido";
 
@@ -39,12 +39,16 @@ export default function BuscarContent() {
 
     const buscar = useCallback((q: string, sec: string, page: number) => {
         setLoading(true);
-        convocatoriasPublicasApi
-            .buscar({ q: q || undefined, sector: sec || undefined, page, size: 20 })
+        const params = { q: q || undefined, sector: sec || undefined, page, size: 20 };
+        const request = autenticado
+            ? convocatoriasUsuarioApi.buscar(params)
+            : convocatoriasPublicasApi.buscar(params);
+
+        request
             .then((res) => setResultados(res.data))
             .catch(() => setResultados(null))
             .finally(() => setLoading(false));
-    }, []);
+    }, [autenticado]);
 
     useEffect(() => {
         setQuery(qParam);
@@ -208,6 +212,7 @@ export default function BuscarContent() {
                                 key={c.id}
                                 convocatoria={c}
                                 autenticado={autenticado}
+                                showMatch={autenticado && c.matchScore != null}
                                 onAccesoRequerido={() => setModalAcceso(true)}
                             />
                         ))}

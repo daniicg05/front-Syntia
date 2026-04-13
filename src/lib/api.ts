@@ -64,6 +64,9 @@ export interface ConvocatoriaPublica {
     urlOficial?: string;
     idBdns?: string;
     numeroConvocatoria?: string;
+    /** Puntuación de afinidad 0-100. Solo presente en endpoints autenticados. */
+    matchScore?: number;
+    matchRazon?: string;
 }
 
 export interface BusquedaPublicaResponse {
@@ -78,6 +81,14 @@ export const convocatoriasPublicasApi = {
     buscar: (params: { q?: string; sector?: string; page?: number; size?: number }) =>
         api.get<BusquedaPublicaResponse>("/convocatorias/publicas/buscar", { params }),
     destacadas: () => api.get<ConvocatoriaPublica[]>("/convocatorias/publicas/destacadas"),
+};
+
+// ── Convocatorias autenticadas (con match score) ───────────────────────────────
+export const convocatoriasUsuarioApi = {
+    recomendadas: (params?: { page?: number; size?: number }) =>
+        api.get<ConvocatoriaPublica[]>("/usuario/convocatorias/recomendadas", { params }),
+    buscar: (params: { q?: string; sector?: string; page?: number; size?: number }) =>
+        api.get<BusquedaPublicaResponse>("/usuario/convocatorias/buscar", { params }),
 };
 
 // ── Dashboard usuario ─────────────────────────────────────────────────────────
