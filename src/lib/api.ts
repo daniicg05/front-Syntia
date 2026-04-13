@@ -139,5 +139,8 @@ export const adminApi = {
         cobertura: () => api.get("/admin/bdns/cobertura"),
         setSyncStatePagina: (pagina: number) =>
             api.put(`/admin/bdns/sync-state/pagina?pagina=${pagina}`),
+        enriquecer: () => api.post("/admin/bdns/enriquecer"),
+        estadoEnriquecimiento: () => api.get("/admin/bdns/enriquecer/estado"),
+        cancelarEnriquecimiento: () => api.delete("/admin/bdns/enriquecer"),
     },
 };
