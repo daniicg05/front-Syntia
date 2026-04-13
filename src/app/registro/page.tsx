@@ -68,9 +68,9 @@ export default function RegistroPage() {
           <Image
             src="/images/syntia-grants-logo.png"
             alt="Syntia Grants"
-            width={140}
-            height={48}
-            className="h-16 w-auto brightness-0 invert"
+            width={160}
+            height={54}
+            className="w-[60px] md:w-[100px] h-auto brightness-0 invert"
           />
         </Link>
 
@@ -100,9 +100,9 @@ export default function RegistroPage() {
           <Image
             src="/images/syntia-grants-logo.png"
             alt="Syntia Grants"
-            width={140}
-            height={48}
-            className="h-16 w-auto"
+            width={160}
+            height={54}
+            className="w-[60px] md:w-[100px] h-auto"
             priority
           />
         </Link>
