@@ -32,8 +32,18 @@ export default function LoginPage() {
       if (result.rol === "ADMIN") {
         router.push("/admin/dashboard");
       } else {
-        const { data } = await perfilApi.estado();
-        router.push(data.perfilCompleto ? "/home" : "/perfil/completar");
+        let perfilCompleto = true;
+        try {
+          const { data } = await perfilApi.estado();
+          perfilCompleto = Boolean(data?.perfilCompleto);
+        } catch (estadoErr: unknown) {
+          const status = (estadoErr as { response?: { status?: number } })?.response?.status;
+          if (status !== 404) {
+            throw estadoErr;
+          }
+        }
+
+        router.push(perfilCompleto ? "/home" : "/perfil/completar");
       }
     } catch (err: unknown) {
       toast.update(

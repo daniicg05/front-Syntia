@@ -130,7 +130,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <motion.header
-        className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md"
+        className="sticky top-0 z-50 border-b border-border bg-background"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 100, damping: 20 }}
@@ -139,9 +139,9 @@ export default function LandingPage() {
           <Image
             src="/images/syntia-grants-logo.png"
             alt="Syntia Grants"
-            width={50}
-            height={50}            
-            className="h-[20px] md:h-[35px] md:w-[90px]"
+            width={160}
+            height={54}
+            className="w-[60px] md:w-[100px] h-auto"
             priority
           />
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-foreground-muted">
