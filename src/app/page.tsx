@@ -191,10 +191,10 @@ export default function LandingPage() {
             </Link>
 
             <Link
-              href="/registro"
+              href="/home"
               className="relative inline-flex items-center justify-center text-sm font-semibold text-white px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
             >
-              <span className="relative z-10">Registrarse</span>
+              <span className="relative z-10">Empezar gratis</span>
               <span className="absolute inset-0 rounded-xl bg-gradient-to-tr from-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity"></span>
             </Link>
           </div>
@@ -245,13 +245,13 @@ export default function LandingPage() {
               variants={fadeInUp}
             >
               <Link
-                href="/buscador"
+                href="/home"
                 className="inline-flex items-center gap-2 bg-white border-[1px] border-primary text-primary px-7 py-3.5 rounded-xl hover:bg-primary-hover hover:text-white font-semibold text-base transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"              >
-                Accede al buscador
+                Explorar subvenciones
                 <Search className="w-4 h-4" />
               </Link>
               <Link
-                href="/registro"
+                href="/home"
                 className="inline-flex items-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl hover:bg-primary-hover font-semibold text-base transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
               >
                 Empezar gratis
@@ -459,10 +459,10 @@ export default function LandingPage() {
                 variants={fadeInUp}
               >
                 <Link
-                  href="/buscador"
+                  href="/home"
                   className="inline-flex items-center gap-2 bg-white border-[1px] border-primary text-primary px-7 py-3.5 rounded-xl hover:bg-primary-hover hover:text-white font-semibold text-base transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                 >
-                  Empieza a buscar
+                  Explorar subvenciones
                   <Search className="w-4 h-4" />
                 </Link>
                 <Link

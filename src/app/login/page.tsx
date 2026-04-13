@@ -28,7 +28,7 @@ export default function LoginPage() {
     try {
       const result = await login(email, password);
       toast.update(loadingId, "success", "Sesión iniciada correctamente");
-      router.push(result.rol === "ADMIN" ? "/admin/dashboard" : "/dashboard");
+      router.push(result.rol === "ADMIN" ? "/admin/dashboard" : "/home");
     } catch (err: unknown) {
       toast.update(
         loadingId,
