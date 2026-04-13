@@ -51,6 +51,35 @@ export const authApi = {
         ),
 };
 
+// ── Convocatorias públicas (sin autenticación) ────────────────────────────────
+export interface ConvocatoriaPublica {
+    id: number;
+    titulo: string;
+    sector?: string;
+    organismo?: string;
+    ubicacion?: string;
+    fechaCierre?: string;
+    fechaPublicacion?: string;
+    abierto?: boolean;
+    urlOficial?: string;
+    idBdns?: string;
+    numeroConvocatoria?: string;
+}
+
+export interface BusquedaPublicaResponse {
+    content: ConvocatoriaPublica[];
+    totalElements: number;
+    totalPages: number;
+    page: number;
+    size: number;
+}
+
+export const convocatoriasPublicasApi = {
+    buscar: (params: { q?: string; sector?: string; page?: number; size?: number }) =>
+        api.get<BusquedaPublicaResponse>("/convocatorias/publicas/buscar", { params }),
+    destacadas: () => api.get<ConvocatoriaPublica[]>("/convocatorias/publicas/destacadas"),
+};
+
 // ── Dashboard usuario ─────────────────────────────────────────────────────────
 export const dashboardApi = {
     get: () => api.get("/usuario/dashboard"),
