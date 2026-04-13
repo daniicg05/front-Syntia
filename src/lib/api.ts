@@ -51,6 +51,46 @@ export const authApi = {
         ),
 };
 
+// ── Convocatorias públicas (sin autenticación) ────────────────────────────────
+export interface ConvocatoriaPublica {
+    id: number;
+    titulo: string;
+    sector?: string;
+    organismo?: string;
+    ubicacion?: string;
+    fechaCierre?: string;
+    fechaPublicacion?: string;
+    abierto?: boolean;
+    urlOficial?: string;
+    idBdns?: string;
+    numeroConvocatoria?: string;
+    /** Puntuación de afinidad 0-100. Solo presente en endpoints autenticados. */
+    matchScore?: number;
+    matchRazon?: string;
+}
+
+export interface BusquedaPublicaResponse {
+    content: ConvocatoriaPublica[];
+    totalElements: number;
+    totalPages: number;
+    page: number;
+    size: number;
+}
+
+export const convocatoriasPublicasApi = {
+    buscar: (params: { q?: string; sector?: string; page?: number; size?: number }) =>
+        api.get<BusquedaPublicaResponse>("/convocatorias/publicas/buscar", { params }),
+    destacadas: () => api.get<ConvocatoriaPublica[]>("/convocatorias/publicas/destacadas"),
+};
+
+// ── Convocatorias autenticadas (con match score) ───────────────────────────────
+export const convocatoriasUsuarioApi = {
+    recomendadas: (params?: { page?: number; size?: number }) =>
+        api.get<ConvocatoriaPublica[]>("/usuario/convocatorias/recomendadas", { params }),
+    buscar: (params: { q?: string; sector?: string; page?: number; size?: number }) =>
+        api.get<BusquedaPublicaResponse>("/usuario/convocatorias/buscar", { params }),
+};
+
 // ── Dashboard usuario ─────────────────────────────────────────────────────────
 export const dashboardApi = {
     get: () => api.get("/usuario/dashboard"),
@@ -76,6 +116,7 @@ export const perfilApi = {
                 [SKIP_AUTH_REDIRECT_HEADER]: "true",
             },
         }),
+    estado: () => api.get<{ perfilCompleto: boolean }>("/usuario/perfil/estado"),
 };
 
 // ── Proyectos ─────────────────────────────────────────────────────────────────
