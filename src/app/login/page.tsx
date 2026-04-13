@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, ArrowRight } from "lucide-react";
 import { login } from "@/lib/auth";
+import { perfilApi } from "@/lib/api";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
@@ -28,7 +29,12 @@ export default function LoginPage() {
     try {
       const result = await login(email, password);
       toast.update(loadingId, "success", "Sesión iniciada correctamente");
-      router.push(result.rol === "ADMIN" ? "/admin/dashboard" : "/dashboard");
+      if (result.rol === "ADMIN") {
+        router.push("/admin/dashboard");
+      } else {
+        const { data } = await perfilApi.estado();
+        router.push(data.perfilCompleto ? "/home" : "/perfil/completar");
+      }
     } catch (err: unknown) {
       toast.update(
         loadingId,

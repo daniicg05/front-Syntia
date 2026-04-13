@@ -46,7 +46,7 @@ export default function RegistroPage() {
     try {
       await registro(form.email, form.password, form.confirmarPassword);
       toast.update(loadingId, "success", "Cuenta creada correctamente. ¡Bienvenido!");
-      router.push("/dashboard");
+      router.push("/perfil/completar");
     } catch (err: unknown) {
       toast.update(
         loadingId,
