@@ -4,6 +4,7 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Search, ArrowRight } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
+import { ModalAccesoRequerido } from "@/components/ModalAccesoRequerido";
 
 const SECTORES = [
   {
@@ -75,6 +76,7 @@ const SECTORES = [
 export default function HomePage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [modalAcceso, setModalAcceso] = useState(false);
   const autenticado = isAuthenticated();
 
   function handleSearch(e: FormEvent) {
@@ -85,15 +87,16 @@ export default function HomePage() {
   }
 
   function handleSectorClick(sectorId: string) {
-    if (!autenticado) {
-      router.push(`/login?redirect=/buscar?sector=${sectorId}`);
-      return;
-    }
     router.push(`/buscar?sector=${sectorId}`);
   }
 
+  // Phase 3: llamar setModalAcceso(true) cuando el usuario no-auth pulse sobre una convocatoria
+
   return (
     <div className="flex flex-col">
+      {modalAcceso && (
+        <ModalAccesoRequerido onClose={() => setModalAcceso(false)} />
+      )}
       {/* Hero con buscador */}
       <section className="px-4 pt-16 pb-12 text-center">
         <div className="max-w-3xl mx-auto">

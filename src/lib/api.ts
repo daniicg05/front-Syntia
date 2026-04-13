@@ -76,6 +76,7 @@ export const perfilApi = {
                 [SKIP_AUTH_REDIRECT_HEADER]: "true",
             },
         }),
+    estado: () => api.get<{ perfilCompleto: boolean }>("/usuario/perfil/estado"),
 };
 
 // ── Proyectos ─────────────────────────────────────────────────────────────────
