@@ -12,6 +12,7 @@ import {
   Zap,
   Shield,
   TrendingUp,
+  Search,
   Moon,
   Sun,
 } from "lucide-react";
@@ -156,36 +157,42 @@ export default function LandingPage() {
             >
               Cómo funciona
             </button>
+            <button
+              onClick={() => scrollToSection("empezar-a-buscar")}
+              className="hover:text-foreground transition-colors cursor-pointer"
+            >
+              Empezar a buscar
+            </button>
           </nav>
           <div className="flex items-center gap-4">
             {mounted && (
-                <button
-                    onClick={toggleTheme}
-                    type="button"
-                    className="group relative p-2 rounded-xl text-foreground-muted hover:text-foreground hover:bg-surface-muted/70 backdrop-blur-sm transition-all duration-200 ease-out"
-                    aria-label={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
-                    title={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
-                >
-                  <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-tr from-primary/10 to-transparent"></span>
+              <button
+                onClick={toggleTheme}
+                type="button"
+                className="group relative p-2 rounded-xl text-foreground-muted hover:text-foreground hover:bg-surface-muted/70 backdrop-blur-sm transition-all duration-200 ease-out"
+                aria-label={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+                title={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+              >
+                <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-tr from-primary/10 to-transparent"></span>
 
-                  {theme === "light" ? (
-                      <Moon className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:rotate-12" />
-                  ) : (
-                      <Sun className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:rotate-12" />
-                  )}
-                </button>
+                {theme === "light" ? (
+                  <Moon className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:rotate-12" />
+                ) : (
+                  <Sun className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:rotate-12" />
+                )}
+              </button>
             )}
 
             <Link
-                href="/login"
-                className="text-sm font-medium text-foreground-muted hover:text-foreground transition-all duration-200 hover:underline underline-offset-4"
+              href="/login"
+              className="text-sm font-medium text-foreground-muted hover:text-foreground transition-all duration-200 hover:underline underline-offset-4"
             >
               Iniciar sesión
             </Link>
 
             <Link
-                href="/registro"
-                className="relative inline-flex items-center justify-center text-sm font-semibold text-white px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+              href="/registro"
+              className="relative inline-flex items-center justify-center text-sm font-semibold text-white px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
             >
               <span className="relative z-10">Registrarse</span>
               <span className="absolute inset-0 rounded-xl bg-gradient-to-tr from-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity"></span>
@@ -238,17 +245,17 @@ export default function LandingPage() {
               variants={fadeInUp}
             >
               <Link
+                href="/buscador"
+                className="inline-flex items-center gap-2 bg-white border-[1px] border-primary text-primary px-7 py-3.5 rounded-xl hover:bg-primary-hover hover:text-white font-semibold text-base transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"              >
+                Accede al buscador
+                <Search className="w-4 h-4" />
+              </Link>
+              <Link
                 href="/registro"
                 className="inline-flex items-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl hover:bg-primary-hover font-semibold text-base transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
               >
                 Empezar gratis
                 <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 bg-white/90 text-gray-900 px-7 py-3.5 rounded-xl hover:bg-white font-semibold text-base transition-all shadow-lg backdrop-blur-sm hover:scale-105 active:scale-95"
-              >
-                Iniciar sesión
               </Link>
             </motion.div>
             <motion.p
@@ -398,7 +405,7 @@ export default function LandingPage() {
         </section>
 
         {/* Trust section */}
-        <section className="px-6 py-20">
+        <section id="empezar-a-buscar" className="px-6 py-20">
           <div className="max-w-4xl mx-auto">
             <motion.div
               className="bg-surface border border-border rounded-3xl p-10 sm:p-14 text-center"
@@ -451,6 +458,13 @@ export default function LandingPage() {
                 className="flex items-center justify-center gap-4 flex-wrap"
                 variants={fadeInUp}
               >
+                <Link
+                  href="/buscador"
+                  className="inline-flex items-center gap-2 bg-white border-[1px] border-primary text-primary px-7 py-3.5 rounded-xl hover:bg-primary-hover hover:text-white font-semibold text-base transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                >
+                  Empieza a buscar
+                  <Search className="w-4 h-4" />
+                </Link>
                 <Link
                   href="/registro"
                   className="inline-flex items-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl hover:bg-primary-hover font-semibold text-base transition-all shadow-md hover:shadow-xl hover:scale-105 active:scale-95"
