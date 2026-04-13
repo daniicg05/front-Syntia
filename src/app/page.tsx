@@ -139,9 +139,9 @@ export default function LandingPage() {
           <Image
             src="/images/syntia-grants-logo.png"
             alt="Syntia Grants"
-            width={140}
-            height={48}
-            className="h-16 w-auto"
+            width={50}
+            height={50}            
+            className="h-[20px] md:h-[35px] md:w-[90px]"
             priority
           />
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-foreground-muted">
@@ -204,17 +204,16 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* Hero */}
         <section
-          className="relative overflow-hidden px-6 pt-24 pb-20 text-center"
+          className="relative overflow-hidden pt-24 pb-20 text-center w-full [background-size:1000px_auto] md:[background-size:cover]"
           style={{
             backgroundImage: "url('/hero-bg.jpg')",
-            backgroundSize: "cover",
             backgroundPosition: "center top",
             backgroundRepeat: "no-repeat",
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/40" />
           <motion.div
-            className="relative max-w-3xl mx-auto"
+            className="relative max-w-3xl mx-auto px-6"
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
