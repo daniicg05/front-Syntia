@@ -107,7 +107,7 @@ export function BuscarView({ title, description, grants, isLoading = false }: Bu
           variants={fadeInUp}
         >
           <Link
-            href="/home"
+            href="/subvenciones"
             className="inline-flex items-center gap-2 bg-white border border-green text-green px-6 py-3 rounded-xl hover:bg-primary-hover font-semibold text-sm transition-all shadow-md hover:shadow-xl hover:scale-105 active:scale-95"
           >
             Empezar a buscar
