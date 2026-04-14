@@ -24,7 +24,7 @@ const NAV_LINKS = [
   { href: "/home", label: "Inicio", icon: Home },
   { href: "/proyectos", label: "Mis proyectos", icon: FolderOpen },
   { href: "/guias", label: "Guías", icon: BookOpen },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
 ];
 
 export function Navbar() {
