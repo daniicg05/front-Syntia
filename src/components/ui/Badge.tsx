@@ -5,9 +5,9 @@ interface ScoreBadgeProps {
 }
 
 function getScoreColor(score: number) {
-  if (score >= 80) return "bg-primary-light text-primary border-primary/20";
-  if (score >= 60) return "bg-amber-50 text-amber-700 border-amber-200";
-  return "bg-red-50 text-red-600 border-red-200";
+  if (score >= 70) return "bg-success-light/20 text-success border-success/20";
+  if (score >= 40) return "bg-warning-light text-warning border-warning/20";
+  return "bg-destructive-light text-destructive border-destructive/20";
 }
 
 export function ScoreBadge({ score, size = "md" }: ScoreBadgeProps) {
@@ -31,9 +31,9 @@ interface StatusBadgeProps {
 
 const statusVariantMap = {
   default: "bg-surface-muted text-foreground-muted border-border",
-  success: "bg-primary-light text-primary border-primary/20",
-  warning: "bg-amber-50 text-amber-700 border-amber-200",
-  danger: "bg-red-50 text-red-600 border-red-200",
+  success: "bg-success-light/20 text-success border-success/20",
+  warning: "bg-warning-light text-warning border-warning/20",
+  danger: "bg-destructive-light text-destructive border-destructive/20",
 };
 
 export function StatusBadge({ label, variant = "default" }: StatusBadgeProps) {
@@ -49,22 +49,37 @@ export function StatusBadge({ label, variant = "default" }: StatusBadgeProps) {
 // ── Generic Badge (used by admin) ──────────────────────────────────────────────
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: "success" | "warning" | "danger" | "info" | "gray";
+  variant?: "success" | "warning" | "danger" | "error" | "info" | "gray" | "plan" | "score";
+  score?: number;
   className?: string;
 }
 
+function getScoreBadgeVariant(score: number): string {
+  if (score >= 70) return "bg-success-light/20 text-success";
+  if (score >= 40) return "bg-warning-light text-warning";
+  return "bg-destructive-light text-destructive";
+}
+
 const badgeVariants = {
-  success: "bg-primary-light text-primary",
-  warning: "bg-amber-50 text-amber-700",
-  danger: "bg-red-50 text-red-600",
-  info: "bg-blue-50 text-blue-700",
-  gray: "bg-surface-muted text-foreground-muted",
+  success: "bg-success-light/20 text-success",
+  warning: "bg-warning-light text-warning",
+  danger:  "bg-destructive-light text-destructive",
+  error:   "bg-destructive-light text-destructive",
+  info:    "bg-primary-light/30 text-primary",
+  gray:    "bg-surface-container text-foreground-muted",
+  plan:    "bg-primary/10 text-primary",
+  score:   "",
 };
 
-export function Badge({ children, variant = "gray", className = "" }: BadgeProps) {
+export function Badge({ children, variant = "gray", score, className = "" }: BadgeProps) {
+  const colorClass =
+    variant === "score" && score !== undefined
+      ? getScoreBadgeVariant(score)
+      : badgeVariants[variant];
+
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badgeVariants[variant]} ${className}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${colorClass} ${className}`}
     >
       {children}
     </span>

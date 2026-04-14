@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { adminApi } from "@/lib/api";
 import { getUser } from "@/lib/auth";
@@ -102,8 +103,16 @@ export default function AdminUsuariosPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
+            <AnimatePresence mode="sync">
             {usuarios.map((u) => (
-              <tr key={u.id} className="hover:bg-surface-muted transition-colors">
+              <motion.tr
+                key={u.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8, transition: { duration: 0.15 } }}
+                transition={{ duration: 0.2 }}
+                className="hover:bg-surface-muted transition-colors"
+              >
                 <td className="px-4 py-3 text-foreground">{u.email}</td>
                 <td className="px-4 py-3"><RolBadge rol={u.rol} /></td>
                 <td className="px-4 py-3 text-foreground-muted hidden sm:table-cell">
@@ -134,8 +143,9 @@ export default function AdminUsuariosPage() {
                     )}
                   </div>
                 </td>
-              </tr>
+              </motion.tr>
             ))}
+            </AnimatePresence>
           </tbody>
         </table>
       </div>

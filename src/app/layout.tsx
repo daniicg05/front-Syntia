@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Fraunces } from "next/font/google";
+import { Inter, Manrope } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { GlobalUserNavbar } from "@/components/GlobalUserNavbar";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -12,11 +12,11 @@ const inter = Inter({
   display: "swap",
 });
 
-const fraunces = Fraunces({
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: "--font-serif",
+  variable: "--font-headline",
   display: "swap",
-  axes: ["opsz"],
+  weight: ["400", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f5f5f0",
+  themeColor: "#f7f9fb",
   width: "device-width",
   initialScale: 1,
 };
@@ -41,7 +41,7 @@ export default function RootLayout({
     <html
       lang="es"
       data-scroll-behavior="smooth"
-      className={`${inter.variable} ${fraunces.variable} h-full antialiased`}
+      className={`${inter.variable} ${manrope.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans" suppressHydrationWarning>
         <ThemeProvider>

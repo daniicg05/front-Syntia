@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { adminApi } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -242,7 +243,15 @@ export default function BdnsPage() {
       </div>
 
       {/* ── Estado del job ─────────────────────────────────────────────────── */}
+      <AnimatePresence>
       {estadoJob && estadoJob.estado !== "INACTIVO" && (
+        <motion.div
+          key={estadoJob.estado}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.25 }}
+        >
         <Card>
           <div className="flex items-center gap-3 mb-3">
             {estadoJob.estado === "EN_CURSO" && (
@@ -272,9 +281,10 @@ export default function BdnsPage() {
                 ) : null}
               </div>
               <div className="w-full bg-surface-muted rounded-full h-2 overflow-hidden">
-                <div
-                  className="bg-primary h-2 rounded-full transition-all duration-700"
-                  style={{ width: `${Math.max(progresoPct, 0.1)}%` }}
+                <motion.div
+                  className="bg-primary h-2 rounded-full"
+                  animate={{ width: `${Math.max(progresoPct, 0.1)}%` }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
                 />
               </div>
               <p className="text-xs text-foreground-muted text-right">{progresoPctStr}% completado</p>
@@ -291,7 +301,9 @@ export default function BdnsPage() {
             <p className="text-sm text-destructive">{estadoJob.error}</p>
           )}
         </Card>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* ── Cobertura de datos ─────────────────────────────────────────────── */}
       <Card>
@@ -415,9 +427,17 @@ export default function BdnsPage() {
       </Card>
 
       {/* ── Modal de confirmación ──────────────────────────────────────────── */}
+      <AnimatePresence>
       {confirmando && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="max-w-md w-full mx-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 8 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="max-w-md w-full mx-4"
+          >
+          <Card>
             <div className="flex items-center gap-3 mb-3">
               <Clock className="h-5 w-5 text-amber-500" />
               <h2 className="font-semibold text-foreground">¿Iniciar actualización masiva?</h2>
@@ -489,8 +509,10 @@ export default function BdnsPage() {
               </Button>
             </div>
           </Card>
+          </motion.div>
         </div>
       )}
+      </AnimatePresence>
     </div>
   );
 }

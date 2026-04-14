@@ -25,21 +25,29 @@ export default function BuscarContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const qParam = searchParams.get("q") ?? "";
-    const sectorParam = searchParams.get("sector") ?? "";
-    const pageParam = parseInt(searchParams.get("page") ?? "0", 10);
+    const qParam       = searchParams.get("q") ?? "";
+    const sectorParam  = searchParams.get("sector") ?? "";
+    const pageParam    = parseInt(searchParams.get("page") ?? "0", 10);
+    const cerradasParam = searchParams.get("cerradas") === "1";
 
-    const [query, setQuery] = useState(qParam);
-    const [sector, setSector] = useState(sectorParam);
-    const [resultados, setResultados] = useState<BusquedaPublicaResponse | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [modalAcceso, setModalAcceso] = useState(false);
-    const [showFiltros, setShowFiltros] = useState(false);
+    const [query, setQuery]               = useState(qParam);
+    const [sector, setSector]             = useState(sectorParam);
+    const [soloAbiertas, setSoloAbiertas] = useState(!cerradasParam);
+    const [resultados, setResultados]     = useState<BusquedaPublicaResponse | null>(null);
+    const [loading, setLoading]           = useState(false);
+    const [modalAcceso, setModalAcceso]   = useState(false);
+    const [showFiltros, setShowFiltros]   = useState(false);
     const autenticado = isAuthenticated();
 
-    const buscar = useCallback((q: string, sec: string, page: number) => {
+    const buscar = useCallback((q: string, sec: string, page: number, abiertas: boolean) => {
         setLoading(true);
-        const params = { q: q || undefined, sector: sec || undefined, page, size: 20 };
+        const params = {
+            q: q || undefined,
+            sector: sec || undefined,
+            abierto: abiertas ? true : undefined,
+            page,
+            size: 20,
+        };
         const request = autenticado
             ? convocatoriasUsuarioApi.buscar(params)
             : convocatoriasPublicasApi.buscar(params);
@@ -53,36 +61,39 @@ export default function BuscarContent() {
     useEffect(() => {
         setQuery(qParam);
         setSector(sectorParam);
-        buscar(qParam, sectorParam, pageParam);
-    }, [qParam, sectorParam, pageParam, buscar]);
+        setSoloAbiertas(!cerradasParam);
+        buscar(qParam, sectorParam, pageParam, !cerradasParam);
+    }, [qParam, sectorParam, pageParam, cerradasParam, buscar]);
+
+    function buildParams(q: string, sec: string, page: number, abiertas: boolean) {
+        const params = new URLSearchParams();
+        if (q) params.set("q", q);
+        if (sec) params.set("sector", sec);
+        if (page) params.set("page", String(page));
+        if (!abiertas) params.set("cerradas", "1");
+        return params.toString();
+    }
 
     function handleSearch(e: FormEvent) {
         e.preventDefault();
-        const q = query.trim();
-        const params = new URLSearchParams();
-        if (q) params.set("q", q);
-        if (sector) params.set("sector", sector);
-        router.push(`/buscar?${params.toString()}`);
+        router.push(`/buscar?${buildParams(query.trim(), sector, 0, soloAbiertas)}`);
     }
 
     function handleSectorChange(value: string) {
         setSector(value);
-        const params = new URLSearchParams();
-        if (query.trim()) params.set("q", query.trim());
-        if (value) params.set("sector", value);
-        router.push(`/buscar?${params.toString()}`);
+        router.push(`/buscar?${buildParams(query.trim(), value, 0, soloAbiertas)}`);
+    }
+
+    function handleToggleAbiertas() {
+        const next = !soloAbiertas;
+        router.push(`/buscar?${buildParams(qParam, sectorParam, 0, next)}`);
     }
 
     function goToPage(page: number) {
-        const params = new URLSearchParams();
-        if (qParam) params.set("q", qParam);
-        if (sectorParam) params.set("sector", sectorParam);
-        params.set("page", String(page));
-        router.push(`/buscar?${params.toString()}`);
+        router.push(`/buscar?${buildParams(qParam, sectorParam, page, soloAbiertas)}`);
     }
 
     const tieneResultados = resultados && resultados.content.length > 0;
-    const tieneQuery = qParam || sectorParam;
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
@@ -123,38 +134,60 @@ export default function BuscarContent() {
                         type="button"
                         onClick={() => setShowFiltros((v) => !v)}
                         className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
-                            showFiltros || sector
+                            showFiltros || sector || !soloAbiertas
                                 ? "border-primary bg-primary-light text-primary"
                                 : "border-border text-foreground-muted hover:bg-surface-muted"
                         }`}
                     >
                         <SlidersHorizontal className="w-4 h-4" />
                         <span className="hidden sm:inline">Filtros</span>
-                        {sector && <span className="w-2 h-2 rounded-full bg-primary" />}
+                        {(sector || !soloAbiertas) && <span className="w-2 h-2 rounded-full bg-primary" />}
                     </button>
                 </form>
 
                 {/* Filtros desplegables */}
                 {showFiltros && (
-                    <div className="mt-3 p-4 bg-surface border border-border rounded-xl">
-                        <p className="text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-3">
-                            Sector
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                            {SECTORES_FILTRO.map((s) => (
-                                <button
-                                    key={s.value}
-                                    type="button"
-                                    onClick={() => handleSectorChange(s.value)}
-                                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
-                                        sector === s.value
-                                            ? "border-primary bg-primary-light text-primary"
-                                            : "border-border text-foreground-muted hover:border-primary/50 hover:text-foreground"
-                                    }`}
-                                >
-                                    {s.label}
-                                </button>
-                            ))}
+                    <div className="mt-3 p-4 bg-surface border border-border rounded-xl space-y-4">
+                        <div>
+                            <p className="text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-3">
+                                Sector
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {SECTORES_FILTRO.map((s) => (
+                                    <button
+                                        key={s.value}
+                                        type="button"
+                                        onClick={() => handleSectorChange(s.value)}
+                                        className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                                            sector === s.value
+                                                ? "border-primary bg-primary-light text-primary"
+                                                : "border-border text-foreground-muted hover:border-primary/50 hover:text-foreground"
+                                        }`}
+                                    >
+                                        {s.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="border-t border-border pt-4 flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-semibold text-foreground">Incluir convocatorias cerradas</p>
+                                <p className="text-xs text-foreground-subtle mt-0.5">Por defecto solo se muestran las convocatorias abiertas</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleToggleAbiertas}
+                                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 ${
+                                    !soloAbiertas ? "bg-primary" : "bg-border"
+                                }`}
+                                role="switch"
+                                aria-checked={!soloAbiertas}
+                            >
+                                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${
+                                    !soloAbiertas ? "translate-x-6" : "translate-x-1"
+                                }`} />
+                            </button>
                         </div>
                     </div>
                 )}
@@ -170,20 +203,17 @@ export default function BuscarContent() {
                             <span className="font-semibold text-foreground">
                                 {resultados.totalElements.toLocaleString()}
                             </span>{" "}
-                            convocatorias encontradas
+                            convocatoria{resultados.totalElements !== 1 ? "s" : ""}{" "}
+                            {soloAbiertas ? "abiertas" : ""} encontrada{resultados.totalElements !== 1 ? "s" : ""}
                             {qParam && (
                                 <> para <span className="font-medium text-foreground">"{qParam}"</span></>
                             )}
                             {sectorParam && (
-                                <> en sector{" "}
-                                <span className="font-medium text-foreground capitalize">{sectorParam}</span>
-                                </>
+                                <> · sector <span className="font-medium text-foreground capitalize">{sectorParam}</span></>
                             )}
                         </p>
-                    ) : tieneQuery ? (
-                        <p className="text-sm text-foreground-muted">Sin resultados</p>
                     ) : (
-                        <p className="text-sm text-foreground-muted">Introduce un término de búsqueda</p>
+                        <p className="text-sm text-foreground-muted">Sin resultados</p>
                     )}
                 </div>
 
@@ -199,14 +229,14 @@ export default function BuscarContent() {
 
             {/* Resultados */}
             {loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {[...Array(12)].map((_, i) => (
-                        <div key={i} className="h-52 bg-surface border border-border rounded-2xl animate-pulse" />
+                <div className="grid grid-cols-1 gap-4">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="h-36 bg-surface border border-border rounded-2xl animate-pulse" />
                     ))}
                 </div>
             ) : tieneResultados ? (
                 <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+                    <div className="grid grid-cols-1 gap-4 mb-8">
                         {resultados.content.map((c: ConvocatoriaPublica) => (
                             <ConvocatoriaCard
                                 key={c.id}
@@ -274,27 +304,21 @@ export default function BuscarContent() {
                         </div>
                     )}
                 </>
-            ) : !loading && tieneQuery ? (
+            ) : !loading ? (
                 <div className="text-center py-16">
                     <Search className="w-12 h-12 text-foreground-subtle mx-auto mb-4" />
                     <p className="font-medium text-foreground mb-2">No encontramos resultados</p>
                     <p className="text-sm text-foreground-muted mb-6">
                         Prueba con otros términos o elimina algunos filtros
                     </p>
-                    <button
-                        onClick={() => router.push("/buscar")}
-                        className="text-sm text-primary hover:underline font-medium"
-                    >
-                        Limpiar búsqueda
-                    </button>
-                </div>
-            ) : !loading && !tieneQuery ? (
-                <div className="text-center py-16">
-                    <Search className="w-12 h-12 text-foreground-subtle mx-auto mb-4" />
-                    <p className="font-medium text-foreground mb-2">Empieza a buscar</p>
-                    <p className="text-sm text-foreground-muted">
-                        Introduce un término de búsqueda o selecciona un sector con los filtros
-                    </p>
+                    {(qParam || sectorParam || !soloAbiertas) && (
+                        <button
+                            onClick={() => router.push("/buscar")}
+                            className="text-sm text-primary hover:underline font-medium"
+                        >
+                            Limpiar búsqueda
+                        </button>
+                    )}
                 </div>
             ) : null}
         </div>
