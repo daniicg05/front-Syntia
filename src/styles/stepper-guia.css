@@ -1,0 +1,372 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   PRESERVED STYLES v3.2.0 — Stepper Visual + Timeline Guía de Solicitud
+   ─────────────────────────────────────────────────────────────────────────
+
+   Componentes visuales del modal de guía de solicitud:
+   - Stepper horizontal con 8 nodos (flowchart)
+   - Timeline vertical con 8 pasos
+   - Iconos emoji + etiquetas semánticas
+   - 8 esquemas de color diferenciados por fase
+   - Animaciones escalonadas (fadeInPaso 50ms entre pasos)
+*/
+
+/* ─────────────────────────────────────────────────────────────────────────
+   STEPPER HORIZONTAL — Flowchart con 8 nodos conectados
+   ───────────────────────────────────────────────────────────────────────── */
+
+.stepper-flow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+  scrollbar-width: none; /* Firefox */
+}
+
+.stepper-flow::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+.stepper-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.stepper-step + .stepper-step::before {
+  content: "";
+  position: absolute;
+  top: 1.25rem;
+  left: -1.5rem;
+  width: 1.5rem;
+  height: 2px;
+  background-color: currentColor;
+  opacity: 0.3;
+}
+
+.stepper-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  background-color: #f2f4f6;
+  color: #3f484c;
+  border: 2px solid #d0d5da;
+  transition: all 0.3s ease;
+}
+
+/* Estados del stepper */
+.stepper-step.completed .stepper-icon {
+  background-color: #e6f9f5;
+  color: #005f40;
+  border-color: #005f40;
+}
+
+.stepper-step.active .stepper-icon {
+  background-color: #e6f2f7;
+  color: #005a71;
+  border-color: #005a71;
+  box-shadow: 0 0 0 3px rgba(0, 90, 113, 0.15);
+}
+
+.stepper-step.pending .stepper-icon {
+  background-color: #f7f9fb;
+  color: #878d91;
+  border-color: #d0d5da;
+}
+
+.stepper-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+  max-width: 4rem;
+  color: #3f484c;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Conectores coloreados entre pasos */
+.stepper-connector {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    #005f40,
+    #0094ce,
+    #ba7f44,
+    #005a71,
+    #6750a4,
+    #005f40,
+    #ce5a57,
+    transparent
+  );
+  opacity: 0.5;
+  margin: 0 -0.5rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   TIMELINE VERTICAL — 8 pasos con iconos y contenido
+   ───────────────────────────────────────────────────────────────────────── */
+
+.guia-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1rem 0;
+}
+
+.guia-paso {
+  display: flex;
+  gap: 1.5rem;
+  position: relative;
+}
+
+/* Línea vertical conectando pasos */
+.guia-paso::before {
+  content: "";
+  position: absolute;
+  left: 1.25rem;
+  top: 3.5rem;
+  width: 2px;
+  height: calc(100% + 0.5rem);
+  background-color: currentColor;
+  opacity: 0.2;
+}
+
+.guia-paso:last-child::before {
+  display: none;
+}
+
+/* Icono del paso */
+.guia-paso-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  background-color: #f2f4f6;
+  color: #3f484c;
+  border: 2px solid #d0d5da;
+  position: relative;
+  z-index: 1;
+}
+
+/* Contenido del paso */
+.guia-paso-content {
+  flex: 1;
+  padding-top: 0.25rem;
+}
+
+.guia-paso-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #191c1e;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.guia-paso-text {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #3f484c;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   8 ESQUEMAS DE COLOR POR FASE (diferenciados)
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* PASO 1 — REQUISITOS LEGALES (verde oscuro) */
+.guia-paso[data-step="1"] .guia-paso-icon {
+  background-color: #e6f9f5;
+  color: #005f40;
+  border-color: #005f40;
+}
+
+.guia-paso[data-step="1"] {
+  --paso-color: #005f40;
+}
+
+/* PASO 2 — DOCUMENTACIÓN OBLIGATORIA (azul marino) */
+.guia-paso[data-step="2"] .guia-paso-icon {
+  background-color: #e6f2f7;
+  color: #003d66;
+  border-color: #003d66;
+}
+
+.guia-paso[data-step="2"] {
+  --paso-color: #003d66;
+}
+
+/* PASO 3 — ACCESO Y PRESENTACIÓN (teal) */
+.guia-paso[data-step="3"] .guia-paso-icon {
+  background-color: #e1f5f3;
+  color: #00695c;
+  border-color: #00695c;
+}
+
+.guia-paso[data-step="3"] {
+  --paso-color: #00695c;
+}
+
+/* PASO 4 — PLAZOS Y CALENDARIO (azul medio) */
+.guia-paso[data-step="4"] .guia-paso-icon {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  border-color: #1565c0;
+}
+
+.guia-paso[data-step="4"] {
+  --paso-color: #1565c0;
+}
+
+/* PASO 5 — RÉGIMEN DE CONCESIÓN (púrpura) */
+.guia-paso[data-step="5"] .guia-paso-icon {
+  background-color: #f3e5f5;
+  color: #6a1b9a;
+  border-color: #6a1b9a;
+}
+
+.guia-paso[data-step="5"] {
+  --paso-color: #6a1b9a;
+}
+
+/* PASO 6 — OBLIGACIONES POST-CONCESIÓN (naranja) */
+.guia-paso[data-step="6"] .guia-paso-icon {
+  background-color: #fff3e0;
+  color: #e65100;
+  border-color: #e65100;
+}
+
+.guia-paso[data-step="6"] {
+  --paso-color: #e65100;
+}
+
+/* PASO 7 — JUSTIFICACIÓN DE GASTOS (oro) */
+.guia-paso[data-step="7"] .guia-paso-icon {
+  background-color: #fef5e7;
+  color: #b8860b;
+  border-color: #b8860b;
+}
+
+.guia-paso[data-step="7"] {
+  --paso-color: #b8860b;
+}
+
+/* PASO 8 — ADVERTENCIAS CRÍTICAS (rojo) */
+.guia-paso[data-step="8"] .guia-paso-icon {
+  background-color: #ffebee;
+  color: #c62828;
+  border-color: #c62828;
+}
+
+.guia-paso[data-step="8"] {
+  --paso-color: #c62828;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ANIMACIONES (integración Framer Motion + CSS fallback)
+   ───────────────────────────────────────────────────────────────────────── */
+
+@keyframes fadeInPasoCSS {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fallback CSS si Framer Motion falla */
+.guia-paso {
+  animation: fadeInPasoCSS 0.3s ease-out backwards;
+}
+
+.guia-paso[data-step="1"] { animation-delay: 0ms; }
+.guia-paso[data-step="2"] { animation-delay: 50ms; }
+.guia-paso[data-step="3"] { animation-delay: 100ms; }
+.guia-paso[data-step="4"] { animation-delay: 150ms; }
+.guia-paso[data-step="5"] { animation-delay: 200ms; }
+.guia-paso[data-step="6"] { animation-delay: 250ms; }
+.guia-paso[data-step="7"] { animation-delay: 300ms; }
+.guia-paso[data-step="8"] { animation-delay: 350ms; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   RESPONSIVE MOBILE
+   ───────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .stepper-flow {
+    gap: 0.25rem;
+    padding: 0.75rem 0;
+  }
+
+  .stepper-icon {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+  }
+
+  .stepper-label {
+    font-size: 0.65rem;
+    max-width: 3rem;
+  }
+
+  .stepper-step + .stepper-step::before {
+    width: 1rem;
+    left: -1rem;
+  }
+
+  .guia-paso {
+    gap: 1rem;
+  }
+
+  .guia-paso::before {
+    left: 1rem;
+    top: 3rem;
+  }
+
+  .guia-paso-icon {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+  }
+
+  .guia-paso-title {
+    font-size: 0.8rem;
+  }
+
+  .guia-paso-text {
+    font-size: 0.75rem;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ACCESIBILIDAD — prefers-reduced-motion
+   ───────────────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .guia-paso {
+    animation: none;
+  }
+
+  .stepper-icon,
+  .guia-paso-icon {
+    transition: none;
+  }
+}
+
