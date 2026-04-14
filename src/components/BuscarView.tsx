@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
 import type { ConvocatoriaPublica } from "@/lib/api";
 
@@ -96,6 +98,22 @@ export function BuscarView({ title, description, grants, isLoading = false }: Bu
             <p className="text-foreground-muted">No hay subvenciones disponibles en este momento.</p>
           </motion.div>
         )}
+
+        <motion.div
+          className="mt-8 flex items-center justify-center"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeInUp}
+        >
+          <Link
+            href="/home"
+            className="inline-flex items-center gap-2 bg-white border border-green text-green px-6 py-3 rounded-xl hover:bg-primary-hover font-semibold text-sm transition-all shadow-md hover:shadow-xl hover:scale-105 active:scale-95"
+          >
+            Empezar a buscar
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </motion.div>
       </div>
     </section>
   );
