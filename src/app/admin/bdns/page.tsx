@@ -158,6 +158,7 @@ export default function BdnsPage() {
     };
   }, [estadoJob?.estado]);
 
+
   const handleCancelar = async () => {
     setCancelando(true);
     try {
