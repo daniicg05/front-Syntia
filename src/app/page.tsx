@@ -17,6 +17,8 @@ import {
   Sun,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
+import { BuscarView } from "@/components/BuscarView";
+import type { ConvocatoriaPublica } from "@/lib/api";
 
 import { motion } from "framer-motion";
 
@@ -67,6 +69,49 @@ const STATS = [
   { value: "98%", label: "Precisión del matching" },
   { value: "-5 min", label: "Para tener resultados" },
   { value: "0 €", label: "Para empezar" },
+];
+
+const MOCK_GRANTS: ConvocatoriaPublica[] = [
+  {
+    id: 9901,
+    titulo: "Programa de digitalización para pymes 2026",
+    organismo: "Ministerio de Industria y Turismo",
+    sector: "Tecnología e Innovación",
+    ubicacion: "España",
+    fechaCierre: "2026-06-30",
+    abierto: true,
+    urlOficial: "https://www.example.com/grant/9901",
+  },
+  {
+    id: 9902,
+    titulo: "Ayudas a eficiencia energética en instalaciones industriales",
+    organismo: "IDAE",
+    sector: "Medio Ambiente",
+    ubicacion: "Comunitat Valenciana",
+    fechaCierre: "2026-05-20",
+    abierto: true,
+    urlOficial: "https://www.example.com/grant/9902",
+  },
+  {
+    id: 9903,
+    titulo: "Subvención para proyectos de innovación en hostelería",
+    organismo: "Generalitat Valenciana",
+    sector: "Hostelería y Turismo",
+    ubicacion: "Alicante",
+    fechaCierre: "2026-07-15",
+    abierto: true,
+    urlOficial: "https://www.example.com/grant/9903",
+  },
+  {
+    id: 9904,
+    titulo: "Línea de apoyo a I+D en salud y biotecnología",
+    organismo: "CDTI",
+    sector: "Salud e Investigación",
+    ubicacion: "España",
+    fechaCierre: "2026-08-10",
+    abierto: false,
+    urlOficial: "https://www.example.com/grant/9904",
+  },
 ];
 
 const fadeInUp = {
@@ -402,6 +447,12 @@ export default function LandingPage() {
             </motion.div>
           </div>
         </section>
+
+        <BuscarView
+          title="Subvenciones destacadas para empezar"
+          description="Explora convocatorias reales en formato tarjeta. Esta vista está mockeada para validar diseño, experiencia y comportamiento responsive antes de conectarla al backend."
+          grants={MOCK_GRANTS}
+        />
 
         {/* Trust section */}
         <section id="empezar-a-buscar" className="px-6 py-20">
