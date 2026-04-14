@@ -5,7 +5,7 @@ import Link from "next/link";
 import { adminApi } from "@/lib/api";
 import type { Convocatoria, ConvocatoriasPageResponse } from "@/lib/types/convocatorias";
 import { Button } from "@/components/ui/Button";
-import { Download, Pencil, Plus, Trash2 } from "lucide-react";
+import { Download, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 
 type PageCache = Record<number, ConvocatoriasPageResponse>;
 
@@ -21,6 +21,10 @@ export default function AdminConvocatoriasPage() {
   const [importando, setImportando] = useState(false);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
+  const [searchQ, setSearchQ] = useState("");
+  const [searchSector, setSearchSector] = useState("");
+  const [activeQ, setActiveQ] = useState("");
+  const [activeSector, setActiveSector] = useState("");
 
   const pageCacheRef = useRef<PageCache>({});
   const inFlightRef = useRef<Record<number, Promise<ConvocatoriasPageResponse>>>({});
@@ -35,26 +39,27 @@ export default function AdminConvocatoriasPage() {
     setHasNext(data.hasNext);
   };
 
-  const fetchPage = useCallback(async (page: number) => {
-    const cached = pageCacheRef.current[page];
+  const fetchPage = useCallback(async (page: number, q = activeQ, sector = activeSector) => {
+    const cacheKey = `${page}:${q}:${sector}`;
+    const cached = (pageCacheRef.current as Record<string, ConvocatoriasPageResponse>)[cacheKey];
     if (cached) return cached;
 
-    const pending = inFlightRef.current[page];
+    const pending = (inFlightRef.current as Record<string, Promise<ConvocatoriasPageResponse>>)[cacheKey];
     if (pending) return pending;
 
     const request = adminApi.convocatorias
-      .list(page)
+      .list(page, q || undefined, sector || undefined)
       .then((r) => {
-        pageCacheRef.current[page] = r.data;
+        (pageCacheRef.current as Record<string, ConvocatoriasPageResponse>)[cacheKey] = r.data;
         return r.data;
       })
       .finally(() => {
-        delete inFlightRef.current[page];
+        delete (inFlightRef.current as Record<string, unknown>)[cacheKey];
       });
 
-    inFlightRef.current[page] = request;
+    (inFlightRef.current as Record<string, Promise<ConvocatoriasPageResponse>>)[cacheKey] = request;
     return request;
-  }, []);
+  }, [activeQ, activeSector]);
 
   const prefetchPage = useCallback(
     async (page: number) => {
@@ -107,9 +112,24 @@ export default function AdminConvocatoriasPage() {
     await loadPage(page);
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setActiveQ(searchQ.trim());
+    setActiveSector(searchSector);
+    resetCache();
+  };
+
+  const handleClearSearch = () => {
+    setSearchQ("");
+    setSearchSector("");
+    setActiveQ("");
+    setActiveSector("");
+    resetCache();
+  };
+
   useEffect(() => {
     void loadPage(0);
-  }, [loadPage]);
+  }, [loadPage, activeQ, activeSector]);
 
   const importar = async () => {
     setImportando(true);
@@ -170,6 +190,41 @@ export default function AdminConvocatoriasPage() {
           </Link>
         </div>
       </div>
+
+      {/* Barra de búsqueda/filtros */}
+      <form onSubmit={handleSearch} className="mb-4 flex flex-wrap gap-2 items-center">
+        <div className="flex-1 min-w-48 flex items-center gap-2 bg-surface border border-border rounded-xl px-3 py-2 focus-within:border-primary transition-colors">
+          <Search className="h-4 w-4 text-foreground-muted shrink-0" />
+          <input
+            type="text"
+            value={searchQ}
+            onChange={(e) => setSearchQ(e.target.value)}
+            placeholder="Buscar por título..."
+            className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-foreground-muted"
+          />
+          {searchQ && (
+            <button type="button" onClick={() => setSearchQ("")} className="text-foreground-muted hover:text-foreground">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        <select
+          value={searchSector}
+          onChange={(e) => setSearchSector(e.target.value)}
+          className="px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
+        >
+          <option value="">Todos los sectores</option>
+          {["tecnologia","agricola","industrial","hosteleria","social","medioambiente","comercio","salud","educacion"].map(s => (
+            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+          ))}
+        </select>
+        <Button type="submit" size="sm" disabled={pageLoading}>Buscar</Button>
+        {(activeQ || activeSector) && (
+          <Button type="button" size="sm" variant="ghost" onClick={handleClearSearch} icon={<X className="h-3.5 w-3.5" />}>
+            Limpiar
+          </Button>
+        )}
+      </form>
 
       {msg && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-700 text-sm rounded-xl">

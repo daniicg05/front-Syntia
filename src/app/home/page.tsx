@@ -147,13 +147,13 @@ export default function HomePage() {
                     </div>
 
                     {loadingDestacadas ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 gap-4">
                             {[...Array(8)].map((_, i) => (
                                 <div key={i} className="h-52 bg-surface border border-border rounded-2xl animate-pulse" />
                             ))}
                         </div>
                     ) : destacadas.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 gap-4">
                             {destacadas.map((c) => (
                                 <ConvocatoriaCard
                                     key={c.id}

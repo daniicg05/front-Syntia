@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { getUser, logout } from "@/lib/auth";
 import { perfilApi } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import { staggerChildren, staggerItem, fadeIn } from "@/lib/motion";
 import Cookies from "js-cookie";
 import {
   User,
@@ -172,7 +174,13 @@ function ModalCambiarEmail({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-surface rounded-2xl border border-border shadow-xl w-full max-w-sm p-6">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 8 }}
+        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        className="bg-surface rounded-2xl border border-border shadow-xl w-full max-w-sm p-6"
+      >
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-semibold text-foreground">Cambiar email</h3>
           <button type="button" onClick={onClose} className="text-foreground-muted hover:text-foreground transition-colors">
@@ -223,7 +231,7 @@ function ModalCambiarEmail({
             </button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -279,7 +287,13 @@ function ModalCambiarPassword({
 
   const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-surface rounded-2xl border border-border shadow-xl w-full max-w-sm p-6">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 8 }}
+        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        className="bg-surface rounded-2xl border border-border shadow-xl w-full max-w-sm p-6"
+      >
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-semibold text-foreground">Cambiar contraseña</h3>
           <button type="button" onClick={onClose} className="text-foreground-muted hover:text-foreground transition-colors">
@@ -345,7 +359,7 @@ function ModalCambiarPassword({
             </button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 
@@ -357,6 +371,7 @@ function ModalCambiarPassword({
 export default function PerfilPage() {
   const jwtUser = getUser();
   const toast = useToast();
+  const shouldReduce = useReducedMotion();
   const [form, setForm] = useState<PerfilData>({
     nombre: "",
     email: jwtUser?.sub ?? "",
@@ -446,22 +461,28 @@ export default function PerfilPage() {
     );
   }
 
+  const motionProps = shouldReduce ? {} : { initial: "hidden", animate: "visible" };
+
   return (
     <div>
-      {showEmailModal && (
-        <ModalCambiarEmail
-          onClose={() => setShowEmailModal(false)}
-          onSuccess={handleEmailSuccess}
-        />
-      )}
-      {showPasswordModal && (
-        <ModalCambiarPassword
-          onClose={() => setShowPasswordModal(false)}
-          onSuccess={handlePasswordSuccess}
-        />
-      )}
+      <AnimatePresence>
+        {showEmailModal && (
+          <ModalCambiarEmail
+            onClose={() => setShowEmailModal(false)}
+            onSuccess={handleEmailSuccess}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showPasswordModal && (
+          <ModalCambiarPassword
+            onClose={() => setShowPasswordModal(false)}
+            onSuccess={handlePasswordSuccess}
+          />
+        )}
+      </AnimatePresence>
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between gap-4">
+      <motion.div {...motionProps} variants={fadeIn} className="mb-8 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Mi perfil</h1>
           <p className="text-foreground-muted mt-1">
@@ -472,10 +493,16 @@ export default function PerfilPage() {
         <div className="w-14 h-14 rounded-2xl bg-primary-light border border-primary/20 flex items-center justify-center shrink-0">
           <User className="w-6 h-6 text-primary" />
         </div>
-      </div>
+      </motion.div>
 
-      <form onSubmit={handleSave} className="space-y-5">
+      <motion.form
+        {...motionProps}
+        variants={staggerChildren}
+        onSubmit={handleSave}
+        className="space-y-5"
+      >
         {/* Personal info */}
+        <motion.div variants={staggerItem}>
         <Section icon={<User className="w-4 h-4" />} title="Información personal">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field
@@ -530,8 +557,10 @@ export default function PerfilPage() {
             />
           </div>
         </Section>
+        </motion.div>
 
         {/* Account info */}
+        <motion.div variants={staggerItem}>
         <Section icon={<Shield className="w-4 h-4" />} title="Cuenta">
           <div className="space-y-3">
             <div className="flex items-center justify-between py-3 border-b border-border">
@@ -558,8 +587,10 @@ export default function PerfilPage() {
             </button>
           </div>
         </Section>
+        </motion.div>
 
         {/* Notifications */}
+        <motion.div variants={staggerItem}>
         <Section icon={<Bell className="w-4 h-4" />} title="Notificaciones">
           <div className="space-y-4">
             {([
@@ -598,9 +629,10 @@ export default function PerfilPage() {
             ))}
           </div>
         </Section>
+        </motion.div>
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+        <motion.div variants={staggerItem} className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
           <button
             type="button"
             onClick={logout}
@@ -626,8 +658,8 @@ export default function PerfilPage() {
               </>
             )}
           </button>
-        </div>
-      </form>
+        </motion.div>
+      </motion.form>
     </div>
   );
 }

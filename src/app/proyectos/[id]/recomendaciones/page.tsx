@@ -217,7 +217,7 @@ export default function RecomendacionesPage() {
         )}
 
         {streaming && streamLog.length > 0 && (
-          <div className="mt-4 p-4 bg-gray-900 rounded-xl text-sm font-mono text-green-400 max-h-48 overflow-y-auto">
+          <div className="mt-4 p-4 bg-gray-900 rounded-xl text-sm font-mono text-success max-h-48 overflow-y-auto">
             {streamLog.map((line, i) => (
               <div key={i} className="flex items-start gap-2">
                 {i === streamLog.length - 1 && streaming && (

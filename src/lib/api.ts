@@ -64,9 +64,11 @@ export interface ConvocatoriaPublica {
     urlOficial?: string;
     idBdns?: string;
     numeroConvocatoria?: string;
+    tipo?: string;
     /** Puntuación de afinidad 0-100. Solo presente en endpoints autenticados. */
     matchScore?: number;
     matchRazon?: string;
+    presupuesto?: number;
 }
 
 export interface BusquedaPublicaResponse {
@@ -78,7 +80,7 @@ export interface BusquedaPublicaResponse {
 }
 
 export const convocatoriasPublicasApi = {
-    buscar: (params: { q?: string; sector?: string; page?: number; size?: number }) =>
+    buscar: (params: { q?: string; sector?: string; abierto?: boolean; page?: number; size?: number }) =>
         api.get<BusquedaPublicaResponse>("/convocatorias/publicas/buscar", { params }),
     destacadas: () => api.get<ConvocatoriaPublica[]>("/convocatorias/publicas/destacadas"),
 };
@@ -87,7 +89,7 @@ export const convocatoriasPublicasApi = {
 export const convocatoriasUsuarioApi = {
     recomendadas: (params?: { page?: number; size?: number }) =>
         api.get<ConvocatoriaPublica[]>("/usuario/convocatorias/recomendadas", { params }),
-    buscar: (params: { q?: string; sector?: string; page?: number; size?: number }) =>
+    buscar: (params: { q?: string; sector?: string; abierto?: boolean; page?: number; size?: number }) =>
         api.get<BusquedaPublicaResponse>("/usuario/convocatorias/buscar", { params }),
 };
 
@@ -154,9 +156,9 @@ export const adminApi = {
         delete: (id: number) => api.delete(`/admin/usuarios/${id}`),
     },
     convocatorias: {
-        list: (page = 0) =>
+        list: (page = 0, q?: string, sector?: string) =>
             api.get<ConvocatoriasPageResponse>("/admin/convocatorias", {
-                params: { page },
+                params: { page, ...(q ? { q } : {}), ...(sector ? { sector } : {}) },
             }),
         get: (id: number) => api.get(`/admin/convocatorias/${id}`),
         create: (data: Record<string, unknown>) =>

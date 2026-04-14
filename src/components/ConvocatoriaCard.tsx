@@ -1,7 +1,7 @@
 "use client";
 
 import { ConvocatoriaPublica } from "@/lib/api";
-import { Calendar, MapPin, Building2, ExternalLink, Lock } from "lucide-react";
+import { ExternalLink, Lock } from "lucide-react";
 
 interface Props {
     convocatoria: ConvocatoriaPublica;
@@ -10,144 +10,227 @@ interface Props {
     showMatch?: boolean;
 }
 
-function MatchBadge({ score }: { score: number }) {
-    const color =
-        score >= 70 ? "bg-green-50 text-green-700 border-green-200" :
-        score >= 40 ? "bg-amber-50 text-amber-700 border-amber-200" :
-                      "bg-surface-muted text-foreground-muted border-border";
-    return (
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-bold ${color}`}>
-            <span className="text-[10px]">⬥</span> {score}% match
-        </span>
-    );
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function calcDaysLeft(fechaCierre?: string): number | null {
+    if (!fechaCierre) return null;
+    return Math.ceil((new Date(fechaCierre).getTime() - Date.now()) / 86_400_000);
+}
+
+function calcProgress(daysLeft: number): number {
+    if (daysLeft <= 0)  return 100;
+    if (daysLeft <= 7)  return 90;
+    if (daysLeft <= 14) return 75;
+    if (daysLeft <= 30) return 55;
+    if (daysLeft <= 60) return 30;
+    if (daysLeft <= 90) return 15;
+    return 5;
 }
 
 function formatFecha(fecha?: string): string {
     if (!fecha) return "";
     try {
         return new Date(fecha).toLocaleDateString("es-ES", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
+            day: "numeric", month: "short", year: "numeric",
         });
-    } catch {
-        return fecha;
-    }
+    } catch { return fecha; }
 }
 
-function sectoresBadgeColor(sector?: string): string {
-    if (!sector) return "bg-surface-muted text-foreground-muted";
-    const s = sector.toLowerCase();
-    if (s.includes("tecno") || s.includes("innov") || s.includes("digit")) return "bg-blue-50 text-blue-700";
-    if (s.includes("agr") || s.includes("rural") || s.includes("pesc")) return "bg-green-50 text-green-700";
-    if (s.includes("indust") || s.includes("manufactu")) return "bg-amber-50 text-amber-700";
-    if (s.includes("hostel") || s.includes("turis") || s.includes("restaur")) return "bg-orange-50 text-orange-700";
-    if (s.includes("social") || s.includes("cultur") || s.includes("educ")) return "bg-purple-50 text-purple-700";
-    if (s.includes("ambient") || s.includes("energia") || s.includes("sostenib")) return "bg-emerald-50 text-emerald-700";
-    if (s.includes("salud") || s.includes("sanid") || s.includes("invest")) return "bg-cyan-50 text-cyan-700";
-    return "bg-surface-muted text-foreground-muted";
+function formatPresupuesto(p?: number): string | null {
+    if (p == null || p === 0) return null;
+    if (p >= 1_000_000) return `${(p / 1_000_000).toFixed(1).replace(".", ",")}M€`;
+    if (p >= 100_000)   return `${Math.round(p / 1_000)}k€`;
+    return `${new Intl.NumberFormat("es-ES").format(Math.round(p))}€`;
 }
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autenticado, showMatch = false }: Props) {
     const esCerrada = c.abierto === false;
+    const daysLeft  = calcDaysLeft(c.fechaCierre);
+    const highMatch = showMatch && (c.matchScore ?? 0) >= 70;
+    const urgent    = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
+    const moderate  = daysLeft !== null && daysLeft > 7 && daysLeft <= 30;
+
+    const presupuestoFmt = formatPresupuesto(c.presupuesto);
+    const progress       = daysLeft != null && daysLeft > 0 ? calcProgress(daysLeft) : null;
+
+    // Left accent bar
+    const accentBar =
+        esCerrada ? null :
+        urgent    ? "bg-red-500" :
+        highMatch ? "bg-emerald-500" :
+        moderate  ? "bg-amber-400" :
+        null;
+
+    // Status badge
+    const badge =
+        esCerrada                 ? { label: "Cerrada",            bg: "bg-red-50",     text: "text-red-800"     } :
+        urgent                    ? { label: "Cierre próximo",     bg: "bg-red-100",    text: "text-red-900"     } :
+        highMatch                 ? { label: "Alta compatibilidad",bg: "bg-emerald-100",text: "text-emerald-900" } :
+        c.abierto === true        ? { label: "Abierta",            bg: "bg-[#b9eaff]",  text: "text-[#004d62]"  } :
+        null;
+
+    // Progress bar + label color
+    const progressBarColor =
+        urgent   ? "bg-red-500" :
+        moderate ? "bg-amber-400" :
+        "bg-primary";
+
+    const daysTextColor =
+        urgent   ? "text-red-600" :
+        moderate ? "text-amber-600" :
+        "text-foreground-muted";
 
     function handleClick() {
-        if (!autenticado) {
-            onAccesoRequerido?.();
-            return;
-        }
-        if (c.urlOficial) {
-            window.open(c.urlOficial, "_blank", "noopener,noreferrer");
-        }
+        if (!autenticado) { onAccesoRequerido?.(); return; }
+        if (c.urlOficial) window.open(c.urlOficial, "_blank", "noopener,noreferrer");
     }
 
     return (
-        <div
-            className={`group relative flex flex-col gap-3 p-5 bg-surface border border-border rounded-2xl transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${
-                esCerrada ? "opacity-70" : ""
-            }`}
-        >
-            {/* Sector badge + match */}
-            <div className="flex items-start justify-between gap-2 flex-wrap">
-                {c.sector ? (
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${sectoresBadgeColor(c.sector)}`}>
-                        {c.sector}
-                    </span>
-                ) : (
-                    <span />
-                )}
-                <div className="flex items-center gap-1 shrink-0">
-                    {showMatch && c.matchScore != null && (
-                        <MatchBadge score={c.matchScore} />
-                    )}
-                        {esCerrada && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-600">
-                            Cerrada
-                        </span>
-                    )}
-                    {c.abierto === true && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-600">
-                            Abierta
-                        </span>
-                    )}
-                </div>
-            </div>
-
-            {/* Título */}
-            <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-3 group-hover:text-primary transition-colors">
-                {c.titulo}
-            </h3>
-
-            {/* Meta */}
-            <div className="flex flex-col gap-1.5 mt-auto">
-                {c.organismo && (
-                    <div className="flex items-center gap-1.5 text-xs text-foreground-muted">
-                        <Building2 className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">{c.organismo}</span>
-                    </div>
-                )}
-                {c.ubicacion && (
-                    <div className="flex items-center gap-1.5 text-xs text-foreground-muted">
-                        <MapPin className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">{c.ubicacion}</span>
-                    </div>
-                )}
-                {c.fechaCierre && (
-                    <div className="flex items-center gap-1.5 text-xs text-foreground-muted">
-                        <Calendar className="w-3.5 h-3.5 shrink-0" />
-                        <span>Cierre: {formatFecha(c.fechaCierre)}</span>
-                    </div>
-                )}
-            </div>
-
-            {/* Match razon */}
-            {showMatch && c.matchRazon && (
-                <p className="text-xs text-foreground-subtle italic truncate">
-                    {c.matchRazon}
-                </p>
+        <div className="bg-white hover:shadow-xl hover:shadow-black/[0.03] transition-all duration-200 p-6 rounded-2xl group relative overflow-hidden border border-border">
+            {/* Left accent bar */}
+            {accentBar && (
+                <div className={`absolute top-0 left-0 w-1 h-full ${accentBar}`} />
             )}
 
-            {/* CTA */}
-            <button
-                onClick={handleClick}
-                className={`mt-1 flex items-center justify-center gap-1.5 w-full py-2 px-3 rounded-xl text-xs font-semibold transition-colors ${
-                    autenticado
-                        ? "bg-primary-light text-primary hover:bg-primary hover:text-white"
-                        : "bg-surface-muted text-foreground-muted hover:bg-border"
-                }`}
-            >
-                {autenticado ? (
-                    <>
-                        Ver convocatoria
-                        <ExternalLink className="w-3.5 h-3.5" />
-                    </>
-                ) : (
-                    <>
-                        <Lock className="w-3.5 h-3.5" />
-                        Iniciar sesión para ver detalle
-                    </>
-                )}
-            </button>
+            <div className="flex flex-col md:flex-row justify-between gap-6">
+
+                {/* ── Left content ─────────────────────────────────────── */}
+                <div className="flex-1 space-y-4 min-w-0">
+
+                    {/* Badge + ID row */}
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {badge && (
+                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tight ${badge.bg} ${badge.text}`}>
+                                        {badge.label}
+                                    </span>
+                                )}
+                                {c.numeroConvocatoria && (
+                                    <span className="text-[10px] font-bold text-foreground-subtle uppercase tracking-widest">
+                                        ID: #{c.numeroConvocatoria}
+                                    </span>
+                                )}
+                                {showMatch && c.matchScore != null && !highMatch && (
+                                    <span className="text-[10px] font-bold text-foreground-subtle uppercase tracking-widest">
+                                        {c.matchScore}% match
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="text-xl font-bold text-foreground leading-tight group-hover:text-primary transition-colors duration-150 line-clamp-2">
+                                {c.titulo}
+                            </h3>
+                        </div>
+                    </div>
+
+                    {/* Tags: tipo + sector + ubicacion */}
+                    {(c.tipo || c.sector || c.ubicacion) && (
+                        <div className="flex flex-wrap gap-2">
+                            {c.tipo && (
+                                <span className="px-3 py-1 rounded-full bg-primary-light text-primary text-xs font-semibold">
+                                    {c.tipo}
+                                </span>
+                            )}
+                            {c.sector && (
+                                <span className="px-3 py-1 rounded-full bg-surface-muted text-foreground-muted text-xs font-semibold">
+                                    {c.sector}
+                                </span>
+                            )}
+                            {c.ubicacion && (
+                                <span className="px-3 py-1 rounded-full bg-surface-muted text-foreground-muted text-xs font-semibold">
+                                    {c.ubicacion}
+                                </span>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Organismo + fecha publicación */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                        {c.organismo && (
+                            <span className="text-xs text-foreground-muted font-medium truncate max-w-[280px]">
+                                🏛 {c.organismo}
+                            </span>
+                        )}
+                        {c.fechaPublicacion && (
+                            <span className="text-xs text-foreground-subtle">
+                                Publicada el {formatFecha(c.fechaPublicacion)}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Progress bar */}
+                    {!esCerrada && progress != null && daysLeft != null && daysLeft > 0 && (
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs font-bold">
+                                <span className="text-foreground-muted">Progreso del plazo</span>
+                                <span className={daysTextColor}>
+                                    Quedan {daysLeft} día{daysLeft !== 1 ? "s" : ""} ({progress}%)
+                                </span>
+                            </div>
+                            <div className="w-full h-1.5 bg-surface-muted rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full ${progressBarColor} rounded-full`}
+                                    style={{ width: `${progress}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* ── Right metrics ─────────────────────────────────────── */}
+                <div className="md:w-56 shrink-0 flex flex-col justify-between gap-4 border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
+
+                    {/* Presupuesto */}
+                    <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-foreground-muted uppercase tracking-widest">
+                            Presupuesto total
+                        </p>
+                        {presupuestoFmt ? (
+                            <p className="text-3xl font-bold text-primary leading-none">
+                                {presupuestoFmt}
+                            </p>
+                        ) : (
+                            <p className="text-sm text-foreground-subtle italic">No especificado</p>
+                        )}
+                    </div>
+
+                    {/* Fecha cierre */}
+                    {c.fechaCierre && (
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-foreground-muted uppercase tracking-widest">
+                                Fecha límite
+                            </p>
+                            <p className="text-sm font-bold text-foreground">
+                                {formatFecha(c.fechaCierre)}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* CTA */}
+                    <button
+                        onClick={handleClick}
+                        className={`w-full py-2.5 rounded-xl font-bold text-sm hover:brightness-110 transition-all ${
+                            autenticado
+                                ? "bg-[#0e7490] text-[#d3f1ff]"
+                                : "bg-surface-muted text-foreground-muted"
+                        }`}
+                    >
+                        {autenticado ? (
+                            <span className="flex items-center justify-center gap-1.5">
+                                <ExternalLink className="w-3.5 h-3.5" /> Ver detalles
+                            </span>
+                        ) : (
+                            <span className="flex items-center justify-center gap-1.5">
+                                <Lock className="w-3.5 h-3.5" /> Iniciar sesión
+                            </span>
+                        )}
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

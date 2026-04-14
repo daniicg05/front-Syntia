@@ -2,10 +2,10 @@
 
 :root {
   /* Brand */
-  --primary: #16a34a;
-  --primary-hover: #15803d;
-  --primary-light: #dcfce7;
-  --primary-muted: #86efac;
+  --primary: #005a71;
+  --primary-hover: #0e7490;
+  --primary-light: #b9eaff;
+  --primary-muted: #81d1f0;
 
   /* Neutrals */
   --background: #f5f5f0;
@@ -57,10 +57,10 @@
 /* Dark mode */
 .dark {
   /* Brand */
-  --primary: #22c55e;
-  --primary-hover: #16a34a;
-  --primary-light: #14532d;
-  --primary-muted: #166534;
+  --primary: #81d1f0;
+  --primary-hover: #b9eaff;
+  --primary-light: #003c4f;
+  --primary-muted: #005a71;
 
   /* Neutrals */
   --background: #0f1110;
