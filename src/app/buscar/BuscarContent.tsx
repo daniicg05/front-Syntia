@@ -21,6 +21,8 @@ const SECTORES_FILTRO = [
     { value: "educacion", label: "Educación y Formación" },
 ];
 
+const TAMANOS_PAGINA = [10, 20, 50] as const;
+
 export default function BuscarContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -28,6 +30,10 @@ export default function BuscarContent() {
     const qParam       = searchParams.get("q") ?? "";
     const sectorParam  = searchParams.get("sector") ?? "";
     const pageParam    = parseInt(searchParams.get("page") ?? "0", 10);
+    const sizeCandidate = parseInt(searchParams.get("size") ?? "20", 10);
+    const sizeParam = TAMANOS_PAGINA.includes(sizeCandidate as (typeof TAMANOS_PAGINA)[number])
+        ? sizeCandidate
+        : 20;
     const cerradasParam = searchParams.get("cerradas") === "1";
 
     const [query, setQuery]               = useState(qParam);
@@ -37,16 +43,22 @@ export default function BuscarContent() {
     const [loading, setLoading]           = useState(false);
     const [modalAcceso, setModalAcceso]   = useState(false);
     const [showFiltros, setShowFiltros]   = useState(false);
-    const autenticado = isAuthenticated();
+    const [autenticado, setAutenticado]   = useState(false);
+    const [authReady, setAuthReady]       = useState(false);
 
-    const buscar = useCallback((q: string, sec: string, page: number, abiertas: boolean) => {
+    useEffect(() => {
+        setAutenticado(isAuthenticated());
+        setAuthReady(true);
+    }, []);
+
+    const buscar = useCallback((q: string, sec: string, page: number, abiertas: boolean, size: number) => {
         setLoading(true);
         const params = {
             q: q || undefined,
             sector: sec || undefined,
             abierto: abiertas ? true : undefined,
             page,
-            size: 20,
+            size,
         };
         const request = autenticado
             ? convocatoriasUsuarioApi.buscar(params)
@@ -62,35 +74,40 @@ export default function BuscarContent() {
         setQuery(qParam);
         setSector(sectorParam);
         setSoloAbiertas(!cerradasParam);
-        buscar(qParam, sectorParam, pageParam, !cerradasParam);
-    }, [qParam, sectorParam, pageParam, cerradasParam, buscar]);
+        buscar(qParam, sectorParam, pageParam, !cerradasParam, sizeParam);
+    }, [qParam, sectorParam, pageParam, sizeParam, cerradasParam, buscar]);
 
-    function buildParams(q: string, sec: string, page: number, abiertas: boolean) {
+    function buildParams(q: string, sec: string, page: number, abiertas: boolean, size: number) {
         const params = new URLSearchParams();
         if (q) params.set("q", q);
         if (sec) params.set("sector", sec);
         if (page) params.set("page", String(page));
+        if (size !== 20) params.set("size", String(size));
         if (!abiertas) params.set("cerradas", "1");
         return params.toString();
     }
 
     function handleSearch(e: FormEvent) {
         e.preventDefault();
-        router.push(`/buscar?${buildParams(query.trim(), sector, 0, soloAbiertas)}`);
+        router.push(`/buscar?${buildParams(query.trim(), sector, 0, soloAbiertas, sizeParam)}`);
     }
 
     function handleSectorChange(value: string) {
         setSector(value);
-        router.push(`/buscar?${buildParams(query.trim(), value, 0, soloAbiertas)}`);
+        router.push(`/buscar?${buildParams(query.trim(), value, 0, soloAbiertas, sizeParam)}`);
     }
 
     function handleToggleAbiertas() {
         const next = !soloAbiertas;
-        router.push(`/buscar?${buildParams(qParam, sectorParam, 0, next)}`);
+        router.push(`/buscar?${buildParams(qParam, sectorParam, 0, next, sizeParam)}`);
+    }
+
+    function handlePageSizeChange(size: (typeof TAMANOS_PAGINA)[number]) {
+        router.push(`/buscar?${buildParams(qParam, sectorParam, 0, soloAbiertas, size)}`);
     }
 
     function goToPage(page: number) {
-        router.push(`/buscar?${buildParams(qParam, sectorParam, page, soloAbiertas)}`);
+        router.push(`/buscar?${buildParams(qParam, sectorParam, page, soloAbiertas, sizeParam)}`);
     }
 
     const tieneResultados = resultados && resultados.content.length > 0;
@@ -217,7 +234,7 @@ export default function BuscarContent() {
                     )}
                 </div>
 
-                {!autenticado && (
+                {authReady && !autenticado && (
                     <p className="text-xs text-foreground-subtle hidden sm:block">
                         <a href="/login" className="text-primary font-semibold hover:underline">
                             Inicia sesión
@@ -225,6 +242,32 @@ export default function BuscarContent() {
                         para ver el detalle completo
                     </p>
                 )}
+            </div>
+
+            <div className="flex items-center justify-end mb-5">
+                <div className="flex items-center gap-3">
+                    <span className="text-xs font-semibold text-foreground-subtle uppercase tracking-wider">
+                        Número de subvenciones
+                    </span>
+                    <div className="flex items-center gap-2">
+                        {TAMANOS_PAGINA.map((size) => (
+                            <button
+                                key={size}
+                                type="button"
+                                onClick={() => handlePageSizeChange(size)}
+                                className={`min-w-10 px-3 py-1.5 rounded-lg border text-sm font-semibold transition-colors ${
+                                    sizeParam === size
+                                        ? "border-primary bg-primary-light text-primary"
+                                        : "border-border text-foreground-muted hover:border-primary/40 hover:text-foreground"
+                                }`}
+                                aria-label={`Mostrar ${size} subvenciones por página`}
+                                aria-pressed={sizeParam === size}
+                            >
+                                {size}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </div>
 
             {/* Resultados */}

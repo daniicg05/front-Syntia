@@ -10,7 +10,7 @@ import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica,
 
 // ── Datos estáticos ────────────────────────────────────────────────────────────
 
- 
+
 
 const CCAA_LIST = [
     "Andalucía", "Aragón", "Asturias", "Islas Baleares", "Canarias",
@@ -24,11 +24,13 @@ const CCAA_LIST = [
 const TIPOS_CONVOCATORIA = ["Subvención", "Préstamo", "Garantía", "Premio", "Subvención + Préstamo"];
 
 const PLAZOS_CIERRE = [
-    { value: "",   label: "Cualquier plazo"     },
-    { value: "7",  label: "Cierra en 7 días"    },
-    { value: "30", label: "Cierra en 30 días"   },
-    { value: "90", label: "Cierra en 90 días"   },
+    { value: "", label: "Cualquier plazo" },
+    { value: "7", label: "Cierra en 7 días" },
+    { value: "30", label: "Cierra en 30 días" },
+    { value: "90", label: "Cierra en 90 días" },
 ];
+
+const TAMANOS_PAGINA = [10, 20, 50] as const;
 
 const TIPOS_BENEFICIARIO = ["Pyme", "Autónomo", "Gran Empresa", "Startup", "Entidad sin ánimo de lucro"];
 
@@ -53,44 +55,45 @@ function sortResults(list: ConvocatoriaPublica[], sortBy: string): ConvocatoriaP
 export default function HomePage() {
     const autenticado = isAuthenticated();
 
-    const [modalAcceso,  setModalAcceso]  = useState(false);
-    const [finalidades,  setFinalidades]  = useState<string[]>([]);
-    const [tipos,        setTipos]        = useState<string[]>([]);
+    const [modalAcceso, setModalAcceso] = useState(false);
+    const [finalidades, setFinalidades] = useState<string[]>([]);
+    const [tipos, setTipos] = useState<string[]>([]);
 
     // Filtros rápidos (barra junto al buscador)
-    const [query,        setQuery]        = useState("");
-    const [nivel,        setNivel]        = useState("");
-    const [ccaa,         setCcaa]         = useState("");
+    const [query, setQuery] = useState("");
+    const [nivel, setNivel] = useState("");
+    const [ccaa, setCcaa] = useState("");
     const [soloAbiertas, setSoloAbiertas] = useState(true);
 
     // Filtros de la barra lateral
-    const [sectorActivo,      setSectorActivo]      = useState("");
-    const [tipoConvocatoria,  setTipoConvocatoria]  = useState("");
-    const [plazoCierre,       setPlazoCierre]        = useState("");
-    const [presupuestoMin,    setPresupuestoMin]     = useState(0);
-    const [tipoBeneficiario,  setTipoBeneficiario]  = useState("");
-    const [sortBy,            setSortBy]             = useState("relevancia");
-    const [sidebarVisible,    setSidebarVisible]     = useState(true);
+    const [sectorActivo, setSectorActivo] = useState("");
+    const [tipoConvocatoria, setTipoConvocatoria] = useState("");
+    const [plazoCierre, setPlazoCierre] = useState("");
+    const [presupuestoMin, setPresupuestoMin] = useState(0);
+    const [tipoBeneficiario, setTipoBeneficiario] = useState("");
+    const [sortBy, setSortBy] = useState("relevancia");
+    const [sidebarVisible, setSidebarVisible] = useState(true);
 
     // Estado de resultados
     const [resultados, setResultados] = useState<BusquedaPublicaResponse | null>(null);
-    const [loading,    setLoading]    = useState(true);
-    const [page,       setPage]       = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(0);
+    const [pageSize, setPageSize] = useState<(typeof TAMANOS_PAGINA)[number]>(20);
 
     // Filtros aplicados (los que se han enviado al API)
-    const [appliedQuery,   setAppliedQuery]   = useState("");
-    const [appliedSector,  setAppliedSector]  = useState("");
+    const [appliedQuery, setAppliedQuery] = useState("");
+    const [appliedSector, setAppliedSector] = useState("");
     const [appliedAbierto, setAppliedAbierto] = useState(true);
 
-    const buscar = useCallback((q: string, sec: string, tipo: string, abierto: boolean, p: number) => {
+    const buscar = useCallback((q: string, sec: string, tipo: string, abierto: boolean, p: number, size: number) => {
         setLoading(true);
         const params = {
-            q:       q    || undefined,
-            sector:  sec  || undefined,
-            tipo:    tipo || undefined,
+            q: q || undefined,
+            sector: sec || undefined,
+            tipo: tipo || undefined,
             abierto: abierto ? true : undefined,
-            page:    p,
-            size:    20,
+            page: p,
+            size,
         };
         const request = autenticado
             ? convocatoriasUsuarioApi.buscar(params)
@@ -103,14 +106,14 @@ export default function HomePage() {
     }, [autenticado]);
 
     useEffect(() => {
-        buscar("", "", "", true, 0);
+        buscar("", "", "", true, 0, pageSize);
         convocatoriasPublicasApi.finalidades()
             .then((res) => setFinalidades(res.data))
-            .catch(() => {});
+            .catch(() => { });
         convocatoriasPublicasApi.tipos()
             .then((res) => setTipos(res.data))
-            .catch(() => {});
-    }, [buscar]);
+            .catch(() => { });
+    }, [buscar, pageSize]);
 
     // Búsqueda desde la barra rápida (submit o cambio de filtro)
     function handleQuickSearch(e: FormEvent) {
@@ -123,7 +126,7 @@ export default function HomePage() {
         setAppliedSector(sec);
         setAppliedAbierto(abierto);
         setPage(0);
-        buscar(q, sec, niv, abierto, 0);
+        buscar(q, sec, niv, abierto, 0, pageSize);
     }
 
     // Aplicar filtros desde la barra lateral
@@ -131,7 +134,7 @@ export default function HomePage() {
         setAppliedSector(sectorActivo);
         setAppliedAbierto(soloAbiertas);
         setPage(0);
-        buscar(appliedQuery, sectorActivo, nivel, soloAbiertas, 0);
+        buscar(appliedQuery, sectorActivo, nivel, soloAbiertas, 0, pageSize);
     }
 
     // Limpiar todos los filtros
@@ -141,13 +144,19 @@ export default function HomePage() {
         setPresupuestoMin(0); setTipoBeneficiario("");
         setAppliedQuery(""); setAppliedSector(""); setAppliedAbierto(true);
         setPage(0);
-        buscar("", "", "", true, 0);
+        buscar("", "", "", true, 0, pageSize);
     }
 
     function goToPage(p: number) {
         setPage(p);
-        buscar(appliedQuery, appliedSector, nivel, appliedAbierto, p);
+        buscar(appliedQuery, appliedSector, nivel, appliedAbierto, p, pageSize);
         document.getElementById("listado-section")?.scrollIntoView({ behavior: "smooth" });
+    }
+
+    function handlePageSizeChange(size: (typeof TAMANOS_PAGINA)[number]) {
+        setPageSize(size);
+        setPage(0);
+        buscar(appliedQuery, appliedSector, nivel, appliedAbierto, 0, size);
     }
 
     const displayList = resultados ? sortResults(resultados.content, sortBy) : [];
@@ -206,7 +215,7 @@ export default function HomePage() {
                         {/* CCAA */}
                         <select
                             value={ccaa}
-                            onChange={(e) => { setCcaa(e.target.value); applyQuickFilters(query.trim(), sectorActivo, soloAbiertas); }}
+                            onChange={(e) => { setCcaa(e.target.value); applyQuickFilters(query.trim(), sectorActivo, nivel, soloAbiertas); }}
                             className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground-muted focus:outline-none focus:border-primary transition-colors"
                         >
                             <option value="">Comunidad Autónoma</option>
@@ -230,12 +239,11 @@ export default function HomePage() {
                         {/* Toggle abiertas/cerradas */}
                         <button
                             type="button"
-                            onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), sectorActivo, next); }}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
-                                soloAbiertas
-                                    ? "border-primary bg-primary-light text-primary"
-                                    : "border-border text-foreground-muted hover:border-primary/50"
-                            }`}
+                            onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), sectorActivo, nivel, next); }}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${soloAbiertas
+                                ? "border-primary bg-primary-light text-primary"
+                                : "border-border text-foreground-muted hover:border-primary/50"
+                                }`}
                         >
                             <span className={`w-2 h-2 rounded-full ${soloAbiertas ? "bg-primary" : "bg-foreground-subtle"}`} />
                             {soloAbiertas ? "Solo abiertas" : "Incluir cerradas"}
@@ -288,96 +296,96 @@ export default function HomePage() {
 
                                 {/* Contenido colapsable */}
                                 {sidebarVisible && (
-                                <div className="px-6 pb-6 border-t border-border pt-4">
+                                    <div className="px-6 pb-6 border-t border-border pt-4">
 
-                                <div className="space-y-7">
-                                    {/* Tipo de convocatoria */}
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                            Tipo de Convocatoria
-                                        </label>
-                                        <select
-                                            value={tipoConvocatoria}
-                                            onChange={(e) => setTipoConvocatoria(e.target.value)}
-                                            className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
-                                        >
-                                            <option value="">Todos los tipos</option>
-                                            {TIPOS_CONVOCATORIA.map((t) => (
-                                                <option key={t} value={t}>{t}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                        <div className="space-y-7">
+                                            {/* Tipo de convocatoria */}
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                    Tipo de Convocatoria
+                                                </label>
+                                                <select
+                                                    value={tipoConvocatoria}
+                                                    onChange={(e) => setTipoConvocatoria(e.target.value)}
+                                                    className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                                >
+                                                    <option value="">Todos los tipos</option>
+                                                    {TIPOS_CONVOCATORIA.map((t) => (
+                                                        <option key={t} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
 
-                                    {/* Plazo de cierre */}
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                            Plazo de Cierre
-                                        </label>
-                                        <select
-                                            value={plazoCierre}
-                                            onChange={(e) => setPlazoCierre(e.target.value)}
-                                            className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
-                                        >
-                                            {PLAZOS_CIERRE.map((p) => (
-                                                <option key={p.value} value={p.value}>{p.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                            {/* Plazo de cierre */}
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                    Plazo de Cierre
+                                                </label>
+                                                <select
+                                                    value={plazoCierre}
+                                                    onChange={(e) => setPlazoCierre(e.target.value)}
+                                                    className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                                >
+                                                    {PLAZOS_CIERRE.map((p) => (
+                                                        <option key={p.value} value={p.value}>{p.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
 
-                                    {/* Presupuesto mínimo */}
-                                    <div className="space-y-3">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                            Presupuesto Mínimo
-                                            {presupuestoMin > 0 && (
-                                                <span className="ml-2 text-primary normal-case tracking-normal">
-                                                    {presupuestoMin >= 1_000_000
-                                                        ? `${(presupuestoMin / 1_000_000).toFixed(1)}M€`
-                                                        : presupuestoMin >= 1_000
-                                                        ? `${Math.round(presupuestoMin / 1_000)}k€`
-                                                        : `${presupuestoMin}€`}
-                                                </span>
-                                            )}
-                                        </label>
-                                        <input
-                                            type="range"
-                                            min={0}
-                                            max={1000000}
-                                            step={10000}
-                                            value={presupuestoMin}
-                                            onChange={(e) => setPresupuestoMin(Number(e.target.value))}
-                                            className="w-full h-1.5 rounded-full accent-[var(--color-primary)] bg-surface-muted"
-                                        />
-                                        <div className="flex justify-between">
-                                            <span className="text-[10px] font-bold text-foreground-muted">0€</span>
-                                            <span className="text-[10px] font-bold text-foreground-muted">1M€+</span>
+                                            {/* Presupuesto mínimo */}
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                    Presupuesto Mínimo
+                                                    {presupuestoMin > 0 && (
+                                                        <span className="ml-2 text-primary normal-case tracking-normal">
+                                                            {presupuestoMin >= 1_000_000
+                                                                ? `${(presupuestoMin / 1_000_000).toFixed(1)}M€`
+                                                                : presupuestoMin >= 1_000
+                                                                    ? `${Math.round(presupuestoMin / 1_000)}k€`
+                                                                    : `${presupuestoMin}€`}
+                                                        </span>
+                                                    )}
+                                                </label>
+                                                <input
+                                                    type="range"
+                                                    min={0}
+                                                    max={1000000}
+                                                    step={10000}
+                                                    value={presupuestoMin}
+                                                    onChange={(e) => setPresupuestoMin(Number(e.target.value))}
+                                                    className="w-full h-1.5 rounded-full accent-[var(--color-primary)] bg-surface-muted"
+                                                />
+                                                <div className="flex justify-between">
+                                                    <span className="text-[10px] font-bold text-foreground-muted">0€</span>
+                                                    <span className="text-[10px] font-bold text-foreground-muted">1M€+</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Tipo de beneficiario (futuro) */}
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                    Tipo de Beneficiario
+                                                </label>
+                                                <select
+                                                    value={tipoBeneficiario}
+                                                    onChange={(e) => setTipoBeneficiario(e.target.value)}
+                                                    className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                                >
+                                                    <option value="">Todos</option>
+                                                    {TIPOS_BENEFICIARIO.map((t) => (
+                                                        <option key={t} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* Tipo de beneficiario (futuro) */}
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                            Tipo de Beneficiario
-                                        </label>
-                                        <select
-                                            value={tipoBeneficiario}
-                                            onChange={(e) => setTipoBeneficiario(e.target.value)}
-                                            className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                        <button
+                                            onClick={handleApplyFilters}
+                                            className="mt-8 w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
                                         >
-                                            <option value="">Todos</option>
-                                            {TIPOS_BENEFICIARIO.map((t) => (
-                                                <option key={t} value={t}>{t}</option>
-                                            ))}
-                                        </select>
+                                            Aplicar Filtros
+                                        </button>
                                     </div>
-                                </div>
-
-                                <button
-                                    onClick={handleApplyFilters}
-                                    className="mt-8 w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
-                                >
-                                    Aplicar Filtros
-                                </button>
-                                </div>
                                 )}
                             </div>
                         </aside>
@@ -387,38 +395,75 @@ export default function HomePage() {
 
                             {/* Barra de resultados + ordenación */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface border border-border p-4 rounded-2xl">
-                                <div className="flex items-center gap-3">
-                                    {loading ? (
-                                        <div className="h-4 w-44 bg-surface-muted rounded-full animate-pulse" />
-                                    ) : (
-                                        <span className="text-sm text-foreground-muted">
-                                            <strong className="text-foreground">
-                                                {resultados?.totalElements.toLocaleString() ?? 0}
-                                            </strong>{" "}
-                                            subvenciones encontradas
-                                        </span>
-                                    )}
+
+                                <div className="flex flex-col items-start gap-2">
+                                    <div className="flex items-center text-left gap-3">
+                                        {loading ? (
+                                            <div className="h-4 w-44 bg-surface-muted rounded-full animate-pulse" />
+                                        ) : (
+                                            <span className="text-sm text-foreground-muted">
+                                                <strong className="text-foreground">
+                                                    {resultados?.totalElements.toLocaleString() ?? 0}
+                                                </strong>{" "}
+                                                subvenciones encontradas
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center text-left gap-3">
+                                        {loading ? (
+                                            <div className="h-3 w-44 bg-surface-muted rounded-full animate-pulse" />
+                                        ) : (
+                                            <span className="text-sm my-2 text-foreground-muted">
+                                                <strong className="text-foreground">
+                                                    -
+                                                </strong>{" "}
+                                                
+                                            </span>
+                                        )}
+                                    </div>
+
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-xs font-bold text-foreground-muted uppercase tracking-widest">Ordenar por:</span>
-                                    <div className="flex bg-surface-muted p-1 rounded-lg">
-                                        {[
-                                            { id: "relevancia", label: "Relevancia" },
-                                            { id: "plazo",      label: "Plazo"      },
-                                            { id: "cuantia",    label: "Cuantía"    },
-                                        ].map((opt) => (
-                                            <button
-                                                key={opt.id}
-                                                onClick={() => setSortBy(opt.id)}
-                                                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
-                                                    sortBy === opt.id
+                                <div className="flex flex-col items-end gap-2">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xs font-bold text-foreground-muted uppercase tracking-widest">Ordenar por:</span>
+                                        <div className="flex bg-surface-muted p-1 rounded-lg">
+                                            {[
+                                                { id: "relevancia", label: "Relevancia" },
+                                                { id: "plazo", label: "Plazo" },
+                                                { id: "cuantia", label: "Cuantía" },
+                                            ].map((opt) => (
+                                                <button
+                                                    key={opt.id}
+                                                    onClick={() => setSortBy(opt.id)}
+                                                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${sortBy === opt.id
                                                         ? "bg-white shadow-sm text-primary"
                                                         : "text-foreground-muted hover:text-foreground"
-                                                }`}
-                                            >
-                                                {opt.label}
-                                            </button>
-                                        ))}
+                                                        }`}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-foreground-muted uppercase tracking-widest">Resultados:</span>
+                                        <div className="flex bg-surface-muted p-1 rounded-lg">
+                                            {TAMANOS_PAGINA.map((size) => (
+                                                <button
+                                                    key={size}
+                                                    type="button"
+                                                    onClick={() => handlePageSizeChange(size)}
+                                                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${pageSize === size
+                                                        ? "bg-white shadow-sm text-primary"
+                                                        : "text-foreground-muted hover:text-foreground"
+                                                        }`}
+                                                    aria-label={`Mostrar ${size} subvenciones por página`}
+                                                    aria-pressed={pageSize === size}
+                                                >
+                                                    {size}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -471,21 +516,20 @@ export default function HomePage() {
 
                                     {Array.from({ length: Math.min(resultados.totalPages, 7) }, (_, i) => {
                                         const total = resultados.totalPages;
-                                        const cur   = resultados.page;
+                                        const cur = resultados.page;
                                         let p: number;
-                                        if      (total <= 7)       p = i;
-                                        else if (cur   <= 3)       p = i;
-                                        else if (cur   >= total-4) p = total - 7 + i;
-                                        else                        p = cur - 3 + i;
+                                        if (total <= 7) p = i;
+                                        else if (cur <= 3) p = i;
+                                        else if (cur >= total - 4) p = total - 7 + i;
+                                        else p = cur - 3 + i;
                                         return (
                                             <button
                                                 key={p}
                                                 onClick={() => goToPage(p)}
-                                                className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${
-                                                    p === cur
-                                                        ? "bg-primary text-white"
-                                                        : "bg-surface border border-border text-foreground-muted hover:bg-surface-muted"
-                                                }`}
+                                                className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${p === cur
+                                                    ? "bg-primary text-white"
+                                                    : "bg-surface border border-border text-foreground-muted hover:bg-surface-muted"
+                                                    }`}
                                             >
                                                 {p + 1}
                                             </button>
