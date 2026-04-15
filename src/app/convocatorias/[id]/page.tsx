@@ -118,7 +118,7 @@ export default function ConvocatoriaDetallePage() {
   if (loading) {
     return (
       <section className="max-w-4xl mx-auto px-4 py-10">
-        <div className="bg-white border border-border rounded-2xl p-6 sm:p-8 animate-pulse space-y-5">
+        <div className="bg-surface border border-border rounded-2xl p-6 sm:p-8 animate-pulse space-y-5">
           <div className="h-4 w-32 bg-surface-muted rounded" />
           <div className="h-8 w-56 bg-surface-muted rounded" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -134,7 +134,7 @@ export default function ConvocatoriaDetallePage() {
   if (notFound) {
     return (
       <section className="max-w-4xl mx-auto px-4 py-10">
-        <div className="bg-white border border-border rounded-2xl p-6 sm:p-8 text-center space-y-3">
+        <div className="bg-surface border border-border rounded-2xl p-6 sm:p-8 text-center space-y-3">
           <h1 className="text-2xl font-bold text-foreground">Convocatoria no encontrada</h1>
           <p className="text-sm text-foreground-muted">No existe una convocatoria con ese identificador.</p>
           <Link
@@ -151,7 +151,7 @@ export default function ConvocatoriaDetallePage() {
   if (error || !detalle) {
     return (
       <section className="max-w-4xl mx-auto px-4 py-10">
-        <div className="bg-white border border-border rounded-2xl p-6 sm:p-8 text-center space-y-3">
+        <div className="bg-surface border border-border rounded-2xl p-6 sm:p-8 text-center space-y-3">
           <h1 className="text-2xl font-bold text-foreground">No se pudo cargar el detalle</h1>
           <p className="text-sm text-foreground-muted">
             Ha ocurrido un problema al consultar esta convocatoria. Intentalo de nuevo en unos minutos.
@@ -176,7 +176,7 @@ export default function ConvocatoriaDetallePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
-        <article className="lg:col-span-7 bg-white border border-border rounded-2xl p-6 sm:p-8 space-y-6">
+        <article className="lg:col-span-7 bg-surface border border-border rounded-2xl p-6 sm:p-8 space-y-6">
           <header>
             <p className="text-xs font-bold tracking-widest uppercase text-foreground-muted">Detalle de convocatoria</p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -334,7 +334,7 @@ export default function ConvocatoriaDetallePage() {
                 type="button"
                 aria-label="Sector industria"
                 title="Industria"
-                className="h-11 w-11 rounded-xl border border-border bg-white inline-flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
+                className="h-11 w-11 rounded-xl border border-border bg-surface inline-flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
               >
                 <Factory className="w-5 h-5" />
               </button>
@@ -342,7 +342,7 @@ export default function ConvocatoriaDetallePage() {
                 type="button"
                 aria-label="Sector tecnologia"
                 title="Tecnologia"
-                className="h-11 w-11 rounded-xl border border-border bg-white inline-flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
+                className="h-11 w-11 rounded-xl border border-border bg-surface inline-flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
               >
                 <Cpu className="w-5 h-5" />
               </button>
@@ -350,7 +350,7 @@ export default function ConvocatoriaDetallePage() {
                 type="button"
                 aria-label="Sector servicios"
                 title="Servicios"
-                className="h-11 w-11 rounded-xl border border-border bg-white inline-flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
+                className="h-11 w-11 rounded-xl border border-border bg-surface inline-flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
               >
                 <Building2 className="w-5 h-5" />
               </button>
@@ -358,7 +358,7 @@ export default function ConvocatoriaDetallePage() {
                 type="button"
                 aria-label="Sector sostenibilidad"
                 title="Sostenibilidad"
-                className="h-11 w-11 rounded-xl border border-border bg-white inline-flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
+                className="h-11 w-11 rounded-xl border border-border bg-surface inline-flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
               >
                 <Leaf className="w-5 h-5" />
               </button>
@@ -384,19 +384,19 @@ export default function ConvocatoriaDetallePage() {
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" /> Memoria_tecnica.pdf
               </button>
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" /> Declaracion_responsable.pdf
               </button>
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" /> Presupuesto_detallado.xlsx
               </button>
@@ -411,7 +411,7 @@ export default function ConvocatoriaDetallePage() {
               {PREGUNTAS_FRECUENTES_MOCK.map((item, index) => {
                 const abierta = preguntaAbierta === index;
                 return (
-                  <div key={item.pregunta} className="rounded-lg border border-border bg-white">
+                  <div key={item.pregunta} className="rounded-lg border border-border bg-surface">
                     <button
                       type="button"
                       onClick={() => setPreguntaAbierta(abierta ? null : index)}
@@ -433,7 +433,7 @@ export default function ConvocatoriaDetallePage() {
 
         <aside className="lg:col-span-3">
           <div className="space-y-4">
-            <div className="rounded-2xl border border-border bg-white p-4">
+            <div className="rounded-2xl border border-border bg-surface p-4">
               <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
                 <Star className="w-3.5 h-3.5" /> Añadir Favorito
               </p>
@@ -451,7 +451,7 @@ export default function ConvocatoriaDetallePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-white p-4">
+            <div className="rounded-2xl border border-border bg-surface p-4">
               <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>
@@ -472,7 +472,7 @@ export default function ConvocatoriaDetallePage() {
               </button>
             </div>
 
-            <div className="rounded-2xl border border-border bg-white p-4">
+            <div className="rounded-2xl border border-border bg-surface p-4">
               <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
                 <CalendarDays className="w-3.5 h-3.5" /> Fechas importantes
               </p>
@@ -499,7 +499,7 @@ export default function ConvocatoriaDetallePage() {
         <button
           type="button"
           onClick={handleVolverArriba}
-          className="inline-flex items-center justify-center rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
+          className="inline-flex items-center justify-center rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
         >
           Volver arriba
         </button>
