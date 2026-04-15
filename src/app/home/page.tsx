@@ -6,7 +6,7 @@ import { Search, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
 import { ModalAccesoRequerido } from "@/components/ModalAccesoRequerido";
 import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
-import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica, BusquedaPublicaResponse } from "@/lib/api";
+import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica, BusquedaPublicaResponse, RegionNodo } from "@/lib/api";
 
 // ── Datos estáticos ────────────────────────────────────────────────────────────
 
@@ -51,11 +51,16 @@ function sortResults(list: ConvocatoriaPublica[], sortBy: string): ConvocatoriaP
 // ── Componente ─────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
-    const autenticado = isAuthenticated();
+    const [autenticado, setAutenticado] = useState(false);
+
+    useEffect(() => {
+        setAutenticado(isAuthenticated());
+    }, []);
 
     const [modalAcceso,  setModalAcceso]  = useState(false);
     const [finalidades,  setFinalidades]  = useState<string[]>([]);
     const [tipos,        setTipos]        = useState<string[]>([]);
+    const [regiones,     setRegiones]     = useState<RegionNodo[]>([]);
 
     // Filtros rápidos (barra junto al buscador)
     const [query,        setQuery]        = useState("");
@@ -69,6 +74,7 @@ export default function HomePage() {
     const [plazoCierre,       setPlazoCierre]        = useState("");
     const [presupuestoMin,    setPresupuestoMin]     = useState(0);
     const [tipoBeneficiario,  setTipoBeneficiario]  = useState("");
+    const [selectedRegionId,  setSelectedRegionId]  = useState<number | null>(null);
     const [sortBy,            setSortBy]             = useState("relevancia");
     const [sidebarVisible,    setSidebarVisible]     = useState(true);
 
@@ -82,15 +88,16 @@ export default function HomePage() {
     const [appliedSector,  setAppliedSector]  = useState("");
     const [appliedAbierto, setAppliedAbierto] = useState(true);
 
-    const buscar = useCallback((q: string, sec: string, tipo: string, abierto: boolean, p: number) => {
+    const buscar = useCallback((q: string, sec: string, tipo: string, abierto: boolean, p: number, regionId?: number | null) => {
         setLoading(true);
         const params = {
-            q:       q    || undefined,
-            sector:  sec  || undefined,
-            tipo:    tipo || undefined,
-            abierto: abierto ? true : undefined,
-            page:    p,
-            size:    20,
+            q:        q    || undefined,
+            sector:   sec  || undefined,
+            tipo:     tipo || undefined,
+            abierto:  abierto ? true : undefined,
+            regionId: regionId ?? undefined,
+            page:     p,
+            size:     20,
         };
         const request = autenticado
             ? convocatoriasUsuarioApi.buscar(params)
@@ -109,6 +116,9 @@ export default function HomePage() {
             .catch(() => {});
         convocatoriasPublicasApi.tipos()
             .then((res) => setTipos(res.data))
+            .catch(() => {});
+        convocatoriasPublicasApi.regiones()
+            .then((res) => setRegiones(res.data))
             .catch(() => {});
     }, [buscar]);
 
@@ -131,22 +141,22 @@ export default function HomePage() {
         setAppliedSector(sectorActivo);
         setAppliedAbierto(soloAbiertas);
         setPage(0);
-        buscar(appliedQuery, sectorActivo, nivel, soloAbiertas, 0);
+        buscar(appliedQuery, sectorActivo, nivel, soloAbiertas, 0, selectedRegionId);
     }
 
     // Limpiar todos los filtros
     function handleClearFilters() {
         setQuery(""); setNivel(""); setCcaa(""); setSoloAbiertas(true);
         setSectorActivo(""); setTipoConvocatoria(""); setPlazoCierre("");
-        setPresupuestoMin(0); setTipoBeneficiario("");
+        setPresupuestoMin(0); setTipoBeneficiario(""); setSelectedRegionId(null);
         setAppliedQuery(""); setAppliedSector(""); setAppliedAbierto(true);
         setPage(0);
-        buscar("", "", "", true, 0);
+        buscar("", "", "", true, 0, null);
     }
 
     function goToPage(p: number) {
         setPage(p);
-        buscar(appliedQuery, appliedSector, nivel, appliedAbierto, p);
+        buscar(appliedQuery, appliedSector, nivel, appliedAbierto, p, selectedRegionId);
         document.getElementById("listado-section")?.scrollIntoView({ behavior: "smooth" });
     }
 
@@ -369,6 +379,40 @@ export default function HomePage() {
                                             ))}
                                         </select>
                                     </div>
+
+                                    {/* Región / Comunidad Autónoma */}
+                                    {regiones.length > 0 && (
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                Región / CCAA
+                                            </label>
+                                            <select
+                                                value={selectedRegionId ?? ""}
+                                                onChange={(e) => setSelectedRegionId(e.target.value ? Number(e.target.value) : null)}
+                                                className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                            >
+                                                <option value="">Toda España</option>
+                                                {regiones.map((macroRegion) => (
+                                                    <optgroup key={macroRegion.id} label={macroRegion.descripcion}>
+                                                        {macroRegion.children.map((ccaa) => (
+                                                            <option key={ccaa.id} value={ccaa.id}>
+                                                                {ccaa.descripcion.replace(/^ES\d+\w*\s*-\s*/, "")}
+                                                            </option>
+                                                        ))}
+                                                    </optgroup>
+                                                ))}
+                                            </select>
+                                            {selectedRegionId && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedRegionId(null)}
+                                                    className="text-xs text-primary hover:underline"
+                                                >
+                                                    Quitar filtro de región
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <button
