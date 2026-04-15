@@ -80,16 +80,18 @@ export interface BusquedaPublicaResponse {
 }
 
 export const convocatoriasPublicasApi = {
-    buscar: (params: { q?: string; sector?: string; abierto?: boolean; page?: number; size?: number }) =>
+    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; page?: number; size?: number }) =>
         api.get<BusquedaPublicaResponse>("/convocatorias/publicas/buscar", { params }),
     destacadas: () => api.get<ConvocatoriaPublica[]>("/convocatorias/publicas/destacadas"),
+    finalidades: () => api.get<string[]>("/convocatorias/publicas/finalidades"),
+    tipos: () => api.get<string[]>("/convocatorias/publicas/tipos"),
 };
 
 // ── Convocatorias autenticadas (con match score) ───────────────────────────────
 export const convocatoriasUsuarioApi = {
     recomendadas: (params?: { page?: number; size?: number }) =>
         api.get<ConvocatoriaPublica[]>("/usuario/convocatorias/recomendadas", { params }),
-    buscar: (params: { q?: string; sector?: string; abierto?: boolean; page?: number; size?: number }) =>
+    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; page?: number; size?: number }) =>
         api.get<BusquedaPublicaResponse>("/usuario/convocatorias/buscar", { params }),
 };
 

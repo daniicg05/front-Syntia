@@ -11,17 +11,6 @@ import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica,
 // ── Datos estáticos ────────────────────────────────────────────────────────────
 
  
-const SECTORES_FILTRO = [
-    { id: "tecnologia",    label: "Tecnología e Innovación" },
-    { id: "agricola",      label: "Sector Agrícola"         },
-    { id: "industrial",    label: "Sector Industrial"       },
-    { id: "hosteleria",    label: "Hostelería y Turismo"    },
-    { id: "social",        label: "Social y Cultural"       },
-    { id: "medioambiente", label: "Medio Ambiente"          },
-    { id: "comercio",      label: "Comercio y Pymes"        },
-    { id: "salud",         label: "Salud e Investigación"   },
-    { id: "educacion",     label: "Educación y Formación"   },
-];
 
 const CCAA_LIST = [
     "Andalucía", "Aragón", "Asturias", "Islas Baleares", "Canarias",
@@ -30,12 +19,7 @@ const CCAA_LIST = [
     "Navarra", "País Vasco", "Comunidad Valenciana", "Ceuta", "Melilla",
 ];
 
-const NIVELES = [
-    { value: "",          label: "Todos los niveles" },
-    { value: "estado",    label: "Estado"            },
-    { value: "autonomico",label: "Autonómico"        },
-    { value: "local",     label: "Local"             },
-];
+
 
 const TIPOS_CONVOCATORIA = ["Subvención", "Préstamo", "Garantía", "Premio", "Subvención + Préstamo"];
 
@@ -69,7 +53,9 @@ function sortResults(list: ConvocatoriaPublica[], sortBy: string): ConvocatoriaP
 export default function HomePage() {
     const autenticado = isAuthenticated();
 
-    const [modalAcceso, setModalAcceso] = useState(false);
+    const [modalAcceso,  setModalAcceso]  = useState(false);
+    const [finalidades,  setFinalidades]  = useState<string[]>([]);
+    const [tipos,        setTipos]        = useState<string[]>([]);
 
     // Filtros rápidos (barra junto al buscador)
     const [query,        setQuery]        = useState("");
@@ -96,11 +82,12 @@ export default function HomePage() {
     const [appliedSector,  setAppliedSector]  = useState("");
     const [appliedAbierto, setAppliedAbierto] = useState(true);
 
-    const buscar = useCallback((q: string, sec: string, abierto: boolean, p: number) => {
+    const buscar = useCallback((q: string, sec: string, tipo: string, abierto: boolean, p: number) => {
         setLoading(true);
         const params = {
-            q:       q   || undefined,
-            sector:  sec || undefined,
+            q:       q    || undefined,
+            sector:  sec  || undefined,
+            tipo:    tipo || undefined,
             abierto: abierto ? true : undefined,
             page:    p,
             size:    20,
@@ -116,17 +103,27 @@ export default function HomePage() {
     }, [autenticado]);
 
     useEffect(() => {
-        buscar("", "", true, 0);
+        buscar("", "", "", true, 0);
+        convocatoriasPublicasApi.finalidades()
+            .then((res) => setFinalidades(res.data))
+            .catch(() => {});
+        convocatoriasPublicasApi.tipos()
+            .then((res) => setTipos(res.data))
+            .catch(() => {});
     }, [buscar]);
 
-    // Búsqueda desde la barra rápida
+    // Búsqueda desde la barra rápida (submit o cambio de filtro)
     function handleQuickSearch(e: FormEvent) {
         e.preventDefault();
-        const q = query.trim();
+        applyQuickFilters(query.trim(), sectorActivo, nivel, soloAbiertas);
+    }
+
+    function applyQuickFilters(q: string, sec: string, niv: string, abierto: boolean) {
         setAppliedQuery(q);
-        setAppliedAbierto(soloAbiertas);
+        setAppliedSector(sec);
+        setAppliedAbierto(abierto);
         setPage(0);
-        buscar(q, appliedSector, soloAbiertas, 0);
+        buscar(q, sec, niv, abierto, 0);
     }
 
     // Aplicar filtros desde la barra lateral
@@ -134,7 +131,7 @@ export default function HomePage() {
         setAppliedSector(sectorActivo);
         setAppliedAbierto(soloAbiertas);
         setPage(0);
-        buscar(appliedQuery, sectorActivo, soloAbiertas, 0);
+        buscar(appliedQuery, sectorActivo, nivel, soloAbiertas, 0);
     }
 
     // Limpiar todos los filtros
@@ -144,12 +141,12 @@ export default function HomePage() {
         setPresupuestoMin(0); setTipoBeneficiario("");
         setAppliedQuery(""); setAppliedSector(""); setAppliedAbierto(true);
         setPage(0);
-        buscar("", "", true, 0);
+        buscar("", "", "", true, 0);
     }
 
     function goToPage(p: number) {
         setPage(p);
-        buscar(appliedQuery, appliedSector, appliedAbierto, p);
+        buscar(appliedQuery, appliedSector, nivel, appliedAbierto, p);
         document.getElementById("listado-section")?.scrollIntoView({ behavior: "smooth" });
     }
 
@@ -197,18 +194,19 @@ export default function HomePage() {
                         {/* Nivel */}
                         <select
                             value={nivel}
-                            onChange={(e) => setNivel(e.target.value)}
+                            onChange={(e) => { setNivel(e.target.value); applyQuickFilters(query.trim(), sectorActivo, e.target.value, soloAbiertas); }}
                             className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground-muted focus:outline-none focus:border-primary transition-colors"
                         >
-                            {NIVELES.map((n) => (
-                                <option key={n.value} value={n.value}>{n.label}</option>
+                            <option value="">Todos los niveles</option>
+                            {tipos.map((t) => (
+                                <option key={t} value={t}>{t}</option>
                             ))}
                         </select>
 
                         {/* CCAA */}
                         <select
                             value={ccaa}
-                            onChange={(e) => setCcaa(e.target.value)}
+                            onChange={(e) => { setCcaa(e.target.value); applyQuickFilters(query.trim(), sectorActivo, soloAbiertas); }}
                             className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground-muted focus:outline-none focus:border-primary transition-colors"
                         >
                             <option value="">Comunidad Autónoma</option>
@@ -220,19 +218,19 @@ export default function HomePage() {
                         {/* Sector */}
                         <select
                             value={sectorActivo}
-                            onChange={(e) => setSectorActivo(e.target.value)}
+                            onChange={(e) => { setSectorActivo(e.target.value); applyQuickFilters(query.trim(), e.target.value, nivel, soloAbiertas); }}
                             className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground-muted focus:outline-none focus:border-primary transition-colors"
                         >
                             <option value="">Explorar por sector</option>
-                            {SECTORES_FILTRO.map((s) => (
-                                <option key={s.id} value={s.id}>{s.label}</option>
+                            {finalidades.map((f) => (
+                                <option key={f} value={f}>{f}</option>
                             ))}
                         </select>
 
                         {/* Toggle abiertas/cerradas */}
                         <button
                             type="button"
-                            onClick={() => setSoloAbiertas((v) => !v)}
+                            onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), sectorActivo, next); }}
                             className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
                                 soloAbiertas
                                     ? "border-primary bg-primary-light text-primary"
