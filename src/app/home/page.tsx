@@ -206,7 +206,7 @@ export default function HomePage() {
                         {/* CCAA */}
                         <select
                             value={ccaa}
-                            onChange={(e) => { setCcaa(e.target.value); applyQuickFilters(query.trim(), sectorActivo, soloAbiertas); }}
+                            onChange={(e) => { setCcaa(e.target.value); applyQuickFilters(query.trim(), sectorActivo, nivel, soloAbiertas); }}
                             className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground-muted focus:outline-none focus:border-primary transition-colors"
                         >
                             <option value="">Comunidad Autónoma</option>
@@ -230,7 +230,7 @@ export default function HomePage() {
                         {/* Toggle abiertas/cerradas */}
                         <button
                             type="button"
-                            onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), sectorActivo, next); }}
+                            onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), sectorActivo, nivel, next); }}
                             className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
                                 soloAbiertas
                                     ? "border-primary bg-primary-light text-primary"
