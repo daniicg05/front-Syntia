@@ -1,76 +1,175 @@
 "use client";
 
-import { useState, FormEvent, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Search, ArrowRight, Sparkles } from "lucide-react";
+import { useState, FormEvent, useEffect, useCallback } from "react";
+
+import { Search, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
 import { ModalAccesoRequerido } from "@/components/ModalAccesoRequerido";
 import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
-import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica } from "@/lib/api";
+import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica, BusquedaPublicaResponse } from "@/lib/api";
 
-const SECTORES = [
-    { id: "tecnologia", label: "Tecnología e Innovación", icon: "💻", color: "bg-blue-50 border-blue-100 hover:border-blue-300 text-blue-700", iconBg: "bg-blue-100" },
-    { id: "agricola", label: "Sector Agrícola", icon: "🌾", color: "bg-green-50 border-green-100 hover:border-green-300 text-green-700", iconBg: "bg-green-100" },
-    { id: "industrial", label: "Sector Industrial", icon: "🏭", color: "bg-amber-50 border-amber-100 hover:border-amber-300 text-amber-700", iconBg: "bg-amber-100" },
-    { id: "hosteleria", label: "Hostelería y Turismo", icon: "🏨", color: "bg-orange-50 border-orange-100 hover:border-orange-300 text-orange-700", iconBg: "bg-orange-100" },
-    { id: "social", label: "Social y Cultural", icon: "🤝", color: "bg-purple-50 border-purple-100 hover:border-purple-300 text-purple-700", iconBg: "bg-purple-100" },
-    { id: "medioambiente", label: "Medio Ambiente", icon: "🌿", color: "bg-emerald-50 border-emerald-100 hover:border-emerald-300 text-emerald-700", iconBg: "bg-emerald-100" },
-    { id: "comercio", label: "Comercio y Pymes", icon: "🛒", color: "bg-rose-50 border-rose-100 hover:border-rose-300 text-rose-700", iconBg: "bg-rose-100" },
-    { id: "salud", label: "Salud e Investigación", icon: "🔬", color: "bg-cyan-50 border-cyan-100 hover:border-cyan-300 text-cyan-700", iconBg: "bg-cyan-100" },
+// ── Datos estáticos ────────────────────────────────────────────────────────────
+
+ 
+
+const CCAA_LIST = [
+    "Andalucía", "Aragón", "Asturias", "Islas Baleares", "Canarias",
+    "Cantabria", "Castilla-La Mancha", "Castilla y León", "Cataluña",
+    "Extremadura", "Galicia", "La Rioja", "Madrid", "Murcia",
+    "Navarra", "País Vasco", "Comunidad Valenciana", "Ceuta", "Melilla",
 ];
 
+
+
+const TIPOS_CONVOCATORIA = ["Subvención", "Préstamo", "Garantía", "Premio", "Subvención + Préstamo"];
+
+const PLAZOS_CIERRE = [
+    { value: "",   label: "Cualquier plazo"     },
+    { value: "7",  label: "Cierra en 7 días"    },
+    { value: "30", label: "Cierra en 30 días"   },
+    { value: "90", label: "Cierra en 90 días"   },
+];
+
+const TIPOS_BENEFICIARIO = ["Pyme", "Autónomo", "Gran Empresa", "Startup", "Entidad sin ánimo de lucro"];
+
+// ── Helpers de orden local ─────────────────────────────────────────────────────
+
+function sortResults(list: ConvocatoriaPublica[], sortBy: string): ConvocatoriaPublica[] {
+    if (sortBy === "plazo") {
+        return [...list].sort((a, b) => {
+            if (!a.fechaCierre) return 1;
+            if (!b.fechaCierre) return -1;
+            return new Date(a.fechaCierre).getTime() - new Date(b.fechaCierre).getTime();
+        });
+    }
+    if (sortBy === "cuantia") {
+        return [...list].sort((a, b) => (b.presupuesto ?? 0) - (a.presupuesto ?? 0));
+    }
+    return list;
+}
+
+// ── Componente ─────────────────────────────────────────────────────────────────
+
 export default function HomePage() {
-    const router = useRouter();
-    const [query, setQuery] = useState("");
-    const [modalAcceso, setModalAcceso] = useState(false);
-    const [destacadas, setDestacadas] = useState<ConvocatoriaPublica[]>([]);
-    const [loadingDestacadas, setLoadingDestacadas] = useState(true);
     const autenticado = isAuthenticated();
 
-    useEffect(() => {
-        const fetchDestacadas = autenticado
-            ? convocatoriasUsuarioApi.recomendadas({ size: 16 })
-            : convocatoriasPublicasApi.destacadas();
+    const [modalAcceso,  setModalAcceso]  = useState(false);
+    const [finalidades,  setFinalidades]  = useState<string[]>([]);
+    const [tipos,        setTipos]        = useState<string[]>([]);
 
-        fetchDestacadas
-            .then((res) => setDestacadas(res.data))
-            .catch(() => {})
-            .finally(() => setLoadingDestacadas(false));
+    // Filtros rápidos (barra junto al buscador)
+    const [query,        setQuery]        = useState("");
+    const [nivel,        setNivel]        = useState("");
+    const [ccaa,         setCcaa]         = useState("");
+    const [soloAbiertas, setSoloAbiertas] = useState(true);
+
+    // Filtros de la barra lateral
+    const [sectorActivo,      setSectorActivo]      = useState("");
+    const [tipoConvocatoria,  setTipoConvocatoria]  = useState("");
+    const [plazoCierre,       setPlazoCierre]        = useState("");
+    const [presupuestoMin,    setPresupuestoMin]     = useState(0);
+    const [tipoBeneficiario,  setTipoBeneficiario]  = useState("");
+    const [sortBy,            setSortBy]             = useState("relevancia");
+    const [sidebarVisible,    setSidebarVisible]     = useState(true);
+
+    // Estado de resultados
+    const [resultados, setResultados] = useState<BusquedaPublicaResponse | null>(null);
+    const [loading,    setLoading]    = useState(true);
+    const [page,       setPage]       = useState(0);
+
+    // Filtros aplicados (los que se han enviado al API)
+    const [appliedQuery,   setAppliedQuery]   = useState("");
+    const [appliedSector,  setAppliedSector]  = useState("");
+    const [appliedAbierto, setAppliedAbierto] = useState(true);
+
+    const buscar = useCallback((q: string, sec: string, tipo: string, abierto: boolean, p: number) => {
+        setLoading(true);
+        const params = {
+            q:       q    || undefined,
+            sector:  sec  || undefined,
+            tipo:    tipo || undefined,
+            abierto: abierto ? true : undefined,
+            page:    p,
+            size:    20,
+        };
+        const request = autenticado
+            ? convocatoriasUsuarioApi.buscar(params)
+            : convocatoriasPublicasApi.buscar(params);
+
+        request
+            .then((res) => setResultados(res.data))
+            .catch(() => setResultados(null))
+            .finally(() => setLoading(false));
     }, [autenticado]);
 
-    function handleSearch(e: FormEvent) {
+    useEffect(() => {
+        buscar("", "", "", true, 0);
+        convocatoriasPublicasApi.finalidades()
+            .then((res) => setFinalidades(res.data))
+            .catch(() => {});
+        convocatoriasPublicasApi.tipos()
+            .then((res) => setTipos(res.data))
+            .catch(() => {});
+    }, [buscar]);
+
+    // Búsqueda desde la barra rápida (submit o cambio de filtro)
+    function handleQuickSearch(e: FormEvent) {
         e.preventDefault();
-        const q = query.trim();
-        if (!q) return;
-        router.push(`/buscar?q=${encodeURIComponent(q)}`);
+        applyQuickFilters(query.trim(), sectorActivo, nivel, soloAbiertas);
     }
 
-    function handleSectorClick(sectorId: string) {
-        router.push(`/buscar?sector=${sectorId}`);
+    function applyQuickFilters(q: string, sec: string, niv: string, abierto: boolean) {
+        setAppliedQuery(q);
+        setAppliedSector(sec);
+        setAppliedAbierto(abierto);
+        setPage(0);
+        buscar(q, sec, niv, abierto, 0);
     }
 
-    // Phase 3: llamar setModalAcceso(true) cuando el usuario no-auth pulse sobre una convocatoria
+    // Aplicar filtros desde la barra lateral
+    function handleApplyFilters() {
+        setAppliedSector(sectorActivo);
+        setAppliedAbierto(soloAbiertas);
+        setPage(0);
+        buscar(appliedQuery, sectorActivo, nivel, soloAbiertas, 0);
+    }
+
+    // Limpiar todos los filtros
+    function handleClearFilters() {
+        setQuery(""); setNivel(""); setCcaa(""); setSoloAbiertas(true);
+        setSectorActivo(""); setTipoConvocatoria(""); setPlazoCierre("");
+        setPresupuestoMin(0); setTipoBeneficiario("");
+        setAppliedQuery(""); setAppliedSector(""); setAppliedAbierto(true);
+        setPage(0);
+        buscar("", "", "", true, 0);
+    }
+
+    function goToPage(p: number) {
+        setPage(p);
+        buscar(appliedQuery, appliedSector, nivel, appliedAbierto, p);
+        document.getElementById("listado-section")?.scrollIntoView({ behavior: "smooth" });
+    }
+
+    const displayList = resultados ? sortResults(resultados.content, sortBy) : [];
 
     return (
         <div className="flex flex-col">
-            {modalAcceso && (
-                <ModalAccesoRequerido onClose={() => setModalAcceso(false)} />
-            )}
+            {modalAcceso && <ModalAccesoRequerido onClose={() => setModalAcceso(false)} />}
 
-            {/* Hero con buscador */}
-            <section className="px-4 pt-16 pb-12 text-center">
+            {/* ── Hero + buscador ──────────────────────────────────────────── */}
+            <section className="px-4 pt-16 pb-10 text-center">
                 <div className="max-w-3xl mx-auto">
                     <h1 className="text-4xl sm:text-5xl font-bold text-foreground leading-tight mb-4">
                         Descubre subvenciones{" "}
                         <span className="text-primary">para tu proyecto</span>
                     </h1>
-                    <p className="text-lg text-foreground-muted mb-10 max-w-xl mx-auto leading-relaxed">
+                    <p className="text-lg text-foreground-muted mb-8 max-w-xl mx-auto leading-relaxed">
                         Busca entre miles de convocatorias públicas o explora por sector.
                         {!autenticado && " Crea una cuenta para acceder a recomendaciones personalizadas."}
                     </p>
 
-                    {/* Barra de búsqueda */}
-                    <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
+                    {/* Barra de búsqueda principal */}
+                    <form onSubmit={handleQuickSearch} className="relative max-w-2xl mx-auto mb-4">
                         <div className="flex items-center gap-0 bg-surface border-2 border-border rounded-2xl shadow-sm focus-within:border-primary transition-colors overflow-hidden">
                             <Search className="w-5 h-5 text-foreground-muted ml-4 shrink-0" />
                             <input
@@ -90,6 +189,59 @@ export default function HomePage() {
                         </div>
                     </form>
 
+                    {/* Filtros rápidos junto al buscador */}
+                    <div className="max-w-2xl mx-auto flex items-center gap-2">
+                        {/* Nivel */}
+                        <select
+                            value={nivel}
+                            onChange={(e) => { setNivel(e.target.value); applyQuickFilters(query.trim(), sectorActivo, e.target.value, soloAbiertas); }}
+                            className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground-muted focus:outline-none focus:border-primary transition-colors"
+                        >
+                            <option value="">Todos los niveles</option>
+                            {tipos.map((t) => (
+                                <option key={t} value={t}>{t}</option>
+                            ))}
+                        </select>
+
+                        {/* CCAA */}
+                        <select
+                            value={ccaa}
+                            onChange={(e) => { setCcaa(e.target.value); applyQuickFilters(query.trim(), sectorActivo, soloAbiertas); }}
+                            className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground-muted focus:outline-none focus:border-primary transition-colors"
+                        >
+                            <option value="">Comunidad Autónoma</option>
+                            {CCAA_LIST.map((c) => (
+                                <option key={c} value={c}>{c}</option>
+                            ))}
+                        </select>
+
+                        {/* Sector */}
+                        <select
+                            value={sectorActivo}
+                            onChange={(e) => { setSectorActivo(e.target.value); applyQuickFilters(query.trim(), e.target.value, nivel, soloAbiertas); }}
+                            className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground-muted focus:outline-none focus:border-primary transition-colors"
+                        >
+                            <option value="">Explorar por sector</option>
+                            {finalidades.map((f) => (
+                                <option key={f} value={f}>{f}</option>
+                            ))}
+                        </select>
+
+                        {/* Toggle abiertas/cerradas */}
+                        <button
+                            type="button"
+                            onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), sectorActivo, next); }}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
+                                soloAbiertas
+                                    ? "border-primary bg-primary-light text-primary"
+                                    : "border-border text-foreground-muted hover:border-primary/50"
+                            }`}
+                        >
+                            <span className={`w-2 h-2 rounded-full ${soloAbiertas ? "bg-primary" : "bg-foreground-subtle"}`} />
+                            {soloAbiertas ? "Solo abiertas" : "Incluir cerradas"}
+                        </button>
+                    </div>
+
                     {!autenticado && (
                         <p className="mt-4 text-sm text-foreground-subtle">
                             ¿Ya tienes cuenta?{" "}
@@ -102,77 +254,259 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* Bloques por sector */}
-            <section className="px-4 pb-12">
+            {/* ── Listado con sidebar ──────────────────────────────────────── */}
+            <section id="listado-section" className="px-4 pb-16">
                 <div className="max-w-6xl mx-auto">
-                    <div className="mb-6 text-center">
-                        <h2 className="text-lg font-semibold text-foreground mb-1">Explorar por sector</h2>
-                        <p className="text-sm text-foreground-muted">
-                            Selecciona un sector para ver convocatorias relacionadas
-                        </p>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {SECTORES.map((sector) => (
-                            <button
-                                key={sector.id}
-                                onClick={() => handleSectorClick(sector.id)}
-                                className={`group flex flex-col items-start p-4 rounded-2xl border-2 transition-all duration-200 text-left cursor-pointer hover:shadow-md hover:-translate-y-0.5 ${sector.color}`}
-                            >
-                                <span className={`text-xl mb-2 w-9 h-9 flex items-center justify-center rounded-xl ${sector.iconBg}`}>
-                                    {sector.icon}
-                                </span>
-                                <p className="font-semibold text-xs">{sector.label}</p>
-                            </button>
-                        ))}
+                    <div className={`flex flex-col gap-8 ${sidebarVisible ? "lg:flex-row" : ""}`}>
+
+                        {/* Sidebar de filtros avanzados */}
+                        <aside className={`flex-shrink-0 transition-all duration-300 ${sidebarVisible ? "w-full lg:w-72" : "w-full lg:w-auto"}`}>
+                            <div className="bg-surface border border-border rounded-2xl sticky top-24 overflow-hidden">
+                                {/* Cabecera siempre visible */}
+                                <div className="flex items-center justify-between px-6 py-4">
+                                    <button
+                                        onClick={() => setSidebarVisible((v) => !v)}
+                                        className="flex items-center gap-2 font-bold text-foreground text-base hover:text-primary transition-colors"
+                                    >
+                                        <svg
+                                            className={`w-4 h-4 transition-transform duration-300 ${sidebarVisible ? "rotate-0" : "-rotate-90"}`}
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                        Filtros Avanzados
+                                    </button>
+                                    {sidebarVisible && (
+                                        <button
+                                            onClick={handleClearFilters}
+                                            className="text-xs text-primary font-semibold hover:underline"
+                                        >
+                                            Limpiar
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Contenido colapsable */}
+                                {sidebarVisible && (
+                                <div className="px-6 pb-6 border-t border-border pt-4">
+
+                                <div className="space-y-7">
+                                    {/* Tipo de convocatoria */}
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                            Tipo de Convocatoria
+                                        </label>
+                                        <select
+                                            value={tipoConvocatoria}
+                                            onChange={(e) => setTipoConvocatoria(e.target.value)}
+                                            className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                        >
+                                            <option value="">Todos los tipos</option>
+                                            {TIPOS_CONVOCATORIA.map((t) => (
+                                                <option key={t} value={t}>{t}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Plazo de cierre */}
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                            Plazo de Cierre
+                                        </label>
+                                        <select
+                                            value={plazoCierre}
+                                            onChange={(e) => setPlazoCierre(e.target.value)}
+                                            className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                        >
+                                            {PLAZOS_CIERRE.map((p) => (
+                                                <option key={p.value} value={p.value}>{p.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Presupuesto mínimo */}
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                            Presupuesto Mínimo
+                                            {presupuestoMin > 0 && (
+                                                <span className="ml-2 text-primary normal-case tracking-normal">
+                                                    {presupuestoMin >= 1_000_000
+                                                        ? `${(presupuestoMin / 1_000_000).toFixed(1)}M€`
+                                                        : presupuestoMin >= 1_000
+                                                        ? `${Math.round(presupuestoMin / 1_000)}k€`
+                                                        : `${presupuestoMin}€`}
+                                                </span>
+                                            )}
+                                        </label>
+                                        <input
+                                            type="range"
+                                            min={0}
+                                            max={1000000}
+                                            step={10000}
+                                            value={presupuestoMin}
+                                            onChange={(e) => setPresupuestoMin(Number(e.target.value))}
+                                            className="w-full h-1.5 rounded-full accent-[var(--color-primary)] bg-surface-muted"
+                                        />
+                                        <div className="flex justify-between">
+                                            <span className="text-[10px] font-bold text-foreground-muted">0€</span>
+                                            <span className="text-[10px] font-bold text-foreground-muted">1M€+</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Tipo de beneficiario (futuro) */}
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                            Tipo de Beneficiario
+                                        </label>
+                                        <select
+                                            value={tipoBeneficiario}
+                                            onChange={(e) => setTipoBeneficiario(e.target.value)}
+                                            className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                        >
+                                            <option value="">Todos</option>
+                                            {TIPOS_BENEFICIARIO.map((t) => (
+                                                <option key={t} value={t}>{t}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handleApplyFilters}
+                                    className="mt-8 w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
+                                >
+                                    Aplicar Filtros
+                                </button>
+                                </div>
+                                )}
+                            </div>
+                        </aside>
+
+                        {/* Área de resultados */}
+                        <div className="flex-1 space-y-5 min-w-0">
+
+                            {/* Barra de resultados + ordenación */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface border border-border p-4 rounded-2xl">
+                                <div className="flex items-center gap-3">
+                                    {loading ? (
+                                        <div className="h-4 w-44 bg-surface-muted rounded-full animate-pulse" />
+                                    ) : (
+                                        <span className="text-sm text-foreground-muted">
+                                            <strong className="text-foreground">
+                                                {resultados?.totalElements.toLocaleString() ?? 0}
+                                            </strong>{" "}
+                                            subvenciones encontradas
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs font-bold text-foreground-muted uppercase tracking-widest">Ordenar por:</span>
+                                    <div className="flex bg-surface-muted p-1 rounded-lg">
+                                        {[
+                                            { id: "relevancia", label: "Relevancia" },
+                                            { id: "plazo",      label: "Plazo"      },
+                                            { id: "cuantia",    label: "Cuantía"    },
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.id}
+                                                onClick={() => setSortBy(opt.id)}
+                                                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
+                                                    sortBy === opt.id
+                                                        ? "bg-white shadow-sm text-primary"
+                                                        : "text-foreground-muted hover:text-foreground"
+                                                }`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Tarjetas */}
+                            {loading ? (
+                                <div className="grid grid-cols-1 gap-4">
+                                    {[...Array(6)].map((_, i) => (
+                                        <div key={i} className="h-52 bg-surface border border-border rounded-2xl animate-pulse" />
+                                    ))}
+                                </div>
+                            ) : displayList.length > 0 ? (
+                                <div className="grid grid-cols-1 gap-4">
+                                    {displayList.map((c) => (
+                                        <ConvocatoriaCard
+                                            key={c.id}
+                                            convocatoria={c}
+                                            autenticado={autenticado}
+                                            showMatch={autenticado && c.matchScore != null}
+                                            onAccesoRequerido={() => setModalAcceso(true)}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-16">
+                                    <Search className="w-12 h-12 text-foreground-subtle mx-auto mb-4" />
+                                    <p className="font-medium text-foreground mb-2">No encontramos resultados</p>
+                                    <p className="text-sm text-foreground-muted mb-6">
+                                        Prueba con otros términos o elimina algunos filtros
+                                    </p>
+                                    <button
+                                        onClick={handleClearFilters}
+                                        className="text-sm text-primary hover:underline font-medium"
+                                    >
+                                        Limpiar filtros
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Paginación */}
+                            {resultados && resultados.totalPages > 1 && !loading && (
+                                <div className="flex items-center justify-center gap-2 pt-4">
+                                    <button
+                                        onClick={() => goToPage(resultados.page - 1)}
+                                        disabled={resultados.page === 0}
+                                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface border border-border text-foreground-muted hover:bg-surface-muted transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </button>
+
+                                    {Array.from({ length: Math.min(resultados.totalPages, 7) }, (_, i) => {
+                                        const total = resultados.totalPages;
+                                        const cur   = resultados.page;
+                                        let p: number;
+                                        if      (total <= 7)       p = i;
+                                        else if (cur   <= 3)       p = i;
+                                        else if (cur   >= total-4) p = total - 7 + i;
+                                        else                        p = cur - 3 + i;
+                                        return (
+                                            <button
+                                                key={p}
+                                                onClick={() => goToPage(p)}
+                                                className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${
+                                                    p === cur
+                                                        ? "bg-primary text-white"
+                                                        : "bg-surface border border-border text-foreground-muted hover:bg-surface-muted"
+                                                }`}
+                                            >
+                                                {p + 1}
+                                            </button>
+                                        );
+                                    })}
+
+                                    <button
+                                        onClick={() => goToPage(resultados.page + 1)}
+                                        disabled={resultados.page >= resultados.totalPages - 1}
+                                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface border border-border text-foreground-muted hover:bg-surface-muted transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* Convocatorias destacadas */}
-            <section className="px-4 pb-16">
-                <div className="max-w-6xl mx-auto">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-primary" />
-                            <h2 className="text-lg font-semibold text-foreground">
-                                {autenticado ? "Recomendadas para ti" : "Convocatorias disponibles"}
-                            </h2>
-                        </div>
-                        <button
-                            onClick={() => router.push("/buscar")}
-                            className="text-sm text-primary hover:underline font-medium"
-                        >
-                            Ver todas →
-                        </button>
-                    </div>
-
-                    {loadingDestacadas ? (
-                        <div className="grid grid-cols-1 gap-4">
-                            {[...Array(8)].map((_, i) => (
-                                <div key={i} className="h-52 bg-surface border border-border rounded-2xl animate-pulse" />
-                            ))}
-                        </div>
-                    ) : destacadas.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-4">
-                            {destacadas.map((c) => (
-                                <ConvocatoriaCard
-                                    key={c.id}
-                                    convocatoria={c}
-                                    autenticado={autenticado}
-                                    showMatch={autenticado && c.matchScore != null}
-                                    onAccesoRequerido={() => setModalAcceso(true)}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-12 text-foreground-muted">
-                            <p className="text-sm">No hay convocatorias disponibles en este momento.</p>
-                        </div>
-                    )}
-                </div>
-            </section>
-
-            {/* CTA para no autenticados */}
+            {/* ── CTA para no autenticados ─────────────────────────────────── */}
             {!autenticado && (
                 <section className="px-4 pb-16">
                     <div className="max-w-3xl mx-auto bg-primary-light border border-primary/20 rounded-3xl p-10 text-center">
