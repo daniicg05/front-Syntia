@@ -237,7 +237,7 @@ export default function HomePage() {
                         {/* Toggle abiertas/cerradas */}
                         <button
                             type="button"
-                            onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), sectorActivo, next); }}
+                            onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), sectorActivo, nivel, next); }}
                             className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
                                 soloAbiertas
                                     ? "border-primary bg-primary-light text-primary"
