@@ -101,6 +101,7 @@ export const convocatoriasPublicasApi = {
     finalidades: () => api.get<string[]>("/convocatorias/publicas/finalidades"),
     tipos: () => api.get<string[]>("/convocatorias/publicas/tipos"),
     regiones: () => api.get<RegionNodo[]>("/convocatorias/publicas/regiones"),
+    detalle: (id: number) => api.get<ConvocatoriaDetalle>(`/convocatorias/publicas/${id}`),
 };
 
 // ── Convocatorias autenticadas (con match score) ───────────────────────────────
