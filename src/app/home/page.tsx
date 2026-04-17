@@ -240,10 +240,11 @@ export default function HomePage() {
                         <button
                             type="button"
                             onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), sectorActivo, nivel, next); }}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${soloAbiertas
-                                ? "border-primary bg-primary-light text-primary"
-                                : "border-border text-foreground-muted hover:border-primary/50"
-                                }`}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
+                                soloAbiertas
+                                    ? "border-primary bg-primary-light text-primary"
+                                    : "border-border text-foreground-muted hover:border-primary/50"
+                            }`}
                         >
                             <span className={`w-2 h-2 rounded-full ${soloAbiertas ? "bg-primary" : "bg-foreground-subtle"}`} />
                             {soloAbiertas ? "Solo abiertas" : "Incluir cerradas"}

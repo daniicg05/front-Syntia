@@ -71,6 +71,14 @@ export interface ConvocatoriaPublica {
     presupuesto?: number;
 }
 
+export interface ConvocatoriaDetalle {
+    id: number;
+    codigoBdns: string | null;
+    sector: string | null;
+    descripcion: string | null;
+    tiposBeneficiario: string[];
+}
+
 export interface BusquedaPublicaResponse {
     content: ConvocatoriaPublica[];
     totalElements: number;
@@ -85,6 +93,7 @@ export const convocatoriasPublicasApi = {
     destacadas: () => api.get<ConvocatoriaPublica[]>("/convocatorias/publicas/destacadas"),
     finalidades: () => api.get<string[]>("/convocatorias/publicas/finalidades"),
     tipos: () => api.get<string[]>("/convocatorias/publicas/tipos"),
+    detalle: (id: number) => api.get<ConvocatoriaDetalle>(`/convocatorias/publicas/${id}`),
 };
 
 // ── Convocatorias autenticadas (con match score) ───────────────────────────────
