@@ -78,6 +78,14 @@ export interface RegionNodo {
     children: RegionNodo[];
 }
 
+export interface ConvocatoriaDetalle {
+    id: number;
+    codigoBdns: string | null;
+    sector: string | null;
+    descripcion: string | null;
+    tiposBeneficiario: string[];
+}
+
 export interface BusquedaPublicaResponse {
     content: ConvocatoriaPublica[];
     totalElements: number;

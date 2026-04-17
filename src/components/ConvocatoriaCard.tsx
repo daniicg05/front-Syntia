@@ -1,7 +1,8 @@
 "use client";
 
 import { ConvocatoriaPublica } from "@/lib/api";
-import { ExternalLink, Lock } from "lucide-react";
+import { ArrowRight, ExternalLink, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Props {
     convocatoria: ConvocatoriaPublica;
@@ -46,6 +47,7 @@ function formatPresupuesto(p?: number): string | null {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autenticado, showMatch = false }: Props) {
+    const router = useRouter();
     const esCerrada = c.abierto === false;
     const daysLeft  = calcDaysLeft(c.fechaCierre);
     const highMatch = showMatch && (c.matchScore ?? 0) >= 70;
@@ -84,7 +86,7 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
 
     function handleClick() {
         if (!autenticado) { onAccesoRequerido?.(); return; }
-        if (c.urlOficial) window.open(c.urlOficial, "_blank", "noopener,noreferrer");
+        router.push(`/convocatorias/${c.id}`);
     }
 
     return (
@@ -221,7 +223,7 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                     >
                         {autenticado ? (
                             <span className="flex items-center justify-center gap-1.5">
-                                <ExternalLink className="w-3.5 h-3.5" /> Ver detalles
+                                <ArrowRight className="w-3.5 h-3.5" /> Ver detalles
                             </span>
                         ) : (
                             <span className="flex items-center justify-center gap-1.5">
@@ -229,6 +231,17 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                             </span>
                         )}
                     </button>
+
+                    {autenticado && c.urlOficial && (
+                        <a
+                            href={c.urlOficial}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-1 text-xs text-foreground-muted hover:text-primary transition-colors"
+                        >
+                            <ExternalLink className="w-3.5 h-3.5" /> Ver fuente oficial
+                        </a>
+                    )}
                 </div>
             </div>
         </div>
