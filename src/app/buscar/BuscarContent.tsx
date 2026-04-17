@@ -8,6 +8,8 @@ import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica,
 import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
 import { ModalAccesoRequerido } from "@/components/ModalAccesoRequerido";
 
+const stripCodigo = (d: string) => d.replace(/^[A-Z0-9]+ - /, "").trim();
+
 const SECTORES_FILTRO = [
     { value: "", label: "Todos los sectores" },
     { value: "tecnologia", label: "Tecnología e Innovación" },
@@ -63,16 +65,21 @@ export default function BuscarContent() {
     }, [autenticado]);
 
     useEffect(() => {
+        if (regiones.length === 0) {
+            convocatoriasPublicasApi.regiones()
+                .then((res) => setRegiones(res.data))
+                .catch(() => {});
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
         setQuery(qParam);
         setSector(sectorParam);
         setSoloAbiertas(!cerradasParam);
         setSelectedRegionId(regionParam);
         buscar(qParam, sectorParam, pageParam, !cerradasParam, regionParam);
-        convocatoriasPublicasApi.regiones()
-            .then((res) => setRegiones(res.data))
-            .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [qParam, sectorParam, pageParam, cerradasParam, buscar]);
+    }, [qParam, sectorParam, pageParam, cerradasParam, regionParam, buscar]);
 
     function buildParams(q: string, sec: string, page: number, abiertas: boolean, regionId?: number | null) {
         const params = new URLSearchParams();
@@ -198,10 +205,10 @@ export default function BuscarContent() {
                                 >
                                     <option value="">Toda España</option>
                                     {regiones.map((macroRegion) => (
-                                        <optgroup key={macroRegion.id} label={macroRegion.descripcion}>
+                                        <optgroup key={macroRegion.id} label={stripCodigo(macroRegion.descripcion)}>
                                             {macroRegion.children.map((ccaa) => (
                                                 <option key={ccaa.id} value={ccaa.id}>
-                                                    {ccaa.descripcion.replace(/^ES\d+\w*\s*-\s*/, "")}
+                                                    {stripCodigo(ccaa.descripcion)}
                                                 </option>
                                             ))}
                                         </optgroup>
