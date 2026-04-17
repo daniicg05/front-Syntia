@@ -268,9 +268,9 @@ export default function HomePage() {
 
                         {/* Sidebar de filtros avanzados */}
                         <aside className={`flex-shrink-0 transition-all duration-300 ${sidebarVisible ? "w-full lg:w-72" : "w-full lg:w-auto"}`}>
-                            <div className="bg-surface border border-border rounded-2xl sticky top-24 overflow-hidden">
+                            <div className="bg-surface border border-border rounded-2xl sticky top-24 overflow-hidden flex flex-col max-h-[calc(100vh-7rem)]">
                                 {/* Cabecera siempre visible */}
-                                <div className="flex items-center justify-between px-6 py-4">
+                                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0">
                                     <button
                                         onClick={() => setSidebarVisible((v) => !v)}
                                         className="flex items-center gap-2 font-bold text-foreground text-base hover:text-primary transition-colors"
@@ -295,9 +295,9 @@ export default function HomePage() {
 
                                 {/* Contenido colapsable */}
                                 {sidebarVisible && (
-                                <div className="px-6 pb-6 border-t border-border pt-4">
+                                <div className="flex flex-col flex-1 min-h-0 border-t border-border">
 
-                                <div className="space-y-7">
+                                <div className="overflow-y-auto flex-1 px-6 pt-4 space-y-7">
                                     {/* Tipo de convocatoria */}
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
@@ -428,12 +428,14 @@ export default function HomePage() {
 
                                 </div>
 
+                                <div className="px-6 py-4 border-t border-border flex-shrink-0">
                                 <button
                                     onClick={handleApplyFilters}
-                                    className="mt-8 w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
+                                    className="w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
                                 >
                                     Aplicar Filtros
                                 </button>
+                                </div>
                                 </div>
                                 )}
                             </div>
