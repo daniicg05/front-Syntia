@@ -196,7 +196,9 @@ export default function ConvocatoriaDetallePage() {
           ))}
         </article>
       </div>
-      {/* <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
+
+      {/*
+       <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
         <article className="lg:col-span-7 bg-surface border border-border rounded-2xl p-6 sm:p-8 space-y-6">
           <header>
             <p className="text-xs font-bold tracking-widest uppercase text-foreground-muted">Detalle de convocatoria</p>
@@ -514,8 +516,8 @@ export default function ConvocatoriaDetallePage() {
             </div>
           </div>
         </aside>
-      </div> */}
-
+      </div> 
+*/}
       <div className="mt-6 flex justify-center">
         <button
           type="button"
