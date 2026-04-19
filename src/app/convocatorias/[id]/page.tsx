@@ -168,12 +168,12 @@ export default function ConvocatoriaDetallePage() {
   }
 
   const filasDetalle: Array<{ campo: string; valor: string }> = [
-    { campo: "id", valor: String(detalle.id) },
-    { campo: "codigoBdns", valor: detalle.codigoBdns ?? "No disponible" },
-    { campo: "sector", valor: detalle.sector ?? "No disponible" },
-    { campo: "descripcion", valor: detalle.descripcion ?? "No disponible" },
+    { campo: "🆔 id", valor: String(detalle.id) },
+    { campo: "🏷️ codigo BDNS", valor: detalle.codigoBdns ?? "No disponible" },
+    { campo: "🏭 sector", valor: detalle.sector ?? "No disponible" },
+    { campo: "📝 descripcion", valor: detalle.descripcion ?? "No disponible" },
     {
-      campo: "tiposBeneficiario",
+      campo: "👥 tipos de beneficiario",
       valor: detalle.tiposBeneficiario.length > 0 ? detalle.tiposBeneficiario.join(", ") : "No disponible",
     },
   ];
@@ -186,14 +186,37 @@ export default function ConvocatoriaDetallePage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
-        <article className="lg:col-span-7 bg-surface border border-border rounded-2xl p-6 sm:p-8 space-y-6">
-          {filasDetalle.map((fila) => (
+      <div className="grid grid-cols-2 lg:grid-cols-10 gap-6 items-start">
+        <article className="lg:col-span-8 bg-surface border border-border rounded-2xl p-6 sm:p-8 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-[7fr_3fr] gap-4">
+            <div className="rounded-xl border border-border p-4 bg-surface">
+              <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted">📝 descripcion</p>
+              <p className="mt-2 text-sm text-foreground whitespace-pre-line">{detalle.descripcion ?? "No disponible"}</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-xl border border-border p-4 bg-surface">
+                <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted">🆔 id</p>
+                <p className="mt-2 text-sm text-foreground">{String(detalle.id)}</p>
+              </div>
+
+              <div className="rounded-xl border border-border p-4 bg-surface">
+                <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted">🏷️ codigo BDNS</p>
+                <p className="mt-2 text-sm text-foreground">{detalle.codigoBdns ?? "No disponible"}</p>
+              </div>
+            </div>
+          </div>
+
+          {filasDetalle
+            .filter((fila) => fila.campo !== "🆔 id" && fila.campo !== "🏷️ codigo BDNS" && fila.campo !== "📝 descripcion")
+            .map((fila) => (
             <div key={fila.campo} className="rounded-xl border border-border p-4 bg-surface">
               <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted">{fila.campo}</p>
-              <p className="mt-2 text-sm text-foreground whitespace-pre-line">{fila.valor}</p>
+              <button className="mt-2 px-4 py-1 text-sm text-foreground bg-surface border border-border rounded-full whitespace-pre-line">
+                {fila.valor}
+              </button>
             </div>
-          ))}
+            ))}
         </article>
       </div>
 
