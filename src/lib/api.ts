@@ -78,12 +78,97 @@ export interface RegionNodo {
     children: RegionNodo[];
 }
 
+export interface TipoBeneficiarioDTO {
+    codigo?: string;
+    descripcion?: string;
+}
+
+export interface SectorDTO {
+    codigo?: string;
+    descripcion?: string;
+}
+
+export interface AnuncioDTO {
+    numAnuncio?: number;
+    titulo?: string;
+    texto?: string;
+    url?: string;
+    cve?: string;
+    desDiarioOficial?: string;
+    datPublicacion?: string;
+}
+
+export interface DocumentoDTO {
+    id?: number;
+    nombreFic?: string;
+    descripcion?: string;
+    longitud?: number;
+    datMod?: string;
+    datPublicacion?: string;
+}
+
 export interface ConvocatoriaDetalle {
+    // Legacy
     id: number;
     codigoBdns: string | null;
-    sector: string | null;
     descripcion: string | null;
     tiposBeneficiario: string[];
+
+    // Identificación
+    idBdns?: string;
+    numeroConvocatoria?: string;
+    titulo?: string;
+
+    // Clasificación
+    tipo?: string;
+    ubicacion?: string;
+    sector?: string;
+    finalidad?: string;
+
+    // Organismo
+    nivel1?: string;
+    nivel2?: string;
+    nivel3?: string;
+    fuente?: string;
+
+    // Financiero
+    presupuestoTotal?: number;
+    ayudaEstado?: string;
+    urlAyudaEstado?: string;
+    mrr?: boolean;
+
+    // Plazos
+    fechaRecepcion?: string;
+    fechaInicioSolicitud?: string;
+    fechaFinSolicitud?: string;
+    fechaCierre?: string;
+    textInicio?: string;
+    textFin?: string;
+
+    // Procedimiento / Bases
+    basesReguladoras?: string;
+    descripcionBasesReguladoras?: string;
+    urlBasesReguladoras?: string;
+    sePublicaDiarioOficial?: boolean;
+    sedeElectronica?: string;
+    tipoConvocatoria?: string;
+    urlOficial?: string;
+
+    // Reglamento UE
+    reglamentoDescripcion?: string;
+    reglamentoAutorizacion?: number;
+    advertencia?: string;
+
+    // Arrays BDNS
+    instrumentos?: string[];
+    tiposBeneficiarios?: TipoBeneficiarioDTO[];
+    sectores?: SectorDTO[];
+    sectoresProductos?: SectorDTO[];
+    regiones?: string[];
+    fondos?: string[];
+    objetivos?: string[];
+    anuncios?: AnuncioDTO[];
+    documentos?: DocumentoDTO[];
 }
 
 export interface BusquedaPublicaResponse {
@@ -101,7 +186,7 @@ export const convocatoriasPublicasApi = {
     finalidades: () => api.get<string[]>("/convocatorias/publicas/finalidades"),
     tipos: () => api.get<string[]>("/convocatorias/publicas/tipos"),
     regiones: () => api.get<RegionNodo[]>("/convocatorias/publicas/regiones"),
-    detalle: (id: number) => api.get<ConvocatoriaDetalle>(`/convocatorias/publicas/${id}`),
+    detalle: (numeroConvocatoria: string) => api.get<ConvocatoriaDetalle>(`/convocatorias/publicas/${encodeURIComponent(numeroConvocatoria)}`),
 };
 
 // ── Convocatorias autenticadas (con match score) ───────────────────────────────

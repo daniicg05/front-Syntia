@@ -83,7 +83,8 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
 
     function handleClick() {
         if (!autenticado) { onAccesoRequerido?.(); return; }
-        router.push(`/convocatorias/${c.id}`);
+        const codigo = c.numeroConvocatoria ?? String(c.id);
+        router.push(`/convocatorias/${encodeURIComponent(codigo)}`);
     }
 
     return (
