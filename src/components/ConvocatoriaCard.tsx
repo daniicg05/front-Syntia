@@ -2,7 +2,6 @@
 
 import { ConvocatoriaPublica } from "@/lib/api";
 import { ArrowRight, ExternalLink, Lock } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -58,32 +57,29 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
     const presupuestoFmt = formatPresupuesto(c.presupuesto);
     const progress       = daysLeft != null && daysLeft > 0 ? calcProgress(daysLeft) : null;
 
-    // Left accent bar
     const accentBar =
         esCerrada ? null :
-        urgent    ? "bg-red-500" :
-        highMatch ? "bg-emerald-500" :
-        moderate  ? "bg-amber-400" :
-        null;
+            urgent    ? "bg-red-500" :
+                highMatch ? "bg-emerald-500" :
+                    moderate  ? "bg-amber-400" :
+                        null;
 
-    // Status badge
     const badge =
         esCerrada                 ? { label: "Cerrada",            bg: "bg-red-50",     text: "text-red-800"     } :
-        urgent                    ? { label: "Cierre próximo",     bg: "bg-red-100",    text: "text-red-900"     } :
-        highMatch                 ? { label: "Alta compatibilidad",bg: "bg-emerald-100",text: "text-emerald-900" } :
-        c.abierto === true        ? { label: "Abierta",            bg: "bg-[#b9eaff]",  text: "text-[#004d62]"  } :
-        null;
+            urgent                    ? { label: "Cierre próximo",     bg: "bg-red-100",    text: "text-red-900"     } :
+                highMatch                 ? { label: "Alta compatibilidad",bg: "bg-emerald-100",text: "text-emerald-900" } :
+                    c.abierto === true        ? { label: "Abierta",            bg: "bg-[#b9eaff]",  text: "text-[#004d62]"  } :
+                        null;
 
-    // Progress bar + label color
     const progressBarColor =
         urgent   ? "bg-red-500" :
-        moderate ? "bg-amber-400" :
-        "bg-primary";
+            moderate ? "bg-amber-400" :
+                "bg-primary";
 
     const daysTextColor =
         urgent   ? "text-red-600" :
-        moderate ? "text-amber-600" :
-        "text-foreground-muted";
+            moderate ? "text-amber-600" :
+                "text-foreground-muted";
 
     function handleClick() {
         if (!autenticado) { onAccesoRequerido?.(); return; }
@@ -92,17 +88,14 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
 
     return (
         <div className="bg-white hover:shadow-xl hover:shadow-black/[0.03] transition-all duration-200 p-6 rounded-2xl group relative overflow-hidden border border-border">
-            {/* Left accent bar */}
             {accentBar && (
                 <div className={`absolute top-0 left-0 w-1 h-full ${accentBar}`} />
             )}
 
             <div className="flex flex-col md:flex-row justify-between gap-6">
 
-                {/* ── Left content ─────────────────────────────────────── */}
                 <div className="flex-1 space-y-4 min-w-0">
 
-                    {/* Badge + ID row */}
                     <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -123,14 +116,12 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                                 )}
                             </div>
 
-                            {/* Title */}
                             <h3 className="text-xl font-bold text-foreground leading-tight group-hover:text-primary transition-colors duration-150 line-clamp-2">
                                 {c.titulo}
                             </h3>
                         </div>
                     </div>
 
-                    {/* Tags: tipo + sector + ubicacion */}
                     {(c.tipo || c.sector || c.ubicacion) && (
                         <div className="flex flex-wrap gap-2">
                             {c.tipo && (
@@ -151,7 +142,6 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                         </div>
                     )}
 
-                    {/* Organismo + fecha publicación */}
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                         {c.organismo && (
                             <span className="text-xs text-foreground-muted font-medium truncate max-w-[280px]">
@@ -165,7 +155,6 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                         )}
                     </div>
 
-                    {/* Progress bar */}
                     {!esCerrada && progress != null && daysLeft != null && daysLeft > 0 && (
                         <div className="space-y-2">
                             <div className="flex justify-between text-xs font-bold">
@@ -184,10 +173,8 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                     )}
                 </div>
 
-                {/* ── Right metrics ─────────────────────────────────────── */}
                 <div className="md:w-56 shrink-0 flex flex-col justify-between gap-4 border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
 
-                    {/* Presupuesto */}
                     <div className="space-y-1">
                         <p className="text-[10px] font-bold text-foreground-muted uppercase tracking-widest">
                             Presupuesto total
@@ -201,7 +188,6 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                         )}
                     </div>
 
-                    {/* Fecha cierre */}
                     {c.fechaCierre && (
                         <div className="space-y-1">
                             <p className="text-[10px] font-bold text-foreground-muted uppercase tracking-widest">
@@ -213,7 +199,6 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                         </div>
                     )}
 
-                    {/* CTA */}
                     <button
                         onClick={handleClick}
                         className={`w-full py-2.5 rounded-xl font-bold text-sm hover:brightness-110 transition-all ${
@@ -244,14 +229,6 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                         </a>
                     )}
 
-                    {c.idBdns && (
-                        <Link
-                            href={`/convocatorias/${c.idBdns}`}
-                            className="text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors text-center"
-                        >
-                            Ver detalle completo
-                        </Link>
-                    )}
                 </div>
             </div>
         </div>
