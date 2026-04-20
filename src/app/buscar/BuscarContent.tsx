@@ -7,6 +7,8 @@ import { isAuthenticated } from "@/lib/auth";
 import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica, BusquedaPublicaResponse, RegionNodo } from "@/lib/api";
 import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
 import { ModalAccesoRequerido } from "@/components/ModalAccesoRequerido";
+import { BdnsFiltrosPanel } from "@/components/convocatorias/BdnsFiltrosPanel";
+import { FILTROS_INICIALES, type FiltrosBdns } from "@/types/bdns";
 
 const stripCodigo = (d: string) => d.replace(/^[A-Z0-9]+ - /, "").trim();
 
@@ -42,6 +44,11 @@ export default function BuscarContent() {
     const [loading, setLoading]           = useState(false);
     const [modalAcceso, setModalAcceso]   = useState(false);
     const [showFiltros, setShowFiltros]   = useState(false);
+    const [filtrosBdns, setFiltrosBdns]   = useState<FiltrosBdns>({
+        ...FILTROS_INICIALES,
+        descripcion: qParam || undefined,
+        regiones: regionParam ? [regionParam] : undefined,
+    });
     const autenticado = isAuthenticated();
 
     const buscar = useCallback((q: string, sec: string, page: number, abiertas: boolean, regionId?: number | null) => {
@@ -78,6 +85,12 @@ export default function BuscarContent() {
         setSector(sectorParam);
         setSoloAbiertas(!cerradasParam);
         setSelectedRegionId(regionParam);
+        setFiltrosBdns((prev) => ({
+            ...prev,
+            descripcion: qParam || undefined,
+            regiones: regionParam ? [regionParam] : undefined,
+            page: pageParam,
+        }));
         buscar(qParam, sectorParam, pageParam, !cerradasParam, regionParam);
     }, [qParam, sectorParam, pageParam, cerradasParam, regionParam, buscar]);
 
@@ -93,7 +106,9 @@ export default function BuscarContent() {
 
     function handleSearch(e: FormEvent) {
         e.preventDefault();
-        router.push(`/buscar?${buildParams(query.trim(), sector, 0, soloAbiertas, selectedRegionId)}`);
+        const nextQuery = query.trim();
+        setFiltrosBdns((prev) => ({ ...prev, descripcion: nextQuery || undefined }));
+        router.push(`/buscar?${buildParams(nextQuery, sector, 0, soloAbiertas, selectedRegionId)}`);
     }
 
     function handleSectorChange(value: string) {
@@ -109,7 +124,16 @@ export default function BuscarContent() {
     function handleRegionChange(value: string) {
         const id = value ? Number(value) : null;
         setSelectedRegionId(id);
+        setFiltrosBdns((prev) => ({ ...prev, regiones: id != null ? [id] : undefined }));
         router.push(`/buscar?${buildParams(qParam, sectorParam, 0, soloAbiertas, id)}`);
+    }
+
+    function handleBuscarConBdns() {
+        const nextQuery = (filtrosBdns.descripcion ?? "").trim();
+        const nextRegion = filtrosBdns.regiones?.[0] ?? null;
+        setQuery(nextQuery);
+        setSelectedRegionId(nextRegion);
+        router.push(`/buscar?${buildParams(nextQuery, sector, 0, soloAbiertas, nextRegion)}`);
     }
 
     function goToPage(page: number) {
@@ -171,6 +195,13 @@ export default function BuscarContent() {
                 {/* Filtros desplegables */}
                 {showFiltros && (
                     <div className="mt-3 p-4 bg-surface border border-border rounded-xl space-y-4">
+                        <BdnsFiltrosPanel
+                            filtros={filtrosBdns}
+                            onChange={setFiltrosBdns}
+                            onBuscar={handleBuscarConBdns}
+                            loading={loading}
+                        />
+
                         <div>
                             <p className="text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-3">
                                 Sector

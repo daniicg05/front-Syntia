@@ -2,6 +2,7 @@
 
 import { ConvocatoriaPublica } from "@/lib/api";
 import { ArrowRight, ExternalLink, Lock } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -241,6 +242,15 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                         >
                             <ExternalLink className="w-3.5 h-3.5" /> Ver fuente oficial
                         </a>
+                    )}
+
+                    {c.idBdns && (
+                        <Link
+                            href={`/convocatorias/${c.idBdns}`}
+                            className="text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors text-center"
+                        >
+                            Ver detalle completo
+                        </Link>
                     )}
                 </div>
             </div>
