@@ -33,10 +33,10 @@ function Seccion({ titulo, contenido }: { titulo: string; contenido?: string | n
     if (!contenido) return null;
     return (
         <section>
-            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 pb-1 border-b border-gray-100 dark:border-gray-800">
+            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 pb-1 border-b border-gray-200">
                 {titulo}
             </h2>
-            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
                 {contenido}
             </p>
         </section>
@@ -47,8 +47,8 @@ function Campo({ label, value }: { label: string; value?: string | number | null
     if (value == null || value === '') return null;
     return (
         <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
-            <p className="font-semibold text-gray-800 dark:text-gray-200 text-sm mt-1 break-words">
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide">{label}</p>
+            <p className="font-semibold text-gray-800 text-sm mt-1 break-words">
                 {value}
             </p>
         </div>
@@ -59,17 +59,17 @@ function ListaBadges({ titulo, items }: { titulo: string; items?: string[] }) {
     if (!items || items.length === 0) return null;
     return (
         <section>
-            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                 {titulo}
             </h2>
             <div className="flex flex-wrap gap-2">
                 {items.map((it, i) => (
                     <span
                         key={i}
-                        className="text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2.5 py-1"
+                        className="text-xs rounded-full bg-gray-100 text-gray-700 px-2.5 py-1"
                     >
-            {it}
-          </span>
+                        {it}
+                    </span>
                 ))}
             </div>
         </section>
@@ -79,13 +79,13 @@ function ListaBadges({ titulo, items }: { titulo: string; items?: string[] }) {
 function Skeleton() {
     return (
         <div className="space-y-4 animate-pulse">
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+            <div className="h-6 bg-gray-200 rounded w-3/4" />
+            <div className="h-4 bg-gray-200 rounded w-1/2" />
             {[...Array(5)].map((_, i) => (
                 <div key={i} className="space-y-2 pt-3">
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
-                    <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded" />
-                    <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-5/6" />
+                    <div className="h-3 bg-gray-200 rounded w-1/4" />
+                    <div className="h-4 bg-gray-100 rounded" />
+                    <div className="h-4 bg-gray-100 rounded w-5/6" />
                 </div>
             ))}
         </div>
@@ -134,11 +134,11 @@ export default function DetalleConvocatoriaPage() {
     const presupuestoFmt = formatImporte(detalle?.presupuestoTotal);
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+        <div className="min-h-screen !bg-white text-gray-900" style={{ backgroundColor: '#ffffff' }}>
             <div className="max-w-4xl mx-auto px-4 py-8">
                 <button
                     onClick={() => router.back()}
-                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mb-6 transition-colors"
+                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors"
                 >
                     ← Volver a resultados
                 </button>
@@ -146,43 +146,43 @@ export default function DetalleConvocatoriaPage() {
                 {loading && <Skeleton />}
 
                 {error && (
-                    <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
+                    <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                         No se pudo cargar la convocatoria. {error}
                     </div>
                 )}
 
                 {detalle && (
-                    <article className="space-y-6">
+                    <article className="space-y-6 text-gray-900">
                         {/* Cabecera */}
                         <header className="space-y-3">
                             <div className="flex flex-wrap items-start gap-2">
                                 {detalle.tipo && (
-                                    <span className="text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 px-2.5 py-0.5">
-                    {detalle.tipo}
-                  </span>
+                                    <span className="text-[10px] font-medium rounded-full bg-gray-100 text-gray-600 px-2.5 py-0.5">
+                                        {detalle.tipo}
+                                    </span>
                                 )}
                                 {detalle.tipoConvocatoria && detalle.tipoConvocatoria !== detalle.tipo && (
-                                    <span className="text-xs font-medium rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 px-2.5 py-0.5">
-                    {detalle.tipoConvocatoria}
-                  </span>
+                                    <span className="text-[10px] font-medium rounded-full bg-blue-50 text-blue-700 px-2.5 py-0.5">
+                                        {detalle.tipoConvocatoria}
+                                    </span>
                                 )}
                                 {detalle.mrr && (
-                                    <span className="text-xs font-medium rounded-full bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300 px-2.5 py-0.5">
-                    MRR
-                  </span>
+                                    <span className="text-[10px] font-medium rounded-full bg-purple-50 text-purple-700 px-2.5 py-0.5">
+                                        MRR
+                                    </span>
                                 )}
                                 {detalle.sePublicaDiarioOficial && (
-                                    <span className="text-xs font-medium rounded-full bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 px-2.5 py-0.5">
-                    Diario oficial
-                  </span>
+                                    <span className="text-[10px] font-medium rounded-full bg-amber-50 text-amber-700 px-2.5 py-0.5">
+                                        Diario oficial
+                                    </span>
                                 )}
                             </div>
 
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-snug">
+                            <h1 className="font-semibold text-gray-900 leading-snug" style={{ fontSize: '1.5rem' }}>
                                 {detalle.titulo ?? 'Convocatoria'}
                             </h1>
 
-                            <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
+                            <div className="flex flex-wrap gap-3 text-xs text-gray-500">
                                 {detalle.fuente && <span>{detalle.fuente}</span>}
                                 {detalle.ubicacion && <span>{detalle.ubicacion}</span>}
                                 {detalle.sector && <span>{detalle.sector}</span>}
@@ -193,14 +193,14 @@ export default function DetalleConvocatoriaPage() {
                             </div>
 
                             {organo && (
-                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                <p className="text-xs text-gray-600">
                                     <span className="font-semibold">Órgano convocante:</span> {organo}
                                 </p>
                             )}
                         </header>
 
                         {/* Panel datos clave */}
-                        <section className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <section className="rounded-xl border border-gray-200 bg-white p-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
                             <Campo label="Presupuesto total" value={presupuestoFmt ?? undefined} />
                             <Campo label="Ayuda de Estado" value={detalle.ayudaEstado} />
                             <Campo label="Finalidad" value={detalle.finalidad} />
@@ -250,16 +250,16 @@ export default function DetalleConvocatoriaPage() {
                         {/* Anuncios */}
                         {detalle.anuncios && detalle.anuncios.length > 0 && (
                             <section>
-                                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                                     Anuncios / Extractos
                                 </h2>
                                 <ul className="space-y-2">
                                     {detalle.anuncios.map((a, i) => (
                                         <li
                                             key={i}
-                                            className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-sm"
+                                            className="rounded-lg border border-gray-200 bg-white p-3 text-sm"
                                         >
-                                            <p className="font-semibold text-gray-800 dark:text-gray-200">
+                                            <p className="font-semibold text-gray-800">
                                                 {a.titulo ?? `Anuncio ${a.numAnuncio ?? i + 1}`}
                                             </p>
                                             {a.desDiarioOficial && (
@@ -287,27 +287,27 @@ export default function DetalleConvocatoriaPage() {
                         {/* Documentos */}
                         {detalle.documentos && detalle.documentos.length > 0 && (
                             <section>
-                                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                                     Documentos
                                 </h2>
                                 <ul className="space-y-2">
                                     {detalle.documentos.map((d, i) => (
                                         <li
                                             key={i}
-                                            className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-sm flex flex-col"
+                                            className="rounded-lg border border-gray-200 bg-white p-3 text-sm flex flex-col"
                                         >
-                      <span className="font-semibold text-gray-800 dark:text-gray-200">
-                        {d.nombreFic ?? `Documento ${d.id ?? i + 1}`}
-                      </span>
+                                            <span className="font-semibold text-gray-800">
+                                                {d.nombreFic ?? `Documento ${d.id ?? i + 1}`}
+                                            </span>
                                             {d.descripcion && (
-                                                <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          {d.descripcion}
-                        </span>
+                                                <span className="text-xs text-gray-600 mt-1">
+                                                    {d.descripcion}
+                                                </span>
                                             )}
                                             {d.datPublicacion && (
                                                 <span className="text-xs text-gray-500 mt-1">
-                          Publicado: {formatFecha(d.datPublicacion)}
-                        </span>
+                                                    Publicado: {formatFecha(d.datPublicacion)}
+                                                </span>
                                             )}
                                         </li>
                                     ))}
@@ -316,7 +316,7 @@ export default function DetalleConvocatoriaPage() {
                         )}
 
                         {/* Enlaces oficiales */}
-                        <div className="flex flex-wrap justify-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+                        <div className="flex flex-wrap justify-center gap-3 pt-4 border-t border-gray-200">
                             {detalle.urlOficial && (
                                 <a
                                     href={detalle.urlOficial}
@@ -332,7 +332,7 @@ export default function DetalleConvocatoriaPage() {
                                     href={detalle.urlBasesReguladoras}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                                 >
                                     Bases reguladoras
                                 </a>
@@ -342,7 +342,7 @@ export default function DetalleConvocatoriaPage() {
                                     href={detalle.sedeElectronica}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                                 >
                                     Sede electrónica
                                 </a>
