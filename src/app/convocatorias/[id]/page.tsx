@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Bot, Briefcase, Building2, CalendarDays, ChevronDown, CircleHelp, Cpu, Download, Factory, FileText, Hash, Leaf, Lock, MapPin, Sparkles, Star, Users, type LucideIcon } from "lucide-react";
-import { ConvocatoriaDetalle, convocatoriasPublicasApi } from "@/lib/api";
+import { ArrowLeft, Briefcase, Building2, CalendarDays, ChevronDown, CircleHelp, Cpu, Download, Euro, Factory, FileText, Hash, Leaf, Lock, MapPin, Sparkles, Star, Users } from "lucide-react";
+import { ConvocatoriaDTO, convocatoriasPublicasApi } from "@/lib/api";
 
 function normalizeText(value: string | null | undefined): string | null {
   if (typeof value !== "string") return null;
@@ -45,13 +45,6 @@ function formatCurrency(value: number | string | null | undefined): string {
   if (Number.isNaN(raw)) return String(value);
   return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(raw);
 }
-
-type FilaDetalle = {
-  clave: "id" | "codigoBdns" | "sector" | "descripcion" | "tiposBeneficiario";
-  campo: string;
-  valor: string;
-  icono: LucideIcon;
-};
 
 export default function ConvocatoriaDetallePage() {
   const params = useParams<{ id: string }>();
@@ -194,22 +187,6 @@ export default function ConvocatoriaDetallePage() {
     );
   }
 
-  const filasDetalle: FilaDetalle[] = [
-    { clave: "id", campo: "id", valor: String(detalle.id), icono: Hash },
-    { clave: "codigoBdns", campo: "codigo BDNS", valor: detalle.codigoBdns ?? "No disponible", icono: FileText },
-    { clave: "sector", campo: "sector", valor: detalle.sector ?? "No disponible", icono: Building2 },
-    { clave: "descripcion", campo: "descripcion", valor: detalle.descripcion ?? "No disponible", icono: FileText },
-    {
-      clave: "tiposBeneficiario",
-      campo: "tipos de beneficiario",
-      valor: detalle.tiposBeneficiario.length > 0 ? detalle.tiposBeneficiario.join(", ") : "No disponible",
-      icono: Users,
-    },
-  ];
-
-  const primeraPalabraDescripcion = detalle.descripcion?.trim().split(/\s+/).slice(0, 5).join(" ") ?? "No disponible";
-  const tituloDetalle = `# id ${detalle.id} I · I ${primeraPalabraDescripcion}`;
-
   return (
     <section className="max-w-6xl mx-auto px-4 py-10">
       <div className="mb-4">
@@ -217,83 +194,294 @@ export default function ConvocatoriaDetallePage() {
           <ArrowLeft className="w-4 h-4" /> Volver al listado
         </Link>
       </div>
-      <div className="rounded-2xl border border-border bg-surface/80 backdrop-blur-sm p-5 mb-4 shadow-sm">
-        <p className="ml-3 text-xl font-semibold tracking-tight text-foreground font-sans">
-          {tituloDetalle}
-        </p>
-      </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
+        <article className="lg:col-span-7 bg-surface border border-border rounded-2xl p-6 sm:p-8 space-y-6">
+          <header>
+            <p className="text-xs font-bold tracking-widest uppercase text-foreground-muted">Detalle de convocatoria</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary-light hover:bg-cyan-400 dark:bg-primary-hover dark:hover:bg-primary-hover px-3 py-1 text-xs font-semibold text-primary cursor-pointer"
+              >
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                {detalle.abierto === false ? "Cerrada" : "Abierta"}
+              </button>
+              {detalle.tipo && (
+                <button
+                  type="button"
+                  className="inline-flex items-center hover:bg-blue-300 rounded-full border border-border px-3 py-1 text-xs font-semibold text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+                >
+                  {detalle.tipo}
+                </button>
+              )}
+              {detalle.ubicacion && (
+                <button
+                  type="button"
+                  className="inline-flex items-center hover:bg-blue-300 rounded-full border border-border px-3 py-1 text-xs font-semibold text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+                >
+                  {detalle.ubicacion}
+                </button>
+              )}
+            </div>
+            {(() => {
+              const tituloPreview = detalle
+                ? (detalle.descripcion
+                  ? detalle.descripcion.split(/\s+/).filter(Boolean).slice(0, 15).join(" ")
+                  : detalle.titulo ?? `Convocatoria #${detalle.id}`)
+                : `Convocatoria #`;
+              return (
+                <h2 className="text-2xl font-bold text-foreground mt-1">{tituloPreview}</h2>
+              );
+            })()}
+          </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-10 gap-6 items-start">
-        <article className="lg:col-span-8 bg-surface border border-border rounded-2xl p-6 sm:p-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-[7fr_3fr] gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="rounded-xl border border-border p-4 bg-surface">
               <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-foreground-muted" />
-                descripcion
+                <Hash className="w-3.5 h-3.5" /> Nº Convocatoria
               </p>
-              <p className="mt-2 text-sm text-foreground whitespace-pre-line">{detalle.descripcion ?? "No disponible"}</p>
+              <p className="mt-2 text-sm text-foreground">{detalle.numeroConvocatoria ?? detalle.idBdns ?? "No disponible"}</p>
             </div>
 
-            <div className="space-y-4">
-              <div className="rounded-xl border border-border p-4 bg-surface">
-                <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
-                  <Hash className="w-3.5 h-3.5 text-foreground-muted" />
-                  id
+            <div className="rounded-xl border border-border p-4 bg-surface">
+              <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5" /> Sector
+              </p>
+              <p className="mt-2 text-sm text-foreground">{detalle.sector ?? "No disponible"}</p>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border p-4 bg-surface">
+            <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5" /> Descripcion detallada
+            </p>
+            <p className="mt-2 text-sm text-foreground whitespace-pre-line">
+              {detalle.textoCompleto ?? detalle.descripcion ?? "No disponible"}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border p-4 bg-surface">
+            <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5" /> Organismo convocante
+            </p>
+            <div className="mt-3 space-y-3  text-sm">
+              <div className="flex items-center gap-6">
+                <p className="text-foreground-muted w-32">Organismo</p>
+                <p className="text-foreground font-medium">
+                  {detalle.organismo ?? "No disponible"}
                 </p>
-                <p className="mt-2 text-sm text-foreground">{String(detalle.id)}</p>
               </div>
 
-              <div className="rounded-xl border border-border p-4 bg-surface">
-                <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-foreground-muted" />
-                  codigo BDNS
+              <div className="flex items-center gap-6">
+                <p className="text-foreground-muted w-32">Fuente</p>
+                <p className="text-foreground font-medium">
+                  {detalle.fuente ?? "No disponible"}
                 </p>
-                <p className="mt-2 text-sm text-foreground">{detalle.codigoBdns ?? "No disponible"}</p>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <p className="text-foreground-muted w-32">Región</p>
+                <p className="text-foreground font-medium">
+                  {detalle.ubicacion ?? "No disponible"}
+                </p>
               </div>
             </div>
           </div>
 
-          {filasDetalle
-            .filter((fila) => fila.clave !== "id" && fila.clave !== "codigoBdns" && fila.clave !== "descripcion")
-            .map((fila) => (
-              <div key={fila.clave} className="flex flex-col rounded-xl border border-border p-4 bg-surface">
-                <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
-                  <fila.icono className="w-3.5 h-3.5 text-foreground-muted" />
-                  {fila.campo}
-                </p>
-
-                <button className="mt-2 self-start px-4 py-1 text-sm bg-green-200 text-black border border-border rounded-full whitespace-pre-line cursor-pointer hover:bg-green-500 transition-colors">
-                  {fila.valor}
-                </button>
+          <div className="rounded-xl border border-border p-4 bg-surface">
+            <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5" /> Informacion general
+            </p>
+            <div className="mt-3 space-y-3 text-sm">
+              <div>
+                <p className="text-foreground-muted font-semibold">Tipo de convocatoria</p>
+                <p className="text-foreground">{detalle.tipo ?? "No disponible"}</p>
               </div>
-            ))}
-        </article>
-        <aside className="lg:col-span-2">
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-border bg-surface p-6 space-y-10">
+
+              <div>
+                <p className="text-foreground-muted font-semibold">Finalidad</p>
+                <p className="text-foreground">{detalle.finalidad ?? "No disponible"}</p>
+              </div>
+
+              <div>
+                <p className="text-foreground-muted font-semibold">Publicacion</p>
+                <p className="text-foreground">{formatDate(detalle.fechaPublicacion)}</p>
+              </div>
+
+              <div>
+                <p className="text-foreground-muted font-semibold">Bases de la convocatoria</p>
+                {detalle.urlOficial ? (
+                  <a
+                    href={detalle.urlOficial}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary font-semibold hover:underline break-all"
+                  >
+                    {detalle.urlOficial}
+                  </a>
+                ) : (
+                  <p className="text-foreground">No disponible</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border p-4 bg-surface">
+            <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5" /> Tipos de beneficiario
+            </p>
+            {detalle.tiposBeneficiario.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {detalle.tiposBeneficiario.map((tipo) => (
+                  <span
+                    key={tipo}
+                    className="px-3 py-1 rounded-full bg-primary-light text-primary text-xs font-semibold"
+                  >
+                    {tipo}
+                  </span>
+                ))}
+                <span className="px-3 py-1 rounded-full bg-primary-light text-primary text-xs font-semibold">
+                  Pymes en crecimiento
+                </span>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-foreground">No especificado</p>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-border p-4 bg-surface">
+            <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+              <Briefcase className="w-3.5 h-3.5" /> Sectores
+            </p>
+            <p className="mt-2 text-sm text-foreground whitespace-pre-line">
+              Impulso de iniciativas en digitalizacion, innovacion social, modernizacion de servicios publicos y mejora de la competitividad territorial.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
-                className="w-full inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-hover transition-colors cursor-pointer"
+                aria-label="Sector industria"
+                title="Industria"
+                className="h-11 w-11 rounded-xl border border-border bg-surface inline-flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
+              >
+                <Factory className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Sector tecnologia"
+                title="Tecnologia"
+                className="h-11 w-11 rounded-xl border border-border bg-surface inline-flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
+              >
+                <Cpu className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Sector servicios"
+                title="Servicios"
+                className="h-11 w-11 rounded-xl border border-border bg-surface inline-flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
+              >
+                <Building2 className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Sector sostenibilidad"
+                title="Sostenibilidad"
+                className="h-11 w-11 rounded-xl border border-border bg-surface inline-flex items-center justify-center text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
+              >
+                <Leaf className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border p-4 bg-surface">
+            <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5" /> Ambito geografico
+            </p>
+            <p className="mt-2 text-sm text-foreground whitespace-pre-line">
+              {detalle.ubicacion ?? "No disponible"}
+            </p>
+          </div>
+        </article>
+
+        <aside className="lg:col-span-3">
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-border bg-surface p-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+                <Star className="w-3.5 h-3.5" /> Añadir Favorito
+              </p>
+              <div className="mt-3 flex items-start justify-between gap-4">
+                <p className="text-sm text-foreground max-w-[65%]">
+                  Guarda esta convocatoria en tu lista para consultarla mas tarde y recibir seguimiento.
+                </p>
+                <button
+                  type="button"
+                  aria-label="Añadir a favoritos"
+                  className="h-14 w-14 shrink-0 rounded-2xl bg-primary text-white inline-flex items-center justify-center shadow-sm hover:bg-primary-hover dark:bg-primary/90 dark:hover:bg-primary-hover transition-colors cursor-pointer">
+                  <Star className="w-7 h-7 text-white fill-white" />
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-surface p-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>
+                  Accede a la gu<span className="text-primary">IA</span>
+                </span>
+              </p>
+              <p className="mt-2 text-sm text-foreground">
+                Consulta una ruta orientativa con pasos, requisitos y recomendaciones.
+              </p>
+              <button
+                type="button"
+                className="mt-3 w-full inline-flex items-center justify-center rounded-xl bg-primary text-white px-4 py-2.5 text-sm font-semibold hover:bg-primary-hover dark:bg-blue-500 dark:hover:bg-blue-500 transition-colors cursor-pointer"
               >
                 <Lock className="w-4 h-4 mr-2" />
                 <span>
-                  Acceder a la guia
+                  Accede a nuestra guia inteligente
                 </span>
               </button>
-              <button
-                type="button"
-                className="w-full inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-hover transition-colors cursor-pointer"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                <span>
-                  Analizar con IA
-                </span>
-              </button>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-surface p-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+                <Euro className="w-3.5 h-3.5" /> Presupuesto
+              </p>
+              <div className="mt-3 flex items-center justify-between">
+                <p className="text-sm text-foreground-muted">Asignado</p>
+                <p className="text-lg font-semibold text-foreground">
+                  {detalle.presupuesto
+                    ? formatCurrency(detalle.presupuesto)
+                    : "Sin cuantía"}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-surface p-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+                <CalendarDays className="w-3.5 h-3.5" /> Fechas importantes
+              </p>
+              <div className="mt-2 space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-foreground-muted font-semibold">Publicacion</span>
+                  <span className="text-foreground">{formatDate(detalle.fechaPublicacion)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-foreground-muted font-semibold">Inicio</span>
+                  <span className="text-foreground">
+                    {detalle.fechaInicio != null ? formatDate(detalle.fechaInicio) : formatDate(detalle.fechaPublicacion)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-foreground-muted font-semibold">Cierre</span>
+                  <span className="text-foreground">{formatDate(detalle.fechaCierre)}</span>
+                </div>
+              </div>
             </div>
           </div>
         </aside>
       </div>
+
       <div className="mt-6 flex justify-center">
         <button
           type="button"
@@ -306,4 +494,3 @@ export default function ConvocatoriaDetallePage() {
     </section>
   );
 }
-
