@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Bot, Briefcase, Building2, CalendarDays, ChevronDown, CircleHelp, Cpu, Download, Factory, FileText, Hash, Leaf, Lock, MapPin, Sparkles, Star, Users } from "lucide-react";
-import { ConvocatoriaDetalle, convocatoriasPublicasApi } from "@/lib/api";
+import { ArrowLeft, Briefcase, Building2, CalendarDays, ChevronDown, CircleHelp, Cpu, Download, Euro, Factory, FileText, Hash, Leaf, Lock, MapPin, Sparkles, Star, Users } from "lucide-react";
+import { ConvocatoriaDTO, convocatoriasPublicasApi } from "@/lib/api";
 
 function normalizeText(value: string | null | undefined): string | null {
   if (typeof value !== "string") return null;
@@ -20,24 +20,31 @@ function normalizeTipos(value: unknown): string[] {
     .filter(Boolean);
 }
 
-const PREGUNTAS_FRECUENTES_MOCK = [
-  {
-    pregunta: "¿Cual es el plazo maximo para presentar la solicitud?",
-    respuesta: "El plazo orientativo es de 30 dias naturales desde la fecha de publicacion en el boletin oficial.",
-  },
-  {
-    pregunta: "¿Se permite presentar la documentacion en formato digital?",
-    respuesta: "Si, la presentacion puede realizarse de forma telematica adjuntando los documentos requeridos en PDF firmado.",
-  },
-  {
-    pregunta: "¿Esta convocatoria permite anticipos de financiacion?",
-    respuesta: "De forma mockeada, se contempla la posibilidad de anticipo parcial sujeto a disponibilidad presupuestaria.",
-  },
-  {
-    pregunta: "¿Como se notificara la resolucion de concesion?",
-    respuesta: "La resolucion se notificara por sede electronica y se publicara en el tablon oficial de anuncios correspondiente.",
-  },
-];
+const parsePresupuesto = (value: unknown) => {
+  if (typeof value === "number") return value;
+
+  if (typeof value === "string") {
+    return Number(
+      value.replace(/[^0-9,.-]/g, "").replace(/,/g, ".")
+    );
+  }
+
+  return null;
+};
+
+function formatDate(value: string | null | undefined): string {
+  if (!value) return "No disponible";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString("es-ES");
+}
+
+function formatCurrency(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "No disponible";
+  const raw = typeof value === "number" ? value : Number(String(value).replace(/[^0-9,.-]/g, "").replace(/,/g, "."));
+  if (Number.isNaN(raw)) return String(value);
+  return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(raw);
+}
 
 export default function ConvocatoriaDetallePage() {
   const params = useParams<{ id: string }>();
@@ -48,7 +55,7 @@ export default function ConvocatoriaDetallePage() {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }, [idRaw]);
 
-  const [detalle, setDetalle] = useState<ConvocatoriaDetalle | null>(null);
+  const [detalle, setDetalle] = useState<ConvocatoriaDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState(false);
@@ -80,11 +87,24 @@ export default function ConvocatoriaDetallePage() {
 
         const data = response.data;
         setDetalle({
-          id: data.id,
-          codigoBdns: normalizeText(data.codigoBdns),
+          ...data,
+          titulo: normalizeText(data.titulo),
+          tipo: normalizeText(data.tipo),
+          ubicacion: normalizeText(data.ubicacion),
+          urlOficial: normalizeText(data.urlOficial),
+          fuente: normalizeText(data.fuente),
+          idBdns: normalizeText(data.idBdns),
+          numeroConvocatoria: normalizeText(data.numeroConvocatoria),
+          fechaCierre: normalizeText(data.fechaCierre),
+          organismo: normalizeText(data.organismo),
+          fechaPublicacion: normalizeText(data.fechaPublicacion),
           sector: normalizeText(data.sector),
           descripcion: normalizeText(data.descripcion),
+          textoCompleto: normalizeText(data.textoCompleto),
+          finalidad: normalizeText(data.finalidad),
+          fechaInicio: normalizeText(data.fechaInicio),
           tiposBeneficiario: normalizeTipos(data.tiposBeneficiario),
+          presupuesto: parsePresupuesto(data.presupuesto),
         });
       } catch (err: unknown) {
         if (!mounted) return;
@@ -182,33 +202,46 @@ export default function ConvocatoriaDetallePage() {
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary-light px-3 py-1 text-xs font-semibold text-primary cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary-light hover:bg-cyan-400 dark:bg-primary-hover dark:hover:bg-primary-hover px-3 py-1 text-xs font-semibold text-primary cursor-pointer"
               >
                 <span className="h-2 w-2 rounded-full bg-primary" />
-                Abierta
+                {detalle.abierto === false ? "Cerrada" : "Abierta"}
               </button>
-              <button
-                type="button"
-                className="inline-flex items-center rounded-full border border-border px-3 py-1 text-xs font-semibold text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
-              >
-                Local
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center rounded-full border border-border px-3 py-1 text-xs font-semibold text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
-              >
-                Pymes
-              </button>
+              {detalle.tipo && (
+                <button
+                  type="button"
+                  className="inline-flex items-center hover:bg-blue-300 rounded-full border border-border px-3 py-1 text-xs font-semibold text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+                >
+                  {detalle.tipo}
+                </button>
+              )}
+              {detalle.ubicacion && (
+                <button
+                  type="button"
+                  className="inline-flex items-center hover:bg-blue-300 rounded-full border border-border px-3 py-1 text-xs font-semibold text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+                >
+                  {detalle.ubicacion}
+                </button>
+              )}
             </div>
-            <h1 className="text-2xl font-bold text-foreground mt-1">Convocatoria #{detalle.id}</h1>
+            {(() => {
+              const tituloPreview = detalle
+                ? (detalle.descripcion
+                  ? detalle.descripcion.split(/\s+/).filter(Boolean).slice(0, 15).join(" ")
+                  : detalle.titulo ?? `Convocatoria #${detalle.id}`)
+                : `Convocatoria #`;
+              return (
+                <h2 className="text-2xl font-bold text-foreground mt-1">{tituloPreview}</h2>
+              );
+            })()}
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="rounded-xl border border-border p-4 bg-surface">
               <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
-                <Hash className="w-3.5 h-3.5" /> Codigo BDNS
+                <Hash className="w-3.5 h-3.5" /> Nº Convocatoria
               </p>
-              <p className="mt-2 text-sm text-foreground">{detalle.codigoBdns ?? "No disponible"}</p>
+              <p className="mt-2 text-sm text-foreground">{detalle.numeroConvocatoria ?? detalle.idBdns ?? "No disponible"}</p>
             </div>
 
             <div className="rounded-xl border border-border p-4 bg-surface">
@@ -221,22 +254,10 @@ export default function ConvocatoriaDetallePage() {
 
           <div className="rounded-xl border border-border p-4 bg-surface">
             <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5" /> Descripcion
-            </p>
-            <p className="mt-2 text-sm text-foreground whitespace-pre-line">
-              {detalle.descripcion ?? "No disponible"}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-border p-4 bg-surface">
-            <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5" /> Descripcion detallada
             </p>
             <p className="mt-2 text-sm text-foreground whitespace-pre-line">
-              Esta subvencion parece orientada a impulsar proyectos con impacto real en competitividad y transformacion empresarial.
-              Por el enfoque del titulo, prioriza actuaciones que mejoren procesos internos, digitalizacion y capacidad de innovacion.
-              Tambien sugiere una evaluacion centrada en viabilidad tecnica, alcance territorial y resultados medibles en el corto y medio plazo.
-              En conjunto, la convocatoria apunta a entidades que puedan ejecutar acciones concretas, justificables y alineadas con objetivos publicos.
+              {detalle.textoCompleto ?? detalle.descripcion ?? "No disponible"}
             </p>
           </div>
 
@@ -244,18 +265,26 @@ export default function ConvocatoriaDetallePage() {
             <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
               <Building2 className="w-3.5 h-3.5" /> Organismo convocante
             </p>
-            <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-              <div className="text-foreground-muted space-y-2">
-                <p>Nivel</p>
-                <p>Administracion</p>
-                <p>Departamento</p>
-                <p>Region</p>
+            <div className="mt-3 space-y-3  text-sm">
+              <div className="flex items-center gap-6">
+                <p className="text-foreground-muted w-32">Organismo</p>
+                <p className="text-foreground font-medium">
+                  {detalle.organismo ?? "No disponible"}
+                </p>
               </div>
-              <div className="text-foreground font-medium space-y-2">
-                <p>Autonomico</p>
-                <p>Generalitat Valenciana</p>
-                <p>Conselleria de Innovacion, Industria y Turismo</p>
-                <p>Comunidad Valenciana</p>
+
+              <div className="flex items-center gap-6">
+                <p className="text-foreground-muted w-32">Fuente</p>
+                <p className="text-foreground font-medium">
+                  {detalle.fuente ?? "No disponible"}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <p className="text-foreground-muted w-32">Región</p>
+                <p className="text-foreground font-medium">
+                  {detalle.ubicacion ?? "No disponible"}
+                </p>
               </div>
             </div>
           </div>
@@ -267,34 +296,33 @@ export default function ConvocatoriaDetallePage() {
             <div className="mt-3 space-y-3 text-sm">
               <div>
                 <p className="text-foreground-muted font-semibold">Tipo de convocatoria</p>
-                <p className="text-foreground">Concesion directa - instrumental</p>
+                <p className="text-foreground">{detalle.tipo ?? "No disponible"}</p>
               </div>
 
               <div>
                 <p className="text-foreground-muted font-semibold">Finalidad</p>
-                <p className="text-foreground">Servicios Sociales y Promocion Social</p>
-              </div>
-
-              <div>
-                <p className="text-foreground-muted font-semibold">Instrumentos</p>
-                <p className="text-foreground">{"descripcion => SUBVENCION Y ENTREGA DINERARIA SIN CONTRAPRESTACION"}</p>
+                <p className="text-foreground">{detalle.finalidad ?? "No disponible"}</p>
               </div>
 
               <div>
                 <p className="text-foreground-muted font-semibold">Publicacion</p>
-                <p className="text-foreground">06/02/2026</p>
+                <p className="text-foreground">{formatDate(detalle.fechaPublicacion)}</p>
               </div>
 
               <div>
                 <p className="text-foreground-muted font-semibold">Bases de la convocatoria</p>
-                <a
-                  href="https://bop2.dipgra.es/opencms/opencms/portal/index.jsp?o..."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary font-semibold hover:underline break-all"
-                >
-                  https://bop2.dipgra.es/opencms/opencms/portal/index.jsp?o...
-                </a>
+                {detalle.urlOficial ? (
+                  <a
+                    href={detalle.urlOficial}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary font-semibold hover:underline break-all"
+                  >
+                    {detalle.urlOficial}
+                  </a>
+                ) : (
+                  <p className="text-foreground">No disponible</p>
+                )}
               </div>
             </div>
           </div>
@@ -370,64 +398,8 @@ export default function ConvocatoriaDetallePage() {
               <MapPin className="w-3.5 h-3.5" /> Ambito geografico
             </p>
             <p className="mt-2 text-sm text-foreground whitespace-pre-line">
-              Convocatoria de aplicacion en todo el territorio de la Comunidad Valenciana, con posibilidad de actuaciones en ambito municipal y comarcal.
+              {detalle.ubicacion ?? "No disponible"}
             </p>
-          </div>
-
-          <div className="rounded-xl border border-border p-4 bg-surface">
-            <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5" /> Documentacion necesaria
-            </p>
-            <p className="mt-2 text-sm text-foreground">
-              Documentacion requerida mockeada para la solicitud: memoria tecnica del proyecto, declaracion responsable y presupuesto detallado de ejecucion.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" /> Memoria_tecnica.pdf
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" /> Declaracion_responsable.pdf
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" /> Presupuesto_detallado.xlsx
-              </button>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-border p-4 bg-surface">
-            <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
-              <CircleHelp className="w-3.5 h-3.5" /> Preguntas frecuentes
-            </p>
-            <div className="mt-3 space-y-2">
-              {PREGUNTAS_FRECUENTES_MOCK.map((item, index) => {
-                const abierta = preguntaAbierta === index;
-                return (
-                  <div key={item.pregunta} className="rounded-lg border border-border bg-surface">
-                    <button
-                      type="button"
-                      onClick={() => setPreguntaAbierta(abierta ? null : index)}
-                      className="w-full px-3 py-2.5 flex items-center justify-between gap-3 text-left cursor-pointer"
-                      aria-expanded={abierta}
-                    >
-                      <span className="text-sm font-semibold text-foreground">{item.pregunta}</span>
-                      <ChevronDown className={`w-4 h-4 text-foreground-muted transition-transform ${abierta ? "rotate-180" : "rotate-0"}`} />
-                    </button>
-                    {abierta && (
-                      <p className="px-3 pb-3 text-sm text-foreground-muted">{item.respuesta}</p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </article>
 
@@ -444,8 +416,7 @@ export default function ConvocatoriaDetallePage() {
                 <button
                   type="button"
                   aria-label="Añadir a favoritos"
-                  className="h-14 w-14 shrink-0 rounded-2xl bg-primary inline-flex items-center justify-center shadow-sm hover:bg-primary-hover transition-colors cursor-pointer"
-                >
+                  className="h-14 w-14 shrink-0 rounded-2xl bg-primary text-white inline-flex items-center justify-center shadow-sm hover:bg-primary-hover dark:bg-primary/90 dark:hover:bg-primary-hover transition-colors cursor-pointer">
                   <Star className="w-7 h-7 text-white fill-white" />
                 </button>
               </div>
@@ -463,7 +434,7 @@ export default function ConvocatoriaDetallePage() {
               </p>
               <button
                 type="button"
-                className="mt-3 w-full inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover transition-colors cursor-pointer"
+                className="mt-3 w-full inline-flex items-center justify-center rounded-xl bg-primary text-white px-4 py-2.5 text-sm font-semibold hover:bg-primary-hover dark:bg-blue-500 dark:hover:bg-blue-500 transition-colors cursor-pointer"
               >
                 <Lock className="w-4 h-4 mr-2" />
                 <span>
@@ -474,20 +445,36 @@ export default function ConvocatoriaDetallePage() {
 
             <div className="rounded-2xl border border-border bg-surface p-4">
               <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+                <Euro className="w-3.5 h-3.5" /> Presupuesto
+              </p>
+              <div className="mt-3 flex items-center justify-between">
+                <p className="text-sm text-foreground-muted">Asignado</p>
+                <p className="text-lg font-semibold text-foreground">
+                  {detalle.presupuesto
+                    ? formatCurrency(detalle.presupuesto)
+                    : "Sin cuantía"}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-surface p-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
                 <CalendarDays className="w-3.5 h-3.5" /> Fechas importantes
               </p>
               <div className="mt-2 space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
+                  <span className="text-foreground-muted font-semibold">Publicacion</span>
+                  <span className="text-foreground">{formatDate(detalle.fechaPublicacion)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
                   <span className="text-foreground-muted font-semibold">Inicio</span>
-                  <span className="text-foreground">10/05/2026</span>
+                  <span className="text-foreground">
+                    {detalle.fechaInicio != null ? formatDate(detalle.fechaInicio) : formatDate(detalle.fechaPublicacion)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-foreground-muted font-semibold">Cierre</span>
-                  <span className="text-foreground">30/06/2026</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-foreground-muted font-semibold">Resolucion</span>
-                  <span className="text-foreground">15/09/2026</span>
+                  <span className="text-foreground">{formatDate(detalle.fechaCierre)}</span>
                 </div>
               </div>
             </div>

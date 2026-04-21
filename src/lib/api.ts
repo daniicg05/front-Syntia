@@ -71,12 +71,29 @@ export interface ConvocatoriaPublica {
     presupuesto?: number;
 }
 
-export interface ConvocatoriaDetalle {
+export interface ConvocatoriaDTO {
     id: number;
-    codigoBdns: string | null;
-    sector: string | null;
-    descripcion: string | null;
-    tiposBeneficiario: string[];
+    titulo?: string | null;
+    tipo?: string | null;
+    sector?: string | null;
+    ubicacion?: string | null;
+    urlOficial?: string | null;
+    fuente?: string | null;
+    idBdns?: string | null;
+    numeroConvocatoria?: string | null;
+    fechaCierre?: string | null;
+    organismo?: string | null;
+    fechaPublicacion?: string | null;
+    descripcion?: string | null;
+    textoCompleto?: string | null;
+    mrr?: string | null;
+    presupuesto?: number | null;
+    abierto?: boolean | null;
+    finalidad?: string | null;
+    fechaInicio?: string | null;
+    regionId?: number | null;
+    provinciaId?: number | null;
+    tiposBeneficiario?: string[] | null;
 }
 
 export interface BusquedaPublicaResponse {
@@ -93,7 +110,7 @@ export const convocatoriasPublicasApi = {
     destacadas: () => api.get<ConvocatoriaPublica[]>("/convocatorias/publicas/destacadas"),
     finalidades: () => api.get<string[]>("/convocatorias/publicas/finalidades"),
     tipos: () => api.get<string[]>("/convocatorias/publicas/tipos"),
-    detalle: (id: number) => api.get<ConvocatoriaDetalle>(`/convocatorias/publicas/${id}`),
+    detalle: (id: number) => api.get<ConvocatoriaDTO>(`/convocatorias/publicas/${id}`),
 };
 
 // ── Convocatorias autenticadas (con match score) ───────────────────────────────
