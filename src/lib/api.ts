@@ -97,6 +97,16 @@ export interface ConvocatoriaDTO {
     numeroConvocatoria?: string | null;
 }
 
+
+export interface ConvocatoriaDetalle extends ConvocatoriaDTO {
+    textoCompleto?: string | null;
+    finalidad?: string | null;
+    fechaInicio?: string | null;
+    tipo?: string | null;
+    fuente?: string | null;
+    idBdns?: string | null;
+}
+
 export interface BusquedaPublicaResponse {
     content: ConvocatoriaPublica[];
     totalElements: number;
