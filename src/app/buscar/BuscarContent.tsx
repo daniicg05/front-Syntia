@@ -4,9 +4,11 @@ import { useState, FormEvent, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, ArrowRight, SlidersHorizontal, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
-import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica, BusquedaPublicaResponse } from "@/lib/api";
+import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica, BusquedaPublicaResponse, RegionNodo } from "@/lib/api";
 import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
 import { ModalAccesoRequerido } from "@/components/ModalAccesoRequerido";
+
+const stripCodigo = (d: string) => d.replace(/^[A-Z0-9]+ - /, "").trim();
 
 const SECTORES_FILTRO = [
     { value: "", label: "Todos los sectores" },
@@ -25,26 +27,30 @@ export default function BuscarContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const qParam       = searchParams.get("q") ?? "";
-    const sectorParam  = searchParams.get("sector") ?? "";
-    const pageParam    = parseInt(searchParams.get("page") ?? "0", 10);
+    const qParam        = searchParams.get("q") ?? "";
+    const sectorParam   = searchParams.get("sector") ?? "";
+    const pageParam     = parseInt(searchParams.get("page") ?? "0", 10);
     const cerradasParam = searchParams.get("cerradas") === "1";
+    const regionParam   = searchParams.get("regionId") ? Number(searchParams.get("regionId")) : null;
 
     const [query, setQuery]               = useState(qParam);
     const [sector, setSector]             = useState(sectorParam);
     const [soloAbiertas, setSoloAbiertas] = useState(!cerradasParam);
+    const [selectedRegionId, setSelectedRegionId] = useState<number | null>(regionParam);
+    const [regiones, setRegiones]         = useState<RegionNodo[]>([]);
     const [resultados, setResultados]     = useState<BusquedaPublicaResponse | null>(null);
     const [loading, setLoading]           = useState(false);
     const [modalAcceso, setModalAcceso]   = useState(false);
     const [showFiltros, setShowFiltros]   = useState(false);
     const autenticado = isAuthenticated();
 
-    const buscar = useCallback((q: string, sec: string, page: number, abiertas: boolean) => {
+    const buscar = useCallback((q: string, sec: string, page: number, abiertas: boolean, regionId?: number | null) => {
         setLoading(true);
         const params = {
-            q: q || undefined,
-            sector: sec || undefined,
-            abierto: abiertas ? true : undefined,
+            q:        q   || undefined,
+            sector:   sec || undefined,
+            abierto:  abiertas ? true : undefined,
+            regionId: regionId ?? undefined,
             page,
             size: 20,
         };
@@ -59,38 +65,55 @@ export default function BuscarContent() {
     }, [autenticado]);
 
     useEffect(() => {
+        if (regiones.length === 0) {
+            convocatoriasPublicasApi.regiones()
+                .then((res) => setRegiones(res.data))
+                .catch(() => {});
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
         setQuery(qParam);
         setSector(sectorParam);
         setSoloAbiertas(!cerradasParam);
-        buscar(qParam, sectorParam, pageParam, !cerradasParam);
-    }, [qParam, sectorParam, pageParam, cerradasParam, buscar]);
+        setSelectedRegionId(regionParam);
+        buscar(qParam, sectorParam, pageParam, !cerradasParam, regionParam);
+    }, [qParam, sectorParam, pageParam, cerradasParam, regionParam, buscar]);
 
-    function buildParams(q: string, sec: string, page: number, abiertas: boolean) {
+    function buildParams(q: string, sec: string, page: number, abiertas: boolean, regionId?: number | null) {
         const params = new URLSearchParams();
         if (q) params.set("q", q);
         if (sec) params.set("sector", sec);
         if (page) params.set("page", String(page));
         if (!abiertas) params.set("cerradas", "1");
+        if (regionId) params.set("regionId", String(regionId));
         return params.toString();
     }
 
     function handleSearch(e: FormEvent) {
         e.preventDefault();
-        router.push(`/buscar?${buildParams(query.trim(), sector, 0, soloAbiertas)}`);
+        router.push(`/buscar?${buildParams(query.trim(), sector, 0, soloAbiertas, selectedRegionId)}`);
     }
 
     function handleSectorChange(value: string) {
         setSector(value);
-        router.push(`/buscar?${buildParams(query.trim(), value, 0, soloAbiertas)}`);
+        router.push(`/buscar?${buildParams(query.trim(), value, 0, soloAbiertas, selectedRegionId)}`);
     }
 
     function handleToggleAbiertas() {
         const next = !soloAbiertas;
-        router.push(`/buscar?${buildParams(qParam, sectorParam, 0, next)}`);
+        router.push(`/buscar?${buildParams(qParam, sectorParam, 0, next, selectedRegionId)}`);
+    }
+
+    function handleRegionChange(value: string) {
+        const id = value ? Number(value) : null;
+        setSelectedRegionId(id);
+        router.push(`/buscar?${buildParams(qParam, sectorParam, 0, soloAbiertas, id)}`);
     }
 
     function goToPage(page: number) {
-        router.push(`/buscar?${buildParams(qParam, sectorParam, page, soloAbiertas)}`);
+        router.push(`/buscar?${buildParams(qParam, sectorParam, page, soloAbiertas, selectedRegionId)}`);
     }
 
     const tieneResultados = resultados && resultados.content.length > 0;
@@ -134,14 +157,14 @@ export default function BuscarContent() {
                         type="button"
                         onClick={() => setShowFiltros((v) => !v)}
                         className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
-                            showFiltros || sector || !soloAbiertas
+                            showFiltros || sector || !soloAbiertas || selectedRegionId
                                 ? "border-primary bg-primary-light text-primary"
                                 : "border-border text-foreground-muted hover:bg-surface-muted"
                         }`}
                     >
                         <SlidersHorizontal className="w-4 h-4" />
                         <span className="hidden sm:inline">Filtros</span>
-                        {(sector || !soloAbiertas) && <span className="w-2 h-2 rounded-full bg-primary" />}
+                        {(sector || !soloAbiertas || selectedRegionId) && <span className="w-2 h-2 rounded-full bg-primary" />}
                     </button>
                 </form>
 
@@ -169,6 +192,30 @@ export default function BuscarContent() {
                                 ))}
                             </div>
                         </div>
+
+                        {regiones.length > 0 && (
+                            <div>
+                                <p className="text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-3">
+                                    Región / CCAA
+                                </p>
+                                <select
+                                    value={selectedRegionId ?? ""}
+                                    onChange={(e) => handleRegionChange(e.target.value)}
+                                    className="w-full bg-surface border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                >
+                                    <option value="">Toda España</option>
+                                    {regiones.map((macroRegion) => (
+                                        <optgroup key={macroRegion.id} label={stripCodigo(macroRegion.descripcion)}>
+                                            {macroRegion.children.map((ccaa) => (
+                                                <option key={ccaa.id} value={ccaa.id}>
+                                                    {stripCodigo(ccaa.descripcion)}
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
 
                         <div className="border-t border-border pt-4 flex items-center justify-between">
                             <div>

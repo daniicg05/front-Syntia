@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Briefcase, Building2, CalendarDays, ChevronDown, CircleHelp, Cpu, Download, Euro, Factory, FileText, Hash, Leaf, Lock, MapPin, Sparkles, Star, Users } from "lucide-react";
-import { ConvocatoriaDTO, convocatoriasPublicasApi } from "@/lib/api";
+import { ArrowLeft, Bot, Briefcase, Building2, CalendarDays, ChevronDown, CircleHelp, Cpu, Download, Factory, FileText, Hash, Leaf, Lock, MapPin, Sparkles, Star, Users, type LucideIcon } from "lucide-react";
+import { ConvocatoriaDetalle, convocatoriasPublicasApi } from "@/lib/api";
 
 function normalizeText(value: string | null | undefined): string | null {
   if (typeof value !== "string") return null;
@@ -45,6 +45,13 @@ function formatCurrency(value: number | string | null | undefined): string {
   if (Number.isNaN(raw)) return String(value);
   return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(raw);
 }
+
+type FilaDetalle = {
+  clave: "id" | "codigoBdns" | "sector" | "descripcion" | "tiposBeneficiario";
+  campo: string;
+  valor: string;
+  icono: LucideIcon;
+};
 
 export default function ConvocatoriaDetallePage() {
   const params = useParams<{ id: string }>();
@@ -187,6 +194,22 @@ export default function ConvocatoriaDetallePage() {
     );
   }
 
+  const filasDetalle: FilaDetalle[] = [
+    { clave: "id", campo: "id", valor: String(detalle.id), icono: Hash },
+    { clave: "codigoBdns", campo: "codigo BDNS", valor: detalle.codigoBdns ?? "No disponible", icono: FileText },
+    { clave: "sector", campo: "sector", valor: detalle.sector ?? "No disponible", icono: Building2 },
+    { clave: "descripcion", campo: "descripcion", valor: detalle.descripcion ?? "No disponible", icono: FileText },
+    {
+      clave: "tiposBeneficiario",
+      campo: "tipos de beneficiario",
+      valor: detalle.tiposBeneficiario.length > 0 ? detalle.tiposBeneficiario.join(", ") : "No disponible",
+      icono: Users,
+    },
+  ];
+
+  const primeraPalabraDescripcion = detalle.descripcion?.trim().split(/\s+/).slice(0, 5).join(" ") ?? "No disponible";
+  const tituloDetalle = `# id ${detalle.id} I · I ${primeraPalabraDescripcion}`;
+
   return (
     <section className="max-w-6xl mx-auto px-4 py-10">
       <div className="mb-4">
@@ -194,11 +217,89 @@ export default function ConvocatoriaDetallePage() {
           <ArrowLeft className="w-4 h-4" /> Volver al listado
         </Link>
       </div>
+      <div className="rounded-2xl border border-border bg-surface/80 backdrop-blur-sm p-5 mb-4 shadow-sm">
+        <p className="ml-3 text-xl font-semibold tracking-tight text-foreground font-sans">
+          {tituloDetalle}
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
+
+      <div className="grid grid-cols-2 lg:grid-cols-10 gap-6 items-start">
+        <article className="lg:col-span-8 bg-surface border border-border rounded-2xl p-6 sm:p-8 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-[7fr_3fr] gap-4">
+            <div className="rounded-xl border border-border p-4 bg-surface">
+              <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-foreground-muted" />
+                descripcion
+              </p>
+              <p className="mt-2 text-sm text-foreground whitespace-pre-line">{detalle.descripcion ?? "No disponible"}</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-xl border border-border p-4 bg-surface">
+                <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+                  <Hash className="w-3.5 h-3.5 text-foreground-muted" />
+                  id
+                </p>
+                <p className="mt-2 text-sm text-foreground">{String(detalle.id)}</p>
+              </div>
+
+              <div className="rounded-xl border border-border p-4 bg-surface">
+                <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-foreground-muted" />
+                  codigo BDNS
+                </p>
+                <p className="mt-2 text-sm text-foreground">{detalle.codigoBdns ?? "No disponible"}</p>
+              </div>
+            </div>
+          </div>
+
+          {filasDetalle
+            .filter((fila) => fila.clave !== "id" && fila.clave !== "codigoBdns" && fila.clave !== "descripcion")
+            .map((fila) => (
+              <div key={fila.clave} className="flex flex-col rounded-xl border border-border p-4 bg-surface">
+                <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
+                  <fila.icono className="w-3.5 h-3.5 text-foreground-muted" />
+                  {fila.campo}
+                </p>
+
+                <button className="mt-2 self-start px-4 py-1 text-sm bg-green-200 text-black border border-border rounded-full whitespace-pre-line cursor-pointer hover:bg-green-500 transition-colors">
+                  {fila.valor}
+                </button>
+              </div>
+            ))}
+        </article>
+        <aside className="lg:col-span-2">
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-border bg-surface p-6 space-y-10">
+              <button
+                type="button"
+                className="w-full inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-hover transition-colors cursor-pointer"
+              >
+                <Lock className="w-4 h-4 mr-2" />
+                <span>
+                  Acceder a la guia
+                </span>
+              </button>
+              <button
+                type="button"
+                className="w-full inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-hover transition-colors cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                <span>
+                  Analizar con IA
+                </span>
+              </button>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      {/*
+       <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
         <article className="lg:col-span-7 bg-surface border border-border rounded-2xl p-6 sm:p-8 space-y-6">
           <header>
-            <p className="text-xs font-bold tracking-widest uppercase text-foreground-muted">Detalle de convocatoria</p>
+            <h2 className="text-lg font-bold text-foreground">{tituloDetalle}</h2>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -480,8 +581,8 @@ export default function ConvocatoriaDetallePage() {
             </div>
           </div>
         </aside>
-      </div>
-
+      </div> 
+*/}
       <div className="mt-6 flex justify-center">
         <button
           type="button"
