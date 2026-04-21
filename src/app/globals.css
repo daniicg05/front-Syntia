@@ -62,6 +62,13 @@
   --primary-light: #003c4f;
   --primary-muted: #005a71;
 
+  /* Alternativa 1 */
+  --primary: #153a52;         /* rgb(21,58,82) */
+  --primary-hover: #28577a;   /* rgb(40,87,122) */
+  --primary-light: #0b2433;   /* rgb(11,36,51) */
+  --primary-muted: #1a3550;   /* rgb(26,53,80) */
+  --primary-rgb: 21,58,82;
+
   /* Neutrals */
   --background: #0f1110;
   --surface: #1a1d1c;

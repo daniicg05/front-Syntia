@@ -215,7 +215,7 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                     {/* CTA */}
                     <button
                         onClick={handleClick}
-                        className={`w-full py-2.5 rounded-xl font-bold text-sm hover:brightness-110 transition-all ${
+                        className={`w-full py-2.5 rounded-xl cursor-pointer font-bold text-sm hover:brightness-110 transition-all ${
                             autenticado
                                 ? "bg-[#0e7490] text-[#d3f1ff]"
                                 : "bg-surface-muted text-foreground-muted"

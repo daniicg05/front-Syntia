@@ -69,14 +69,38 @@ export interface ConvocatoriaPublica {
     matchScore?: number;
     matchRazon?: string;
     presupuesto?: number;
+    regionId?: number;
 }
 
-export interface ConvocatoriaDetalle {
+export interface RegionNodo {
     id: number;
-    codigoBdns: string | null;
-    sector: string | null;
-    descripcion: string | null;
-    tiposBeneficiario: string[];
+    descripcion: string;
+    children: RegionNodo[];
+}
+
+export interface ConvocatoriaDTO {
+    id: number;
+    titulo?: string | null;
+    tipo?: string | null;
+    sector?: string | null;
+    ubicacion?: string | null;
+    urlOficial?: string | null;
+    fuente?: string | null;
+    idBdns?: string | null;
+    numeroConvocatoria?: string | null;
+    fechaCierre?: string | null;
+    organismo?: string | null;
+    fechaPublicacion?: string | null;
+    descripcion?: string | null;
+    textoCompleto?: string | null;
+    mrr?: string | null;
+    presupuesto?: number | null;
+    abierto?: boolean | null;
+    finalidad?: string | null;
+    fechaInicio?: string | null;
+    regionId?: number | null;
+    provinciaId?: number | null;
+    tiposBeneficiario?: string[] | null;
 }
 
 export interface BusquedaPublicaResponse {
@@ -88,11 +112,12 @@ export interface BusquedaPublicaResponse {
 }
 
 export const convocatoriasPublicasApi = {
-    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; page?: number; size?: number }) =>
+    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; regionId?: number; page?: number; size?: number }) =>
         api.get<BusquedaPublicaResponse>("/convocatorias/publicas/buscar", { params }),
     destacadas: () => api.get<ConvocatoriaPublica[]>("/convocatorias/publicas/destacadas"),
     finalidades: () => api.get<string[]>("/convocatorias/publicas/finalidades"),
     tipos: () => api.get<string[]>("/convocatorias/publicas/tipos"),
+    regiones: () => api.get<RegionNodo[]>("/convocatorias/publicas/regiones"),
     detalle: (id: number) => api.get<ConvocatoriaDetalle>(`/convocatorias/publicas/${id}`),
 };
 
@@ -100,7 +125,7 @@ export const convocatoriasPublicasApi = {
 export const convocatoriasUsuarioApi = {
     recomendadas: (params?: { page?: number; size?: number }) =>
         api.get<ConvocatoriaPublica[]>("/usuario/convocatorias/recomendadas", { params }),
-    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; page?: number; size?: number }) =>
+    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; regionId?: number; page?: number; size?: number }) =>
         api.get<BusquedaPublicaResponse>("/usuario/convocatorias/buscar", { params }),
 };
 
