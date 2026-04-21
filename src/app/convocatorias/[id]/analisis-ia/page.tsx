@@ -148,7 +148,6 @@ function SkeletonBloque() {
 export default function AnalisisIAPage() {
     const params = useParams();
     const router = useRouter();
-    const proyectoId = params?.proyectoId as string;
     const convocatoriaId = params?.id as string; // id interno BD (para la URL SSE se usa codigoBdns)
 
     const [fase, setFase] = useState<FaseSSE>("idle");
@@ -193,8 +192,7 @@ export default function AnalisisIAPage() {
         const token = getCookie("syntia_token");
         if (!token) { router.push("/login"); return; }
 
-        const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-        const url = `${API_URL}/api/usuario/proyectos/${proyectoId}/convocatorias/${bdnsId}/analisis-ia`;
+        const url = `/api/convocatorias/${bdnsId}/analisis-ia`;
 
         setFase("conectando");
         setEstado("Conectando con el servidor...");
@@ -302,7 +300,7 @@ export default function AnalisisIAPage() {
                 <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
                         <Link
-                            href={`/mis-proyectos/${proyectoId}/convocatoria/${convocatoriaId}`}
+                            href={`/convocatorias/${convocatoriaId}`}
                             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex-shrink-0"
                         >
                             ← Volver
@@ -336,7 +334,7 @@ export default function AnalisisIAPage() {
                     <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl p-5 text-center">
                         <p className="text-red-700 dark:text-red-300 font-medium mb-3">{errorMsg ?? "Error desconocido"}</p>
                         <Link
-                            href={`/mis-proyectos/${proyectoId}/convocatoria/${convocatoriaId}`}
+                            href={`/convocatorias/${convocatoriaId}`}
                             className="text-sm text-teal-600 hover:underline"
                         >
                             ← Volver al detalle
