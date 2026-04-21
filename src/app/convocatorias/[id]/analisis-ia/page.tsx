@@ -179,7 +179,18 @@ export default function AnalisisIAPage() {
     }, [idBdns]);
 
     function arrancarSSE(bdnsId: number) {
-        const token = localStorage.getItem("token");
+
+        // ✅ Leer token desde cookie syntia_token
+        function getCookie(name: string): string | null {
+            if (typeof document === "undefined") return null;
+            const match = document.cookie
+                .split("; ")
+                .find((row) => row.startsWith(name + "="));
+            return match ? decodeURIComponent(match.split("=")[1]) : null;
+        }
+
+        // Dentro de arrancarSSE:
+        const token = getCookie("syntia_token");
         if (!token) { router.push("/login"); return; }
 
         const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
