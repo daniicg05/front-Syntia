@@ -51,7 +51,7 @@ export default function BuscarContent() {
     const [autenticado, setAutenticado]   = useState(false);
     const [authReady, setAuthReady]       = useState(false);
 
-    const buscar = useCallback((q: string, sec: string, page: number, abiertas: boolean, size:number, regionId?: number | null) => {
+    const buscar = useCallback((q: string, sec: string, page: number, abiertas: boolean, regionId?: number | null) => {
         setLoading(true);
         const params = {
             q:        q   || undefined,
@@ -59,7 +59,7 @@ export default function BuscarContent() {
             abierto:  abiertas ? true : undefined,
             regionId: regionId ?? undefined,
             page,
-            size
+            size: 20
         };
         const request = autenticado
             ? convocatoriasUsuarioApi.buscar(params)
