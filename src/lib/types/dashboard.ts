@@ -11,9 +11,5 @@ export interface DashboardData {
     proyecto: { id: number; nombre: string; sector?: string; ubicacion?: string };
     recomendaciones: RecomendacionDTO[];
   }>;
-  roadmap: Array<{
-    proyecto: { id: number; nombre: string; sector?: string };
-    recomendacion: RecomendacionDTO;
-  }>;
   totalRecomendaciones: number;
 }

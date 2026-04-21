@@ -2,39 +2,83 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useReducedMotion } from "framer-motion";
-import { dashboardApi } from "@/lib/api";
+import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
+import { proyectosApi, recomendacionesApi, type ConvocatoriaPublica } from "@/lib/api";
 import { getUser } from "@/lib/auth";
 import { Card, StatCard } from "@/components/ui/Card";
-import { ScoreBadge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 import { fadeIn, slideUp, staggerChildren, staggerItem } from "@/lib/motion";
 import {
-  TrendingUp,
   FolderOpen,
   Star,
   Plus,
-  ArrowRight,
   Lightbulb,
-  Sparkles,
+  Target,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+
+interface Proyecto {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  sector?: string;
+  presupuesto?: number;
+}
 
 interface RecomendacionDTO {
   id: number;
-  puntuacion: number;
-  explicacion: string;
+  convocatoriaId?: number;
+  titulo?: string;
+  tipo?: string;
+  sector?: string;
+  ubicacion?: string;
+  urlOficial?: string;
+  vigente?: boolean;
   presupuesto?: number;
-  convocatoria: { titulo: string };
-  proyecto: { id: number; nombre: string };
+  fechaCierre?: string;
+  fechaPublicacion?: string;
+  organismo?: string;
+  puntuacion: number;
+  explicacion?: string;
+  convocatoria?: {
+    id?: number;
+    titulo?: string;
+    tipo?: string;
+    sector?: string;
+    ubicacion?: string;
+    urlOficial?: string;
+    vigente?: boolean;
+    presupuesto?: number;
+    fechaCierre?: string;
+    fechaPublicacion?: string;
+    organismo?: string;
+  };
+  proyecto?: { id: number; nombre: string };
+  proyectoId?: number;
+  proyectoNombre?: string;
 }
 
-interface DashboardData {
-  email: string;
-  totalRecomendaciones: number;
-  topRecomendaciones: Record<string, RecomendacionDTO[]>;
-  roadmap: { proyecto: { id: number; nombre: string }; recomendacion: RecomendacionDTO }[];
+function toConvocatoria(rec: RecomendacionDTO): ConvocatoriaPublica {
+  return {
+    id: rec.convocatoriaId ?? rec.convocatoria?.id ?? rec.id,
+    titulo: rec.titulo ?? rec.convocatoria?.titulo ?? "Convocatoria sin título",
+    tipo: rec.tipo ?? rec.convocatoria?.tipo,
+    sector: rec.sector ?? rec.convocatoria?.sector,
+    ubicacion: rec.ubicacion ?? rec.convocatoria?.ubicacion,
+    urlOficial: rec.urlOficial ?? rec.convocatoria?.urlOficial,
+    abierto: rec.vigente ?? rec.convocatoria?.vigente,
+    presupuesto: rec.presupuesto ?? rec.convocatoria?.presupuesto,
+    fechaCierre: rec.fechaCierre ?? rec.convocatoria?.fechaCierre,
+    fechaPublicacion: rec.fechaPublicacion ?? rec.convocatoria?.fechaPublicacion,
+    organismo: rec.organismo ?? rec.convocatoria?.organismo,
+    matchScore: rec.puntuacion,
+    matchRazon: rec.explicacion,
+  };
 }
 
 function getGreeting(nombre: string): string {
@@ -45,10 +89,14 @@ function getGreeting(nombre: string): string {
 }
 
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const searchParams = useSearchParams();
+  const [proyectos, setProyectos] = useState<Proyecto[]>([]);
+  const [recomendaciones, setRecomendaciones] = useState<RecomendacionDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [nombre, setNombre] = useState("usuario");
+  const [selectedProjectId, setSelectedProjectId] = useState<number | "all">("all");
+  const [infoProyectoAbierta, setInfoProyectoAbierta] = useState(false);
   const shouldReduce = useReducedMotion();
 
   const mp = shouldReduce ? {} : { initial: "hidden", animate: "visible" };
@@ -57,15 +105,63 @@ export default function DashboardPage() {
     const user = getUser();
     setNombre(user?.sub?.split("@")[0] ?? "usuario");
 
-    dashboardApi
-      .get()
-      .then((res) => setData(res.data as DashboardData))
-      .catch(() => setError("No se pudieron cargar los datos del dashboard"))
-      .finally(() => setLoading(false));
-  }, []);
+    async function loadData() {
+      setLoading(true);
+      setError("");
+      try {
+        const proyectosRes = await proyectosApi.list();
+        const proyectosData = (proyectosRes.data as Proyecto[]) ?? [];
+        setProyectos(proyectosData);
 
-  const totalProyectos = Object.keys(data?.topRecomendaciones ?? {}).length;
-  const roadmapCount = data?.roadmap?.length ?? 0;
+        if (proyectosData.length === 0) {
+          setRecomendaciones([]);
+          setSelectedProjectId("all");
+          return;
+        }
+
+        const projectIdFromUrl = Number(searchParams.get("projectId"));
+        const hasProjectFromUrl =
+          Number.isFinite(projectIdFromUrl) &&
+          proyectosData.some((proyecto) => proyecto.id === projectIdFromUrl);
+
+        setSelectedProjectId(hasProjectFromUrl ? projectIdFromUrl : "all");
+
+        const recsPorProyecto = await Promise.all(
+          proyectosData.map(async (proyecto) => {
+            try {
+              const recsRes = await recomendacionesApi.list(proyecto.id);
+              const recs = (recsRes.data as RecomendacionDTO[]) ?? [];
+              return recs.map((rec) => ({
+                ...rec,
+                proyectoId: rec.proyecto?.id ?? proyecto.id,
+                proyectoNombre: rec.proyecto?.nombre ?? proyecto.nombre,
+              }));
+            } catch {
+              return [];
+            }
+          })
+        );
+
+        setRecomendaciones(recsPorProyecto.flat());
+      } catch {
+        setError("No se pudieron cargar tus proyectos y recomendaciones");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, [searchParams]);
+
+  const totalProyectos = proyectos.length;
+  const selectedProjectName =
+    selectedProjectId === "all"
+      ? "No seleccionado"
+      : proyectos.find((p) => p.id === selectedProjectId)?.nombre ?? "No seleccionado";
+
+  const convocatoriasProyecto = recomendaciones
+    .filter((rec) => selectedProjectId !== "all" && rec.proyectoId === selectedProjectId)
+    .sort((a, b) => (b.puntuacion ?? 0) - (a.puntuacion ?? 0));
 
   return (
     <motion.div {...mp} variants={fadeIn}>
@@ -74,13 +170,13 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
             <p className="text-xs font-semibold text-foreground-subtle uppercase tracking-widest mb-1">
-              Panel de control
+              Mis proyectos
             </p>
             <h1 className="text-3xl font-bold text-foreground tracking-tight">
               {getGreeting(nombre)}
             </h1>
             <p className="text-foreground-muted mt-1.5 text-sm">
-              Aquí tienes el resumen de tu actividad en Syntia
+              Gestiona tus proyectos y revisa sus convocatorias en un solo lugar
             </p>
           </div>
           <Link
@@ -88,12 +184,61 @@ export default function DashboardPage() {
             className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl hover:bg-primary-hover font-semibold text-sm transition-all shadow-sm shrink-0"
           >
             <Plus className="w-4 h-4" />
-            Nuevo proyecto
+            Crear proyecto
           </Link>
         </div>
       </motion.div>
 
       {error && <Alert variant="error" message={error} className="mb-6" />}
+
+      <motion.div {...mp} variants={slideUp} className="mb-6">
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary-light text-primary flex items-center justify-center shrink-0">
+                <Lightbulb className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground mb-1.5">Para que sirve un proyecto en Syntia</h2>
+                <p className="text-sm text-foreground-muted leading-relaxed">
+                  Crea proyectos para que Syntia entienda mejor tu contexto y te muestre convocatorias
+                  realmente utiles para cada iniciativa.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setInfoProyectoAbierta((prev) => !prev)}
+              className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+              aria-expanded={infoProyectoAbierta}
+            >
+              <Lightbulb className="w-4 h-4" />
+              {infoProyectoAbierta ? "Ocultar" : "Ver mas"}
+              {infoProyectoAbierta ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+          </div>
+          {infoProyectoAbierta && (
+            <div className="mt-4 pt-4 border-t border-border space-y-2.5 text-sm text-foreground-muted">
+              <p>
+                <span className="font-semibold text-foreground">1)</span> Un proyecto agrupa la informacion clave:
+                nombre, descripcion, sector, ubicacion y presupuesto.
+              </p>
+              <p>
+                <span className="font-semibold text-foreground">2)</span> Puedes crear varios proyectos para separar
+                lineas de trabajo y comparar ayudas por cada uno.
+              </p>
+              <p>
+                <span className="font-semibold text-foreground">3)</span> Al seleccionar un proyecto veras sus
+                convocatorias asociadas, y en cada convocatoria podras abrir el detalle completo.
+              </p>
+              <p>
+                <span className="font-semibold text-foreground">4)</span> Marca convocatorias como favoritas para
+                seguirlas desde tu apartado de perfil y controlar si ya las has solicitado.
+              </p>
+            </div>
+          )}
+        </Card>
+      </motion.div>
 
       {/* Stats */}
       {loading ? (
@@ -110,14 +255,6 @@ export default function DashboardPage() {
         >
           <motion.div variants={staggerItem}>
             <StatCard
-              label="Recomendaciones totales"
-              value={data?.totalRecomendaciones ?? 0}
-              icon={<Star className="w-5 h-5" />}
-              color="green"
-            />
-          </motion.div>
-          <motion.div variants={staggerItem}>
-            <StatCard
               label="Proyectos activos"
               value={totalProyectos}
               icon={<FolderOpen className="w-5 h-5" />}
@@ -126,9 +263,17 @@ export default function DashboardPage() {
           </motion.div>
           <motion.div variants={staggerItem}>
             <StatCard
-              label="Oportunidades en roadmap"
-              value={roadmapCount}
-              icon={<TrendingUp className="w-5 h-5" />}
+              label="Subvenciones recomendadas"
+              value={recomendaciones.length}
+              icon={<Star className="w-5 h-5" />}
+              color="green"
+            />
+          </motion.div>
+          <motion.div variants={staggerItem}>
+            <StatCard
+              label="Proyecto seleccionado"
+              value={selectedProjectId === "all" ? "Todos" : selectedProjectName}
+              icon={<Target className="w-5 h-5" />}
               color="amber"
             />
           </motion.div>
@@ -136,74 +281,63 @@ export default function DashboardPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Top recommendations */}
+        {/* Convocatorias por proyecto */}
         <motion.div {...mp} variants={slideUp} className="lg:col-span-2">
           <Card>
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-semibold text-foreground flex items-center gap-2.5">
                 <div className="w-7 h-7 bg-primary-light rounded-lg flex items-center justify-center shrink-0">
-                  <Star className="w-4 h-4 text-primary" />
+                  <FolderOpen className="w-4 h-4 text-primary" />
                 </div>
-                Top recomendaciones por proyecto
+                {selectedProjectId === "all"
+                  ? "Convocatorias por proyecto"
+                  : `Convocatorias de ${selectedProjectName}`}
               </h2>
-              <Link
-                href="/proyectos"
-                className="text-sm text-primary hover:underline font-medium flex items-center gap-1"
-              >
-                Ver todos
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+              {proyectos.length > 0 && (
+                <select
+                  value={selectedProjectId}
+                  onChange={(e) =>
+                    setSelectedProjectId(e.target.value === "all" ? "all" : Number(e.target.value))
+                  }
+                  className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground"
+                >
+                  <option value="all">Ninguno seleccionado</option>
+                  {proyectos.map((proyecto) => (
+                    <option key={proyecto.id} value={proyecto.id}>
+                      {proyecto.nombre}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 bg-surface-muted rounded-xl animate-pulse" />
+                  <div key={i} className="h-24 bg-surface-muted rounded-xl animate-pulse" />
                 ))}
               </div>
-            ) : data && Object.keys(data.topRecomendaciones).length > 0 ? (
-              <div className="space-y-6">
-                {Object.entries(data.topRecomendaciones).map(([proyectoNombre, recs]) =>
-                  recs.length > 0 ? (
-                    <div key={proyectoNombre}>
-                      <div className="flex items-center gap-2 mb-2.5">
-                        <span className="w-1 h-4 bg-primary rounded-full" />
-                        <p className="text-xs font-semibold text-foreground-subtle uppercase tracking-wider">
-                          {proyectoNombre}
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        {recs.map((rec) => (
-                          <div
-                            key={rec.id}
-                            className="flex items-start justify-between gap-4 p-3.5 bg-surface-muted rounded-xl hover:bg-border/40 transition-colors border border-transparent hover:border-border"
-                          >
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">
-                                {rec.convocatoria?.titulo ?? rec.proyecto?.nombre}
-                              </p>
-                              <p className="text-xs text-foreground-muted mt-0.5 line-clamp-1">
-                                {rec.explicacion}
-                              </p>
-                            </div>
-                            <ScoreBadge score={rec.puntuacion} size="sm" />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null
-                )}
+            ) : convocatoriasProyecto.length > 0 ? (
+              <div className="space-y-4">
+                {convocatoriasProyecto.map((rec) => (
+                  <ConvocatoriaCard
+                    key={`${rec.proyectoId}-${rec.id}`}
+                    convocatoria={toConvocatoria(rec)}
+                    autenticado
+                    showMatch
+                  />
+                ))}
               </div>
             ) : (
               <div className="text-center py-12">
                 <div className="w-16 h-16 bg-primary-light rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-8 h-8 text-primary" />
+                  <FolderOpen className="w-8 h-8 text-primary" />
                 </div>
-                <p className="text-foreground font-semibold mb-1.5">
-                  Aún no tienes recomendaciones
-                </p>
+                <p className="text-foreground font-semibold mb-1.5">No hay subvenciones para este filtro</p>
                 <p className="text-sm text-foreground-muted mb-5 max-w-xs mx-auto">
-                  Crea tu primer proyecto y Syntia buscará las subvenciones más compatibles con IA
+                  {selectedProjectId === "all"
+                    ? "Selecciona un proyecto para ver sus convocatorias."
+                    : "Selecciona otro proyecto o crea uno nuevo para empezar a recibir recomendaciones."}
                 </p>
                 <Link
                   href="/proyectos/nuevo"
@@ -219,13 +353,12 @@ export default function DashboardPage() {
 
         {/* Sidebar */}
         <motion.div {...mp} variants={slideUp} className="flex flex-col gap-4">
-          {/* Roadmap */}
           <Card>
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-7 h-7 bg-amber-50 rounded-lg flex items-center justify-center shrink-0">
-                <TrendingUp className="w-4 h-4 text-amber-600" />
+              <div className="w-7 h-7 bg-primary-light rounded-lg flex items-center justify-center shrink-0">
+                <FolderOpen className="w-4 h-4 text-primary" />
               </div>
-              <h2 className="font-semibold text-foreground">Roadmap</h2>
+              <h2 className="font-semibold text-foreground">Mis proyectos activos</h2>
             </div>
 
             {loading ? (
@@ -234,38 +367,55 @@ export default function DashboardPage() {
                   <div key={i} className="h-14 bg-surface-muted rounded-lg animate-pulse" />
                 ))}
               </div>
-            ) : data?.roadmap && data.roadmap.length > 0 ? (
+            ) : proyectos.length > 0 ? (
               <div className="space-y-2">
-                {data.roadmap.slice(0, 4).map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-3 p-3 bg-surface-muted rounded-xl hover:bg-border/30 transition-colors"
+                {proyectos.map((proyecto) => (
+                  <button
+                    key={proyecto.id}
+                    onClick={() => setSelectedProjectId(proyecto.id)}
+                    className={`w-full text-left p-3 rounded-xl border transition-colors ${
+                      selectedProjectId === proyecto.id
+                        ? "border-primary bg-primary-light"
+                        : "border-border bg-surface-muted hover:bg-border/30"
+                    }`}
                   >
-                    <span className="flex-shrink-0 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">
-                      {i + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-foreground-muted mb-0.5 truncate">
-                        {item.proyecto.nombre}
-                      </p>
-                      <p className="text-sm font-medium text-foreground line-clamp-2 leading-snug">
-                        {item.recomendacion.convocatoria?.titulo}
-                      </p>
-                      <div className="mt-1.5">
-                        <ScoreBadge score={item.recomendacion.puntuacion} size="sm" />
-                      </div>
-                    </div>
-                  </div>
+                    <p className="text-sm font-semibold text-foreground line-clamp-1">{proyecto.nombre}</p>
+                    {proyecto.sector && (
+                      <p className="text-xs text-foreground-muted mt-1 line-clamp-1">{proyecto.sector}</p>
+                    )}
+                  </button>
                 ))}
+                <Link
+                  href="/proyectos"
+                  className="block text-center text-sm text-primary font-medium hover:underline pt-1"
+                >
+                  Ver lista de proyectos
+                </Link>
               </div>
             ) : (
               <p className="text-sm text-foreground-muted text-center py-4">
-                Tu roadmap aparecerá aquí
+                Crea tu primer proyecto para empezar
               </p>
             )}
           </Card>
 
-          {/* Tip card with gradient */}
+          <Link href="/perfil/favoritas" className="block">
+            <Card className="hover:border-primary/40 transition-colors">
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-7 h-7 bg-primary-light rounded-lg flex items-center justify-center shrink-0">
+                  <Star className="w-4 h-4 text-primary" />
+                </div>
+                <h2 className="font-semibold text-foreground">Convocatorias favoritas</h2>
+              </div>
+              <p className="text-sm text-foreground-muted mb-4">
+                Revisa tus convocatorias guardadas y marca si ya han sido solicitadas.
+              </p>
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                Ir a convocatorias favoritas
+              </span>
+            </Card>
+          </Link>
+
           <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-primary to-primary-hover text-white">
             <div className="absolute -top-5 -right-5 w-28 h-28 bg-white/10 rounded-full" />
             <div className="absolute bottom-1 -right-3 w-16 h-16 bg-white/5 rounded-full" />
@@ -275,15 +425,14 @@ export default function DashboardPage() {
                 <p className="text-sm font-bold">Consejo</p>
               </div>
               <p className="text-xs text-white/85 leading-relaxed mb-3">
-                Cuanto más detallada sea la descripción de tu proyecto, mejores resultados
-                obtendrás del matching con IA.
+                Usa el selector de proyecto para revisar convocatorias concretas y ve a Ver detalles
+                para editar o completar la información del proyecto.
               </p>
               <Link
                 href="/proyectos/nuevo"
                 className="inline-flex items-center gap-1.5 text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
               >
                 Añadir proyecto
-                <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
           </div>

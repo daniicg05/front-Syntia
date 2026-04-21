@@ -3,7 +3,7 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { proyectosApi } from "@/lib/api";
+import { proyectosApi, recomendacionesApi } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -52,7 +52,7 @@ export default function NuevoProyectoPage() {
       return;
     }
     setLoading(true);
-    const loadingId = toast.loading("Creando proyecto y analizando con IA...");
+    const loadingId = toast.loading("Creando proyecto y cargando convocatorias...");
     try {
       const payload: Record<string, string> = {
         nombre: form.nombre,
@@ -62,8 +62,12 @@ export default function NuevoProyectoPage() {
       };
       const { data } = await proyectosApi.create(payload);
       const proyecto = data as { id: number };
+
+      // Dispara la búsqueda inicial para que el dashboard ya tenga convocatorias al llegar.
+      await recomendacionesApi.buscar(proyecto.id);
+
       toast.update(loadingId, "success", "Proyecto creado correctamente");
-      router.push(`/proyectos/${proyecto.id}/recomendaciones`);
+      router.push(`/dashboard?projectId=${proyecto.id}`);
     } catch (err: unknown) {
       toast.update(
         loadingId,
@@ -94,15 +98,6 @@ export default function NuevoProyectoPage() {
         </p>
       </div>
 
-      {/* Tip */}
-      <div className="flex items-start gap-3 bg-primary-light border border-primary/20 rounded-xl p-4 mb-6">
-        <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-        <p className="text-sm text-primary/90 leading-relaxed">
-          <strong>Consejo:</strong> Cuanto más detallada sea la descripción de tu proyecto
-          (objetivos, tecnologías, público objetivo, impacto), mejores serán los resultados
-          del matching con IA.
-        </p>
-      </div>
 
       <Card>
         <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
