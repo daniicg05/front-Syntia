@@ -267,7 +267,7 @@ export default function ConvocatoriaDetallePage() {
               >
                 <Sparkles className="w-4 h-4 mr-2" />
                 <span>
-                  Analizar con IA
+                    Analizar con IA
                 </span>
               </button>
             </div>
