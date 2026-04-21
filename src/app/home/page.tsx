@@ -339,8 +339,8 @@ export default function HomePage() {
 
                                     <button onClick={() => goToPage(resultados.page + 1)} disabled={resultados.page >= resultados.totalPages - 1} className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface border border-border text-foreground-muted hover:bg-surface-muted transition-all disabled:opacity-40 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
 
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-bold text-foreground-muted uppercase tracking-widest">Resultados:</span>
+                                    <div className="flex items-center gap-2 ml-9">
+                                        <span className="text-xs font-bold text-foreground-muted uppercase tracking-widest"></span>
                                         <div className="flex bg-surface-muted p-1 rounded-lg">
                                             {TAMANOS_PAGINA.map((size) => (
                                                 <button key={size} type="button" onClick={() => handlePageSizeChange(size)} className={`px-3 py-1.5 text-xs font-bold cursor-pointer rounded-md transition-all ${pageSize === size ? "bg-white shadow-sm text-primary" : "text-foreground-muted hover:text-foreground"}`} aria-label={`Mostrar ${size} subvenciones por página`} aria-pressed={pageSize === size}>{size}</button>
