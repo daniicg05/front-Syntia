@@ -90,7 +90,7 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
     }
 
     return (
-        <div className="bg-white hover:shadow-xl hover:shadow-black/[0.03] transition-all duration-200 p-6 rounded-2xl group relative overflow-hidden border border-border">
+        <div className="bg-surface hover:shadow-xl transition-all duration-200 p-6 rounded-2xl group relative overflow-hidden border border-border">
             {/* Left accent bar */}
             {accentBar && (
                 <div className={`absolute top-0 left-0 w-1 h-full ${accentBar}`} />
