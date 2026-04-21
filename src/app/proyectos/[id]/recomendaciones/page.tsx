@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { recomendacionesApi, proyectosApi } from "@/lib/api";
@@ -41,17 +41,17 @@ export default function RecomendacionesPage() {
   const [guias, setGuias] = useState<Record<number, Record<string, unknown>>>({});
   const [filtro, setFiltro] = useState("");
 
-  const cargarRecs = () => {
+  const cargarRecs = useCallback(() => {
     recomendacionesApi.list(proyectoId)
       .then((res) => setRecs(res.data))
       .catch(() => {})
       .finally(() => setLoading(false));
-  };
+  }, [proyectoId]);
 
   useEffect(() => {
     proyectosApi.get(proyectoId).then((res) => setProyecto(res.data)).catch(() => {});
     cargarRecs();
-  }, [proyectoId]);
+  }, [proyectoId, cargarRecs]);
 
   // Paso 1: búsqueda BDNS sin IA
   const buscar = async () => {
@@ -188,7 +188,7 @@ export default function RecomendacionesPage() {
           <div>
             <h2 className="font-semibold text-foreground">Buscar y analizar</h2>
             <p className="text-sm text-foreground-muted mt-0.5">
-              Paso 1: busca convocatorias en BDNS.&nbsp; Paso 2: analiza con IA.
+              Lanza la búsqueda y el análisis para actualizar las convocatorias de este proyecto.
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">

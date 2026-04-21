@@ -70,6 +70,8 @@ export interface ConvocatoriaPublica {
     matchRazon?: string;
     presupuesto?: number;
     regionId?: number;
+    favorita?: boolean;
+    estadoSolicitud?: "no_solicitada" | "solicitada";
 }
 
 export interface RegionNodo {
@@ -80,10 +82,19 @@ export interface RegionNodo {
 
 export interface ConvocatoriaDetalle {
     id: number;
+    titulo?: string | null;
     codigoBdns: string | null;
     sector: string | null;
     descripcion: string | null;
     tiposBeneficiario: string[];
+    organismo?: string | null;
+    ubicacion?: string | null;
+    fechaCierre?: string | null;
+    fechaPublicacion?: string | null;
+    presupuesto?: number | null;
+    abierto?: boolean | null;
+    urlOficial?: string | null;
+    numeroConvocatoria?: string | null;
 }
 
 export interface BusquedaPublicaResponse {

@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ConvocatoriaPublica } from "@/lib/api";
-import { ArrowRight, ExternalLink, Lock } from "lucide-react";
+import { FAVORITAS_UPDATED_EVENT, getFavoritaById, type EstadoSolicitud } from "@/lib/favoritos";
+import { ArrowRight, ExternalLink, Lock, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -9,6 +11,9 @@ interface Props {
     onAccesoRequerido?: () => void;
     autenticado: boolean;
     showMatch?: boolean;
+    compactTitle?: boolean;
+    estadoSolicitud?: "no_solicitada" | "solicitada";
+    onEstadoSolicitudChange?: (estado: "no_solicitada" | "solicitada") => void;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -44,10 +49,27 @@ function formatPresupuesto(p?: number): string | null {
     return `${new Intl.NumberFormat("es-ES").format(Math.round(p))}€`;
 }
 
+function buildBdnsUrl(idBdns?: string): string | null {
+    if (!idBdns) return null;
+    const clean = String(idBdns).trim();
+    if (!clean) return null;
+    return `https://www.infosubvenciones.es/bdnstrans/GE/es/convocatoria/${encodeURIComponent(clean)}`;
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autenticado, showMatch = false }: Props) {
+export function ConvocatoriaCard({
+    convocatoria: c,
+    onAccesoRequerido,
+    autenticado,
+    showMatch = false,
+    compactTitle = false,
+    estadoSolicitud: estadoSolicitudProp,
+    onEstadoSolicitudChange,
+}: Props) {
     const router = useRouter();
+    const [favorita, setFavorita] = useState(false);
+    const [estadoSolicitudLocal, setEstadoSolicitudLocal] = useState<EstadoSolicitud | null>(null);
     const esCerrada = c.abierto === false;
     const daysLeft  = calcDaysLeft(c.fechaCierre);
     const highMatch = showMatch && (c.matchScore ?? 0) >= 70;
@@ -56,6 +78,7 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
 
     const presupuestoFmt = formatPresupuesto(c.presupuesto);
     const progress       = daysLeft != null && daysLeft > 0 ? calcProgress(daysLeft) : null;
+    const fuenteOficialUrl = c.urlOficial || buildBdnsUrl(c.idBdns);
 
     // Left accent bar
     const accentBar =
@@ -84,10 +107,32 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
         moderate ? "text-amber-600" :
         "text-foreground-muted";
 
+    const estadoSolicitudMostrada = estadoSolicitudProp ?? estadoSolicitudLocal;
+    const tipoNormalizado = (c.tipo ?? "").trim().toLowerCase();
+    const sectorNormalizado = (c.sector ?? "").trim().toLowerCase();
+    const mostrarTipo = Boolean(c.tipo) && tipoNormalizado !== sectorNormalizado;
+
     function handleClick() {
         if (!autenticado) { onAccesoRequerido?.(); return; }
         router.push(`/convocatorias/${c.id}`);
     }
+
+    useEffect(() => {
+        function syncFavoritaState() {
+            const favoritaGuardada = getFavoritaById(c.id);
+            setFavorita(Boolean(favoritaGuardada));
+            setEstadoSolicitudLocal(favoritaGuardada?.estadoSolicitud ?? null);
+        }
+
+        syncFavoritaState();
+        window.addEventListener(FAVORITAS_UPDATED_EVENT, syncFavoritaState);
+        window.addEventListener("storage", syncFavoritaState);
+
+        return () => {
+            window.removeEventListener(FAVORITAS_UPDATED_EVENT, syncFavoritaState);
+            window.removeEventListener("storage", syncFavoritaState);
+        };
+    }, [c.id]);
 
     return (
         <div className="bg-white hover:shadow-xl hover:shadow-black/[0.03] transition-all duration-200 p-6 rounded-2xl group relative overflow-hidden border border-border">
@@ -112,7 +157,12 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                                 )}
                                 {c.numeroConvocatoria && (
                                     <span className="text-[10px] font-bold text-foreground-subtle uppercase tracking-widest">
-                                        ID: #{c.numeroConvocatoria}
+                                        Ref: {c.numeroConvocatoria}
+                                    </span>
+                                )}
+                                {c.idBdns && (
+                                    <span className="text-[10px] font-bold text-foreground-subtle uppercase tracking-widest">
+                                        BDNS: {c.idBdns}
                                     </span>
                                 )}
                                 {showMatch && c.matchScore != null && !highMatch && (
@@ -120,10 +170,24 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                                         {c.matchScore}% match
                                     </span>
                                 )}
+                                {favorita && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tight bg-amber-100 text-amber-900">
+                                        <Star className="w-3 h-3 fill-current" /> Favorita
+                                    </span>
+                                )}
+                                {estadoSolicitudMostrada && (
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tight ${
+                                        estadoSolicitudMostrada === "solicitada"
+                                            ? "bg-emerald-100 text-emerald-900"
+                                            : "bg-slate-200 text-slate-700"
+                                    }`}>
+                                        {estadoSolicitudMostrada === "solicitada" ? "Ya solicitada" : "No solicitada"}
+                                    </span>
+                                )}
                             </div>
 
                             {/* Title */}
-                            <h3 className="text-xl font-bold text-foreground leading-tight group-hover:text-primary transition-colors duration-150 line-clamp-2">
+                            <h3 className={`${compactTitle ? "text-[15px] md:text-base line-clamp-none break-words [overflow-wrap:anywhere]" : "text-lg md:text-xl line-clamp-2"} font-bold text-foreground leading-snug group-hover:text-primary transition-colors duration-150`}>
                                 {c.titulo}
                             </h3>
                         </div>
@@ -132,7 +196,7 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                     {/* Tags: tipo + sector + ubicacion */}
                     {(c.tipo || c.sector || c.ubicacion) && (
                         <div className="flex flex-wrap gap-2">
-                            {c.tipo && (
+                            {mostrarTipo && (
                                 <span className="px-3 py-1 rounded-full bg-primary-light text-primary text-xs font-semibold">
                                     {c.tipo}
                                 </span>
@@ -232,15 +296,33 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                         )}
                     </button>
 
-                    {autenticado && c.urlOficial && (
+                    {autenticado && fuenteOficialUrl && (
                         <a
-                            href={c.urlOficial}
+                            href={fuenteOficialUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center gap-1 text-xs text-foreground-muted hover:text-primary transition-colors"
                         >
                             <ExternalLink className="w-3.5 h-3.5" /> Ver fuente oficial
                         </a>
+                    )}
+
+                    {autenticado && estadoSolicitudProp && onEstadoSolicitudChange && (
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-foreground-muted uppercase tracking-widest">
+                                Estado de solicitud
+                            </p>
+                            <select
+                                value={estadoSolicitudProp}
+                                onChange={(e) =>
+                                    onEstadoSolicitudChange(e.target.value as "no_solicitada" | "solicitada")
+                                }
+                                className="w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground"
+                            >
+                                <option value="no_solicitada">No solicitada</option>
+                                <option value="solicitada">Ya solicitada</option>
+                            </select>
+                        </div>
                     )}
                 </div>
             </div>

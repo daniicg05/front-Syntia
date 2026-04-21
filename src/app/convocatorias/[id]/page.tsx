@@ -5,6 +5,12 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Bot, Briefcase, Building2, CalendarDays, ChevronDown, CircleHelp, Cpu, Download, Factory, FileText, Hash, Leaf, Lock, MapPin, Sparkles, Star, Users, type LucideIcon } from "lucide-react";
 import { ConvocatoriaDetalle, convocatoriasPublicasApi } from "@/lib/api";
+import {
+  getFavoritaById,
+  setEstadoSolicitud,
+  toggleFavorita,
+  type EstadoSolicitud,
+} from "@/lib/favoritos";
 
 function normalizeText(value: string | null | undefined): string | null {
   if (typeof value !== "string") return null;
@@ -18,6 +24,37 @@ function normalizeTipos(value: unknown): string[] {
     .filter((item): item is string => typeof item === "string")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function getStringFromAliases(source: Record<string, unknown>, aliases: string[]): string | null {
+  for (const alias of aliases) {
+    const value = source[alias];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function getNumberFromAliases(source: Record<string, unknown>, aliases: string[]): number | null {
+  for (const alias of aliases) {
+    const value = source[alias];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim()) {
+      const cleaned = value.replace(/[^\d,.-]/g, "").trim();
+      const normalized = cleaned.includes(",")
+        ? cleaned.replace(/\./g, "").replace(",", ".")
+        : cleaned;
+      const parsed = Number(normalized);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return null;
+}
+
+function buildBdnsUrl(idBdns?: string | null): string | undefined {
+  if (!idBdns) return undefined;
+  const clean = idBdns.trim();
+  if (!clean) return undefined;
+  return `https://www.infosubvenciones.es/bdnstrans/GE/es/convocatoria/${encodeURIComponent(clean)}`;
 }
 
 const PREGUNTAS_FRECUENTES_MOCK = [
@@ -60,6 +97,8 @@ export default function ConvocatoriaDetallePage() {
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState(false);
   const [preguntaAbierta, setPreguntaAbierta] = useState<number | null>(null);
+  const [esFavorita, setEsFavorita] = useState(false);
+  const [estadoSolicitud, setEstadoSolicitudLocal] = useState<EstadoSolicitud>("no_solicitada");
 
   function handleVolverArriba() {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -86,12 +125,42 @@ export default function ConvocatoriaDetallePage() {
         if (!mounted) return;
 
         const data = response.data;
+        const raw = data as unknown as Record<string, unknown>;
+        const codigoBdns = normalizeText(data.codigoBdns) ?? getStringFromAliases(raw, ["idBdns", "codigo_bdns"]);
+        const urlOficial =
+          normalizeText(data.urlOficial ?? null) ??
+          getStringFromAliases(raw, ["enlaceOficial", "url", "link"]) ??
+          buildBdnsUrl(codigoBdns);
+
         setDetalle({
           id: data.id,
-          codigoBdns: normalizeText(data.codigoBdns),
+          titulo: normalizeText((data as unknown as { titulo?: string | null }).titulo ?? null),
+          codigoBdns,
           sector: normalizeText(data.sector),
           descripcion: normalizeText(data.descripcion),
           tiposBeneficiario: normalizeTipos(data.tiposBeneficiario),
+          organismo:
+            normalizeText(data.organismo ?? null) ?? getStringFromAliases(raw, ["organoConvocante", "entidadConvocante"]),
+          ubicacion:
+            normalizeText(data.ubicacion ?? null) ?? getStringFromAliases(raw, ["ambitoGeografico", "ambito"]),
+          fechaCierre:
+            normalizeText(data.fechaCierre ?? null) ?? getStringFromAliases(raw, ["fechaFin", "plazoFin"]),
+          fechaPublicacion:
+            normalizeText(data.fechaPublicacion ?? null) ?? getStringFromAliases(raw, ["fechaPublicada", "fechaInicio"]),
+          presupuesto:
+            data.presupuesto ??
+            getNumberFromAliases(raw, [
+              "presupuesto",
+              "importe",
+              "cuantia",
+              "presupuestoTotal",
+              "importeTotal",
+              "cuantiaTotal",
+            ]),
+          abierto: typeof data.abierto === "boolean" ? data.abierto : null,
+          urlOficial,
+          numeroConvocatoria:
+            normalizeText(data.numeroConvocatoria ?? null) ?? getStringFromAliases(raw, ["numero", "expediente"]),
         });
       } catch (err: unknown) {
         if (!mounted) return;
@@ -121,6 +190,47 @@ export default function ConvocatoriaDetallePage() {
       mounted = false;
     };
   }, [convocatoriaId]);
+
+  useEffect(() => {
+    if (convocatoriaId == null) return;
+    const favorita = getFavoritaById(convocatoriaId);
+    setEsFavorita(Boolean(favorita));
+    setEstadoSolicitudLocal(favorita?.estadoSolicitud ?? "no_solicitada");
+  }, [convocatoriaId]);
+
+  function getTituloFavorita(): string {
+    if (!detalle) return `Convocatoria #${convocatoriaId ?? ""}`;
+    if (detalle.titulo) return detalle.titulo;
+    const resumen = detalle.descripcion?.trim().split(/\s+/).slice(0, 6).join(" ") ?? "Convocatoria";
+    return `#${detalle.id} - ${resumen}`;
+  }
+
+  function handleToggleFavorita() {
+    if (!detalle) return;
+    const result = toggleFavorita({
+      id: detalle.id,
+      titulo: getTituloFavorita(),
+      organismo: detalle.organismo ?? undefined,
+      ubicacion: detalle.ubicacion ?? undefined,
+      idBdns: detalle.codigoBdns ?? undefined,
+      numeroConvocatoria: detalle.numeroConvocatoria ?? undefined,
+      sector: detalle.sector ?? undefined,
+      fechaPublicacion: detalle.fechaPublicacion ?? undefined,
+      fechaCierre: detalle.fechaCierre ?? undefined,
+      presupuesto: detalle.presupuesto ?? undefined,
+      abierto: detalle.abierto ?? undefined,
+      urlOficial: detalle.urlOficial ?? buildBdnsUrl(detalle.codigoBdns),
+    });
+    setEsFavorita(result.activa);
+    setEstadoSolicitudLocal(result.favorita?.estadoSolicitud ?? "no_solicitada");
+  }
+
+  function handleEstadoSolicitudChange(nextEstado: EstadoSolicitud) {
+    if (!detalle) return;
+    const updated = setEstadoSolicitud(detalle.id, nextEstado);
+    if (!updated) return;
+    setEstadoSolicitudLocal(nextEstado);
+  }
 
   if (loading) {
     return (
@@ -270,6 +380,39 @@ export default function ConvocatoriaDetallePage() {
                   Analizar con IA
                 </span>
               </button>
+
+              <div className="pt-2 border-t border-border space-y-3">
+                <button
+                  type="button"
+                  onClick={handleToggleFavorita}
+                  className={`w-full inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-semibold transition-colors cursor-pointer ${
+                    esFavorita
+                      ? "bg-amber-100 text-amber-900 hover:bg-amber-200"
+                      : "bg-primary text-white hover:bg-primary-hover"
+                  }`}
+                >
+                  <Star className={`w-4 h-4 mr-2 ${esFavorita ? "fill-current" : ""}`} />
+                  {esFavorita ? "Quitar de favoritas" : "Anadir a favoritas"}
+                </button>
+
+                {esFavorita && (
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-widest text-foreground-muted mb-1.5">
+                      Estado de solicitud
+                    </label>
+                    <select
+                      value={estadoSolicitud}
+                      onChange={(e) =>
+                        handleEstadoSolicitudChange(e.target.value as EstadoSolicitud)
+                      }
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground"
+                    >
+                      <option value="no_solicitada">No solicitada</option>
+                      <option value="solicitada">Ya solicitada</option>
+                    </select>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </aside>

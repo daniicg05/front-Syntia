@@ -6,7 +6,6 @@ import { useState, useEffect, useRef } from "react";
 import { getUser, logout } from "@/lib/auth";
 import Image from "next/image";
 import {
-  LayoutDashboard,
   FolderOpen,
   BookOpen,
   LogOut,
@@ -17,28 +16,26 @@ import {
   ChevronDown,
   User,
   Home,
+  Star,
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 
 const NAV_LINKS = [
   { href: "/home", label: "Inicio", icon: Home },
-  { href: "/proyectos", label: "Mis proyectos", icon: FolderOpen },
   { href: "/guias", label: "Guías", icon: BookOpen },
-  { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Mis proyectos", icon: FolderOpen },
+  { href: "/perfil/favoritas", label: "Favoritas", icon: Star },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<ReturnType<typeof getUser>>(null);
+  const [user] = useState<ReturnType<typeof getUser>>(() => getUser());
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const { theme, toggleTheme, mounted } = useTheme();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setUser(getUser());
-  }, []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
