@@ -155,6 +155,7 @@ export function ConvocatoriaCard({
                                         {badge.label}
                                     </span>
                                 )}
+
                                 {c.numeroConvocatoria && (
                                     <span className="text-[10px] font-bold text-foreground-subtle uppercase tracking-widest">
                                         Ref: {c.numeroConvocatoria}
