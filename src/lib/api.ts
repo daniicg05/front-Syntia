@@ -80,7 +80,7 @@ export interface RegionNodo {
     children: RegionNodo[];
 }
 
-export interface ConvocatoriaDetalle {
+export interface ConvocatoriaDTO {
     id: number;
     titulo?: string | null;
     codigoBdns: string | null;
