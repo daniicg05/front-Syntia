@@ -70,6 +70,8 @@ export interface ConvocatoriaPublica {
     matchRazon?: string;
     presupuesto?: number;
     regionId?: number;
+    favorita?: boolean;
+    estadoSolicitud?: "no_solicitada" | "solicitada";
 }
 
 export interface RegionNodo {
@@ -81,26 +83,28 @@ export interface RegionNodo {
 export interface ConvocatoriaDTO {
     id: number;
     titulo?: string | null;
-    tipo?: string | null;
-    sector?: string | null;
-    ubicacion?: string | null;
-    urlOficial?: string | null;
-    fuente?: string | null;
-    idBdns?: string | null;
-    numeroConvocatoria?: string | null;
-    fechaCierre?: string | null;
+    codigoBdns: string | null;
+    sector: string | null;
+    descripcion: string | null;
+    tiposBeneficiario: string[];
     organismo?: string | null;
+    ubicacion?: string | null;
+    fechaCierre?: string | null;
     fechaPublicacion?: string | null;
-    descripcion?: string | null;
-    textoCompleto?: string | null;
-    mrr?: string | null;
     presupuesto?: number | null;
     abierto?: boolean | null;
+    urlOficial?: string | null;
+    numeroConvocatoria?: string | null;
+}
+
+
+export interface ConvocatoriaDetalle extends ConvocatoriaDTO {
+    textoCompleto?: string | null;
     finalidad?: string | null;
     fechaInicio?: string | null;
-    regionId?: number | null;
-    provinciaId?: number | null;
-    tiposBeneficiario?: string[] | null;
+    tipo?: string | null;
+    fuente?: string | null;
+    idBdns?: string | null;
 }
 
 export interface BusquedaPublicaResponse {
