@@ -19,9 +19,42 @@ export interface ConvocatoriaFavorita {
 }
 
 const FAVORITAS_STORAGE_KEY = "syntia_convocatorias_favoritas";
+
+function getStorageKey(): string {
+  try {
+    const raw = document.cookie
+        .split("; ")
+        .find((c) => c.startsWith("syntia_token="))
+        ?.split("=")[1];
+    if (!raw) return FAVORITAS_STORAGE_KEY;
+    const payload = JSON.parse(atob(raw.split(".")[1]));
+    const userId = payload.sub ?? payload.id ?? payload.email;
+    if (!userId) return FAVORITAS_STORAGE_KEY;
+    return `${FAVORITAS_STORAGE_KEY}_${userId}`;
+  } catch {
+    return FAVORITAS_STORAGE_KEY;
+  }
+}
+
 export const FAVORITAS_UPDATED_EVENT = "syntia:favoritas-updated";
 
-function parseFavoritas(raw: string | null): ConvocatoriaFavorita[] {
+function parseFavoritas(raw: string | null): {
+    id: number;
+    titulo: string;
+    organismo: string | undefined;
+    ubicacion: string | undefined;
+    tipo: string | undefined;
+    sector: string | undefined;
+    fechaPublicacion: string | undefined;
+    fechaCierre: string | undefined;
+    presupuesto: number | undefined;
+    abierto: boolean | undefined;
+    urlOficial: string | undefined;
+    idBdns: string | undefined;
+    numeroConvocatoria: string | undefined;
+    estadoSolicitud: string;
+    guardadaEn: string
+}[] {
   if (!raw) return [];
 
   try {
@@ -71,12 +104,12 @@ function parseFavoritas(raw: string | null): ConvocatoriaFavorita[] {
 
 function readFavoritas(): ConvocatoriaFavorita[] {
   if (typeof window === "undefined") return [];
-  return parseFavoritas(window.localStorage.getItem(FAVORITAS_STORAGE_KEY));
+  return parseFavoritas(window.localStorage.getItem(getStorageKey()));
 }
 
 function writeFavoritas(items: ConvocatoriaFavorita[]) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(FAVORITAS_STORAGE_KEY, JSON.stringify(items));
+  window.localStorage.setItem(getStorageKey(), JSON.stringify(items));
   window.dispatchEvent(new Event(FAVORITAS_UPDATED_EVENT));
 }
 
