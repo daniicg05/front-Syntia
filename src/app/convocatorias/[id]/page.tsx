@@ -457,51 +457,7 @@ export default function ConvocatoriaDetallePage() {
               <h2 className="text-2xl font-bold text-foreground mt-1">
                 {tituloPreview}
               </h2>
-            </header>
-
-            {/* ID + BDNS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-border p-4 bg-surface">
-                <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
-                  <Hash className="w-3.5 h-3.5 text-foreground-muted" />
-                  ID
-                </p>
-                <p className="mt-2 text-sm text-foreground">{String(detalle.id)}</p>
-              </div>
-
-              <div className="rounded-xl border border-border p-4 bg-surface">
-                <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-foreground-muted" />
-                  Código BDNS
-                </p>
-                <p className="mt-2 text-sm text-foreground">
-                  {detalle.codigoBdns ?? "No disponible"}
-                </p>
-              </div>
-            </div>
-
-            {/* Extra fila fields (sector, tiposBeneficiario) */}
-            {filasDetalle
-                .filter(
-                    (fila) =>
-                        fila.clave !== "id" &&
-                        fila.clave !== "codigoBdns" &&
-                        fila.clave !== "descripcion"
-                )
-                .map((fila) => (
-                    <div
-                        key={fila.clave}
-                        className="flex flex-col rounded-xl border border-border p-4 bg-surface"
-                    >
-                      <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
-                        <fila.icono className="w-3.5 h-3.5 text-foreground-muted" />
-                        {fila.campo}
-                      </p>
-                      <button className="mt-2 self-start px-4 py-1 text-sm bg-green-200 text-black border border-border rounded-full whitespace-pre-line cursor-pointer hover:bg-green-500 transition-colors">
-                        {fila.valor}
-                      </button>
-                    </div>
-                ))}
+            </header>            
 
             {/* Nº Convocatoria + Sector */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
