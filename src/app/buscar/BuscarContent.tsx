@@ -88,14 +88,14 @@ export default function BuscarContent() {
         buscar(qParam, sectorParam, pageParam, !cerradasParam, regionParam);
     }, [qParam, sectorParam, pageParam, cerradasParam, regionParam, buscar]);
 
-    function buildParams(q: string, sec: string, page: number, abiertas: boolean,size:number, regionId?: number | null) {
+    function buildParams(q: string, sec: string, page: number, abiertas: boolean, regionId?: number | null, size: number = 20) {
         const params = new URLSearchParams();
         if (q) params.set("q", q);
         if (sec) params.set("sector", sec);
         if (page) params.set("page", String(page));
         if (size !== 20) params.set("size", String(size));
         if (!abiertas) params.set("cerradas", "1");
-        if (regionId) params.set("regionId", String(regionId));
+        if (regionId != null) params.set("regionId", String(regionId));
         return params.toString();
     }
 
@@ -122,6 +122,11 @@ export default function BuscarContent() {
 
     function goToPage(page: number) {
         router.push(`/buscar?${buildParams(qParam, sectorParam, page, soloAbiertas, selectedRegionId)}`);
+    }
+
+    function handlePageSizeChange(size: number) {
+        // reset to first page when changing page size
+        router.push(`/buscar?${buildParams(query.trim(), sector, 0, soloAbiertas, selectedRegionId, size)}`);
     }
 
     const tieneResultados = resultados && resultados.content.length > 0;
