@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Briefcase,
   Building2,
   CalendarDays,
-  ChevronDown,
   Cpu,
   Euro,
   Factory,
@@ -24,15 +23,11 @@ import {
 } from "lucide-react";
 import {
   ConvocatoriaDetalle,
-  ConvocatoriaDTO,
   convocatoriasPublicasApi,
 } from "@/lib/api";
-import {
-  getFavoritaById,
-  setEstadoSolicitud,
-  toggleFavorita,
-  type EstadoSolicitud,
-} from "@/lib/favoritos";
+import { getToken } from "@/lib/auth";
+import { useFavoriteStatus } from "@/hooks/useFavorites";
+import { useToast } from "@/components/ui/Toast";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -122,6 +117,8 @@ type FilaDetalle = {
 
 export default function ConvocatoriaDetallePage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const toast = useToast();
   const idRaw = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
   const convocatoriaId = useMemo(() => {
@@ -133,9 +130,8 @@ export default function ConvocatoriaDetallePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState(false);
-  const [esFavorita, setEsFavorita] = useState(false);
-  const [estadoSolicitud, setEstadoSolicitudLocal] =
-      useState<EstadoSolicitud>("no_solicitada");
+  const isAuthenticated = Boolean(getToken());
+  const { favorita: esFavorita, toggleFavorite } = useFavoriteStatus(convocatoriaId, isAuthenticated);
 
   function handleVolverArriba() {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -249,52 +245,21 @@ export default function ConvocatoriaDetallePage() {
     };
   }, [convocatoriaId]);
 
-  // ── Load favorita state ────────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (convocatoriaId == null) return;
-    const favorita = getFavoritaById(convocatoriaId);
-    setEsFavorita(Boolean(favorita));
-    setEstadoSolicitudLocal(favorita?.estadoSolicitud ?? "no_solicitada");
-  }, [convocatoriaId]);
-
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  function getTituloFavorita(): string {
-    if (!detalle) return `Convocatoria #${convocatoriaId ?? ""}`;
-    if (detalle.titulo) return detalle.titulo;
-    const resumen =
-        detalle.descripcion?.trim().split(/\s+/).slice(0, 6).join(" ") ??
-        "Convocatoria";
-    return `#${detalle.id} - ${resumen}`;
-  }
-
-  function handleToggleFavorita() {
+  async function handleToggleFavorita() {
     if (!detalle) return;
-    const result = toggleFavorita({
-      id: detalle.id,
-      titulo: getTituloFavorita(),
-      organismo: detalle.organismo ?? undefined,
-      ubicacion: detalle.ubicacion ?? undefined,
-      idBdns: detalle.codigoBdns ?? undefined,
-      numeroConvocatoria: detalle.numeroConvocatoria ?? undefined,
-      sector: detalle.sector ?? undefined,
-      tipo: detalle.tipo ?? undefined,
-      fechaPublicacion: detalle.fechaPublicacion ?? undefined,
-      fechaCierre: detalle.fechaCierre ?? undefined,
-      presupuesto: detalle.presupuesto ?? undefined,
-      abierto: detalle.abierto ?? undefined,
-      urlOficial: detalle.urlOficial ?? buildBdnsUrl(detalle.codigoBdns),
-    });
-    setEsFavorita(result.activa);
-    setEstadoSolicitudLocal(result.favorita?.estadoSolicitud ?? "no_solicitada");
-  }
-
-  function handleEstadoSolicitudChange(nextEstado: EstadoSolicitud) {
-    if (!detalle) return;
-    const updated = setEstadoSolicitud(detalle.id, nextEstado);
-    if (!updated) return;
-    setEstadoSolicitudLocal(nextEstado);
+    if (!isAuthenticated) {
+      toast.warning("Debes iniciar sesion para gestionar favoritas.");
+      router.push("/login");
+      return;
+    }
+    try {
+      const nextState = await toggleFavorite();
+      toast.success(nextState ? "Convocatoria anadida a favoritas." : "Convocatoria eliminada de favoritas.");
+    } catch {
+      toast.error("No se pudo actualizar favoritas. Intentalo de nuevo.");
+    }
   }
 
   // ── filasDetalle ───────────────────────────────────────────────────────────
@@ -703,23 +668,9 @@ export default function ConvocatoriaDetallePage() {
                 </div>
 
                 {esFavorita && (
-                    <div className="mt-3">
-                      <label className="block text-[11px] font-bold uppercase tracking-widest text-foreground-muted mb-1.5">
-                        Estado de solicitud
-                      </label>
-                      <select
-                          value={estadoSolicitud}
-                          onChange={(e) =>
-                              handleEstadoSolicitudChange(
-                                  e.target.value as EstadoSolicitud
-                              )
-                          }
-                          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground"
-                      >
-                        <option value="no_solicitada">No solicitada</option>
-                        <option value="solicitada">Ya solicitada</option>
-                      </select>
-                    </div>
+                  <p className="mt-3 text-xs font-semibold text-amber-600">
+                    Guardada en tus favoritas.
+                  </p>
                 )}
               </div>
 
