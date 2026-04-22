@@ -163,7 +163,13 @@ export default function AnalisisIAPage() {
     useEffect(() => {
         const stored = sessionStorage.getItem(`analisis_idBdns_${convocatoriaId}`);
         if (stored) {
-            setIdBdns(Number(stored));
+            const parsed = Number(stored);
+            if (Number.isFinite(parsed)) {
+                setIdBdns(parsed);
+            } else {
+                setErrorMsg("Código BDNS inválido. Vuelve al detalle de la convocatoria.");
+                setFase("error");
+            }
         } else {
             setErrorMsg("No se encontró el código BDNS. Vuelve al detalle de la convocatoria.");
             setFase("error");
@@ -192,7 +198,7 @@ export default function AnalisisIAPage() {
         const token = getCookie("syntia_token");
         if (!token) { router.push("/login"); return; }
 
-        const url = `/api/convocatorias/${bdnsId}/analisis-ia`;
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/usuario/convocatorias/${bdnsId}/analisis-ia`;
 
         setFase("conectando");
         setEstado("Conectando con el servidor...");
@@ -213,30 +219,60 @@ export default function AnalisisIAPage() {
             const reader = res.body.getReader();
             const decoder = new TextDecoder();
             let buffer = "";
+            let eventoActual = "";
+            let dataActual: string[] = [];
+            let eventoTerminal = false;
 
-            setFase("detalle");
+            const despacharEvento = () => {
+                if (!eventoActual && dataActual.length === 0) return;
+                const payload = dataActual.join("\n");
+                procesarEvento(eventoActual || "message", payload);
+                if (eventoActual === "completado" || eventoActual === "error") {
+                    eventoTerminal = true;
+                }
+                eventoActual = "";
+                dataActual = [];
+            };
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
 
                 buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split("\n");
+                const lines = buffer.replace(/\r\n/g, "\n").split("\n");
                 buffer = lines.pop() ?? "";
 
                 for (const line of lines) {
                     if (line.startsWith("event:")) {
-                        // el nombre del evento viene en la línea siguiente con "data:"
+                        eventoActual = line.slice(6).trim();
                     } else if (line.startsWith("data:")) {
-                        // Necesitamos el evento anterior — usamos parser completo
+                        dataActual.push(line.slice(5).trimStart());
+                    } else if (line === "") {
+                        despacharEvento();
                     }
                 }
 
-                // Parser SSE completo por bloques event+data
-                const bloques = (decoder.decode(value, { stream: true }) + buffer).split("\n\n");
-                for (const bloque of bloques) {
-                    procesarBloque(bloque);
+                if (eventoTerminal) {
+                    controller.abort();
+                    break;
                 }
+            }
+
+            // Procesa líneas pendientes cuando el stream termina sin línea en blanco final.
+            buffer += decoder.decode();
+            const trailingLines = buffer.replace(/\r\n/g, "\n").split("\n");
+            for (const line of trailingLines) {
+                if (line.startsWith("event:")) {
+                    eventoActual = line.slice(6).trim();
+                } else if (line.startsWith("data:")) {
+                    dataActual.push(line.slice(5).trimStart());
+                }
+            }
+            despacharEvento();
+
+            if (!eventoTerminal) {
+                setErrorMsg("La conexión finalizó sin completar el análisis.");
+                setFase("error");
             }
         }).catch((e) => {
             if (e.name !== "AbortError") {
@@ -248,16 +284,7 @@ export default function AnalisisIAPage() {
         sseRef.current = { close: () => controller.abort() } as unknown as EventSource;
     }
 
-    function procesarBloque(bloque: string) {
-        const lines = bloque.split("\n");
-        let evento = "";
-        let data = "";
-        for (const line of lines) {
-            if (line.startsWith("event:")) evento = line.replace("event:", "").trim();
-            if (line.startsWith("data:")) data = line.replace("data:", "").trim();
-        }
-        if (!evento || !data) return;
-
+    function procesarEvento(evento: string, data: string) {
         try {
             switch (evento) {
                 case "estado":
