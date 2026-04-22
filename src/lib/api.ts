@@ -1,6 +1,11 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 import type { ConvocatoriasPageResponse } from "@/lib/types/convocatorias";
+import type {
+    ConvocatoriaFavoritaDTO,
+    FavoriteStatusResponse,
+    FavoriteToggleResponse,
+} from "@/lib/types/favorites";
 
 const SKIP_AUTH_REDIRECT_HEADER = "x-skip-auth-redirect";
 
@@ -183,6 +188,18 @@ export const recomendacionesApi = {
         api.post(`/usuario/proyectos/${proyectoId}/recomendaciones/generar`),
     guiaEnriquecida: (proyectoId: number, recId: number) =>
         api.get(`/usuario/proyectos/${proyectoId}/recomendaciones/${recId}/guia-enriquecida`),
+};
+
+// ── Favoritas usuario ────────────────────────────────────────────────────────
+export const favoritesApi = {
+    list: () => api.get<ConvocatoriaFavoritaDTO[]>("/usuario/favoritas"),
+    ids: () => api.get<number[]>("/usuario/favoritas/ids"),
+    status: (convocatoriaId: number) =>
+        api.get<FavoriteStatusResponse>(`/usuario/favoritas/${convocatoriaId}/estado`),
+    add: (convocatoriaId: number) =>
+        api.post<FavoriteToggleResponse>(`/usuario/favoritas/${convocatoriaId}`),
+    remove: (convocatoriaId: number) =>
+        api.delete<FavoriteToggleResponse>(`/usuario/favoritas/${convocatoriaId}`),
 };
 
 // ── Admin ─────────────────────────────────────────────────────────────────────

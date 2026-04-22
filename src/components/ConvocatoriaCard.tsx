@@ -107,7 +107,8 @@ export function ConvocatoriaCard({
         moderate ? "text-amber-600" :
         "text-foreground-muted";
 
-    const estadoSolicitudMostrada = estadoSolicitudProp ?? estadoSolicitudLocal;
+    const favoritaMostrada = typeof c.favorita === "boolean" ? c.favorita : favorita;
+    const estadoSolicitudMostrada = estadoSolicitudProp ?? estadoSolicitudLocal ?? c.estadoSolicitud ?? null;
     const tipoNormalizado = (c.tipo ?? "").trim().toLowerCase();
     const sectorNormalizado = (c.sector ?? "").trim().toLowerCase();
     const mostrarTipo = Boolean(c.tipo) && tipoNormalizado !== sectorNormalizado;
@@ -118,6 +119,8 @@ export function ConvocatoriaCard({
     }
 
     useEffect(() => {
+        if (typeof c.favorita === "boolean") return;
+
         function syncFavoritaState() {
             const favoritaGuardada = getFavoritaById(c.id);
             setFavorita(Boolean(favoritaGuardada));
@@ -132,7 +135,7 @@ export function ConvocatoriaCard({
             window.removeEventListener(FAVORITAS_UPDATED_EVENT, syncFavoritaState);
             window.removeEventListener("storage", syncFavoritaState);
         };
-    }, [c.id]);
+    }, [c.id, c.favorita, c.estadoSolicitud]);
 
     return (
         <div className="bg-surface hover:shadow-xl transition-all duration-200 p-6 rounded-2xl group relative overflow-hidden border border-border">
@@ -171,7 +174,7 @@ export function ConvocatoriaCard({
                                         {c.matchScore}% match
                                     </span>
                                 )}
-                                {favorita && (
+                                {favoritaMostrada && (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tight bg-amber-100 text-amber-900">
                                         <Star className="w-3 h-3 fill-current" /> Favorita
                                     </span>

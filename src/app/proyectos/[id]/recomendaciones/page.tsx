@@ -5,32 +5,32 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { recomendacionesApi, proyectosApi } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { useFavoriteIds } from "@/hooks/useFavorites";
+import { useToast } from "@/components/ui/Toast";
+import type { RecomendacionDTO } from "@/lib/types/recomendacion";
+import type { ApiError } from "@/lib/types/favorites";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ScoreBadge } from "@/components/ui/Badge";
-import { Search, Sparkles, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { Search, Sparkles, ChevronDown, ChevronUp, Loader2, Star } from "lucide-react";
 
-interface Recomendacion {
-  id: number;
-  puntuacion: number;
-  explicacion: string;
-  guia?: string;
-  convocatoriaId: number;
-  titulo: string;
-  tipo: string;
-  sector: string;
-  ubicacion: string;
-  urlOficial: string;
-  fuente: string;
-  vigente: boolean;
-  usadaIa: boolean;
+function favoriteErrorMessage(error: unknown): string {
+  const apiError = error as ApiError;
+  if (!apiError?.status) {
+    return apiError?.message || "No se pudo actualizar favorita.";
+  }
+  if (apiError.status === 401) return "Sesion expirada. Inicia sesion de nuevo.";
+  if (apiError.status === 403) return "No tienes permisos para gestionar favoritas.";
+  if (apiError.status === 404) return "La convocatoria ya no esta disponible.";
+  if (apiError.status >= 500) return "Error temporal del servidor. Intentalo de nuevo.";
+  return apiError.message || "No se pudo actualizar favorita.";
 }
 
 export default function RecomendacionesPage() {
   const { id } = useParams<{ id: string }>();
   const proyectoId = Number(id);
   const [proyecto, setProyecto] = useState<{ nombre: string } | null>(null);
-  const [recs, setRecs] = useState<Recomendacion[]>([]);
+  const [recs, setRecs] = useState<RecomendacionDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [buscando, setBuscando] = useState(false);
   const [busquedaMensaje, setBusquedaMensaje] = useState<string | null>(null);
@@ -40,13 +40,57 @@ export default function RecomendacionesPage() {
   const [guiasLoading, setGuiasLoading] = useState<Set<number>>(new Set());
   const [guias, setGuias] = useState<Record<number, Record<string, unknown>>>({});
   const [filtro, setFiltro] = useState("");
+  const toast = useToast();
+  const isAuthenticated = Boolean(getToken());
+  const {
+    isFavorite,
+    toggleFavorite: toggleFavoriteRemote,
+    hydrateFromRecommendations,
+  } = useFavoriteIds(isAuthenticated);
 
   const cargarRecs = useCallback(() => {
     recomendacionesApi.list(proyectoId)
-      .then((res) => setRecs(res.data))
+      .then((res) => {
+        const data = res.data as RecomendacionDTO[];
+        setRecs(data);
+        hydrateFromRecommendations(data);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [proyectoId]);
+  }, [proyectoId, hydrateFromRecommendations]);
+
+  const handleToggleFavorite = useCallback(async (convocatoriaId: number) => {
+    if (!isAuthenticated) {
+      toast.warning("Debes iniciar sesion para guardar favoritas.");
+      return;
+    }
+
+    const previous = isFavorite(convocatoriaId);
+    const optimistic = !previous;
+
+    setRecs((prev) =>
+      prev.map((rec) =>
+        rec.convocatoriaId === convocatoriaId ? { ...rec, favorita: optimistic } : rec
+      )
+    );
+
+    try {
+      const finalState = await toggleFavoriteRemote(convocatoriaId);
+      setRecs((prev) =>
+        prev.map((rec) =>
+          rec.convocatoriaId === convocatoriaId ? { ...rec, favorita: finalState } : rec
+        )
+      );
+      toast.success(finalState ? "Convocatoria anadida a favoritas." : "Convocatoria eliminada de favoritas.");
+    } catch (error) {
+      setRecs((prev) =>
+        prev.map((rec) =>
+          rec.convocatoriaId === convocatoriaId ? { ...rec, favorita: previous } : rec
+        )
+      );
+      toast.error(favoriteErrorMessage(error));
+    }
+  }, [isAuthenticated, isFavorite, toggleFavoriteRemote, toast]);
 
   useEffect(() => {
     proyectosApi.get(proyectoId).then((res) => setProyecto(res.data)).catch(() => {});
@@ -284,16 +328,28 @@ export default function RecomendacionesPage() {
                     </div>
                     <h3 className="text-sm font-medium text-foreground line-clamp-2">{rec.titulo}</h3>
                   </div>
-                  {rec.urlOficial && (
-                    <a
-                      href={rec.urlOficial}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline flex-shrink-0"
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFavorite(rec.convocatoriaId)}
+                      aria-label="Alternar favorita"
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-border bg-surface hover:bg-surface-muted transition-colors"
                     >
-                      Ver convocatoria
-                    </a>
-                  )}
+                      <Star
+                        className={`w-4 h-4 ${(rec.favorita ?? isFavorite(rec.convocatoriaId)) ? "fill-amber-400 text-amber-500" : "text-foreground-muted"}`}
+                      />
+                    </button>
+                    {rec.urlOficial && (
+                      <a
+                        href={rec.urlOficial}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Ver convocatoria
+                      </a>
+                    )}
+                  </div>
                 </div>
               </Card>
             ))}
@@ -331,6 +387,16 @@ export default function RecomendacionesPage() {
                       <p className="text-sm text-foreground-muted line-clamp-3">{rec.explicacion}</p>
                     </div>
                     <div className="flex flex-col gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleFavorite(rec.convocatoriaId)}
+                        aria-label="Alternar favorita"
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-border bg-surface hover:bg-surface-muted transition-colors self-end"
+                      >
+                        <Star
+                          className={`w-4 h-4 ${(rec.favorita ?? isFavorite(rec.convocatoriaId)) ? "fill-amber-400 text-amber-500" : "text-foreground-muted"}`}
+                        />
+                      </button>
                       {rec.urlOficial && (
                         <a
                           href={rec.urlOficial}
