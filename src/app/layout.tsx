@@ -22,8 +22,14 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Syntia — Encuentra subvenciones para tu proyecto",
   description:
-    "Syntia analiza tu proyecto con inteligencia artificial y encuentra las subvenciones públicas más compatibles de la BDNS.",
-  keywords: ["subvenciones", "BDNS", "inteligencia artificial", "financiación pública", "España"],
+      "Syntia analiza tu proyecto con inteligencia artificial y encuentra las subvenciones públicas más compatibles de la BDNS.",
+  keywords: [
+    "subvenciones",
+    "BDNS",
+    "inteligencia artificial",
+    "financiación pública",
+    "España",
+  ],
 };
 
 export const viewport: Viewport = {
@@ -33,28 +39,26 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({
-  children,
-}: Readonly<{
+                                     children,
+                                   }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="es"
-      data-scroll-behavior="smooth"
-      className={`${inter.variable} ${manrope.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-background text-foreground font-sans" suppressHydrationWarning>
-        <ThemeProvider>
-          <ToastProvider>
-            <GlobalUserNavbar />
-            {/** Contenedor principal con espacio inferior para que el contenido no quede pegado al footer */}
-            <main className="flex-1 pb-8">{children}</main>
-            {/** Footer global único para toda la app (con exclusiones definidas en GlobalFooter) */}
-            <GlobalFooter />
-          </ToastProvider>
-
-        </ThemeProvider>
+      <html
+          lang="es"
+          data-scroll-behavior="smooth"
+          suppressHydrationWarning
+          className={`${inter.variable} ${manrope.variable} h-full antialiased`}
+      >
+      <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
+      <ThemeProvider>
+        <ToastProvider>
+          <GlobalUserNavbar />
+          <main className="flex-1 pb-8">{children}</main>
+          <GlobalFooter />
+        </ToastProvider>
+      </ThemeProvider>
       </body>
-    </html>
+      </html>
   );
 }

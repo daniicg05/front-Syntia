@@ -57,17 +57,10 @@
 /* Dark mode */
 .dark {
   /* Brand */
-  --primary: #81d1f0;
-  --primary-hover: #b9eaff;
-  --primary-light: #003c4f;
-  --primary-muted: #005a71;
-
-  /* Alternativa 1 */
-  --primary: #153a52;         /* rgb(21,58,82) */
-  --primary-hover: #28577a;   /* rgb(40,87,122) */
-  --primary-light: #0b2433;   /* rgb(11,36,51) */
-  --primary-muted: #1a3550;   /* rgb(26,53,80) */
-  --primary-rgb: 21,58,82;
+  --primary: #153a52;
+  --primary-hover: #28577a;
+  --primary-light: #0b2433;
+  --primary-muted: #1a3550;
 
   /* Neutrals */
   --background: #0f1110;
@@ -94,19 +87,31 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-light: var(--primary-light);
+  --color-primary-muted: var(--primary-muted);
+
   --color-surface: var(--surface);
   --color-surface-muted: var(--surface-muted);
+
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
+
   --color-foreground-muted: var(--foreground-muted);
   --color-foreground-subtle: var(--foreground-subtle);
+
+  --color-accent-green: var(--accent-green);
+  --color-accent-emerald: var(--accent-emerald);
+  --color-accent-amber: var(--accent-amber);
+
   --color-destructive: var(--destructive);
   --color-destructive-light: var(--destructive-light);
-  --font-sans: 'Inter', 'Inter Fallback';
-  --font-serif: 'Fraunces', 'Georgia', serif;
+
+  --font-sans: "Inter", "Inter Fallback";
+  --font-serif: "Fraunces", "Georgia", serif;
+
   --radius: var(--radius);
 }
 
@@ -114,13 +119,15 @@
   box-sizing: border-box;
 }
 
-/* Theme transition */
 html {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 html * {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition:
+          background-color 0.2s ease,
+          border-color 0.2s ease,
+          color 0.2s ease;
 }
 
 body {
@@ -135,8 +142,12 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* Typography styles */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 700;
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
@@ -159,7 +170,8 @@ p {
   line-height: var(--leading-relaxed);
 }
 
-small, .text-sm {
+small,
+.text-sm {
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
 }
@@ -173,13 +185,16 @@ small, .text-sm {
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--surface-muted);
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--foreground-subtle);
 }
@@ -307,17 +322,19 @@ small, .text-sm {
 /* Enhanced skeleton shimmer */
 .skeleton-shimmer {
   background: linear-gradient(
-    90deg,
-    var(--surface-muted) 25%,
-    var(--border) 50%,
-    var(--surface-muted) 75%
+          90deg,
+          var(--surface-muted) 25%,
+          var(--border) 50%,
+          var(--surface-muted) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
 /* Button and interactive element transitions */
-button, a, [role="button"] {
+button,
+a,
+[role="button"] {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -330,7 +347,7 @@ button, a, [role="button"] {
 /* Selection */
 ::selection {
   background-color: var(--primary-light);
-  color: var(--primary);
+  color: var(--foreground);
 }
 
 /* Smooth underlines */
@@ -339,7 +356,7 @@ button, a, [role="button"] {
 }
 
 .hover-underline::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -2px;
   left: 0;

@@ -1,32 +1,30 @@
 "use client";
 
 import { useState, FormEvent, useEffect, useCallback } from "react";
-
 import { Search, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
 import { ModalAccesoRequerido } from "@/components/ModalAccesoRequerido";
 import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
-import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica, BusquedaPublicaResponse, RegionNodo } from "@/lib/api";
-
-// ── Datos estáticos ────────────────────────────────────────────────────────────
-
- 
-
+import {
+    convocatoriasPublicasApi,
+    convocatoriasUsuarioApi,
+    ConvocatoriaPublica,
+    BusquedaPublicaResponse,
+    RegionNodo,
+} from "@/lib/api";
 
 const stripCodigo = (d: string) => d.replace(/^[A-Z0-9]+ - /, "").trim();
 
 const TIPOS_CONVOCATORIA = ["Subvención", "Préstamo", "Garantía", "Premio", "Subvención + Préstamo"];
 
 const PLAZOS_CIERRE = [
-    { value: "",   label: "Cualquier plazo"     },
-    { value: "7",  label: "Cierra en 7 días"    },
-    { value: "30", label: "Cierra en 30 días"   },
-    { value: "90", label: "Cierra en 90 días"   },
+    { value: "", label: "Cualquier plazo" },
+    { value: "7", label: "Cierra en 7 días" },
+    { value: "30", label: "Cierra en 30 días" },
+    { value: "90", label: "Cierra en 90 días" },
 ];
 
 const TIPOS_BENEFICIARIO = ["Pyme", "Autónomo", "Gran Empresa", "Startup", "Entidad sin ánimo de lucro"];
-
-// ── Helpers de orden local ─────────────────────────────────────────────────────
 
 function sortResults(list: ConvocatoriaPublica[], sortBy: string): ConvocatoriaPublica[] {
     if (sortBy === "plazo") {
@@ -42,8 +40,6 @@ function sortResults(list: ConvocatoriaPublica[], sortBy: string): ConvocatoriaP
     return list;
 }
 
-// ── Componente ─────────────────────────────────────────────────────────────────
-
 export default function HomePage() {
     const [autenticado, setAutenticado] = useState(false);
 
@@ -51,72 +47,65 @@ export default function HomePage() {
         setAutenticado(isAuthenticated());
     }, []);
 
-    const [modalAcceso,  setModalAcceso]  = useState(false);
-    const [finalidades,  setFinalidades]  = useState<string[]>([]);
-    const [tipos,        setTipos]        = useState<string[]>([]);
-    const [regiones,     setRegiones]     = useState<RegionNodo[]>([]);
+    const [modalAcceso, setModalAcceso] = useState(false);
+    const [finalidades, setFinalidades] = useState<string[]>([]);
+    const [tipos, setTipos] = useState<string[]>([]);
+    const [regiones, setRegiones] = useState<RegionNodo[]>([]);
 
-    // Filtros rápidos (barra junto al buscador)
-    const [query,        setQuery]        = useState("");
-    const [nivel,        setNivel]        = useState("");
+    const [query, setQuery] = useState("");
+    const [nivel, setNivel] = useState("");
     const [soloAbiertas, setSoloAbiertas] = useState(true);
 
-    // Filtros de la barra lateral
-    const [sectorActivo,      setSectorActivo]      = useState("");
-    const [tipoConvocatoria,  setTipoConvocatoria]  = useState("");
-    const [plazoCierre,       setPlazoCierre]        = useState("");
-    const [presupuestoMin,    setPresupuestoMin]     = useState(0);
-    const [tipoBeneficiario,  setTipoBeneficiario]  = useState("");
-    const [selectedRegionId,  setSelectedRegionId]  = useState<number | null>(null);
+    const [sectorActivo, setSectorActivo] = useState("");
+    const [tipoConvocatoria, setTipoConvocatoria] = useState("");
+    const [plazoCierre, setPlazoCierre] = useState("");
+    const [presupuestoMin, setPresupuestoMin] = useState(0);
+    const [tipoBeneficiario, setTipoBeneficiario] = useState("");
+    const [selectedRegionId, setSelectedRegionId] = useState<number | null>(null);
     const [selectedProvinciaId, setSelectedProvinciaId] = useState<number | null>(null);
-    const [sortBy,            setSortBy]             = useState("relevancia");
-    const [sidebarVisible,    setSidebarVisible]     = useState(true);
+    const [sortBy, setSortBy] = useState("relevancia");
+    const [sidebarVisible, setSidebarVisible] = useState(true);
 
-    // Estado de resultados
     const [resultados, setResultados] = useState<BusquedaPublicaResponse | null>(null);
-    const [loading,    setLoading]    = useState(true);
-    const [page,       setPage]       = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(0);
 
-    // Filtros aplicados (los que se han enviado al API)
-    const [appliedQuery,   setAppliedQuery]   = useState("");
-    const [appliedSector,  setAppliedSector]  = useState("");
+    const [appliedQuery, setAppliedQuery] = useState("");
+    const [appliedSector, setAppliedSector] = useState("");
     const [appliedAbierto, setAppliedAbierto] = useState(true);
 
-    const buscar = useCallback((q: string, sec: string, tipo: string, abierto: boolean, p: number, regionId?: number | null) => {
-        setLoading(true);
-        const params = {
-            q:        q    || undefined,
-            sector:   sec  || undefined,
-            tipo:     tipo || undefined,
-            abierto:  abierto ? true : undefined,
-            regionId: regionId ?? undefined,
-            page:     p,
-            size:     20,
-        };
-        const request = autenticado
-            ? convocatoriasUsuarioApi.buscar(params)
-            : convocatoriasPublicasApi.buscar(params);
+    const buscar = useCallback(
+        (q: string, sec: string, tipo: string, abierto: boolean, p: number, regionId?: number | null) => {
+            setLoading(true);
+            const params = {
+                q: q || undefined,
+                sector: sec || undefined,
+                tipo: tipo || undefined,
+                abierto: abierto ? true : undefined,
+                regionId: regionId ?? undefined,
+                page: p,
+                size: 20,
+            };
 
-        request
-            .then((res) => setResultados(res.data))
-            .catch(() => setResultados(null))
-            .finally(() => setLoading(false));
-    }, [autenticado]);
+            const request = autenticado
+                ? convocatoriasUsuarioApi.buscar(params)
+                : convocatoriasPublicasApi.buscar(params);
+
+            request
+                .then((res) => setResultados(res.data))
+                .catch(() => setResultados(null))
+                .finally(() => setLoading(false));
+        },
+        [autenticado]
+    );
 
     useEffect(() => {
         buscar("", "", "", true, 0);
-        convocatoriasPublicasApi.finalidades()
-            .then((res) => setFinalidades(res.data))
-            .catch(() => {});
-        convocatoriasPublicasApi.tipos()
-            .then((res) => setTipos(res.data))
-            .catch(() => {});
-        convocatoriasPublicasApi.regiones()
-            .then((res) => setRegiones(res.data))
-            .catch(() => {});
+        convocatoriasPublicasApi.finalidades().then((res) => setFinalidades(res.data)).catch(() => {});
+        convocatoriasPublicasApi.tipos().then((res) => setTipos(res.data)).catch(() => {});
+        convocatoriasPublicasApi.regiones().then((res) => setRegiones(res.data)).catch(() => {});
     }, [buscar]);
 
-    // Búsqueda desde la barra rápida (submit o cambio de filtro)
     function handleQuickSearch(e: FormEvent) {
         e.preventDefault();
         applyQuickFilters(query.trim(), sectorActivo, nivel, soloAbiertas);
@@ -130,7 +119,6 @@ export default function HomePage() {
         buscar(q, sec, niv, abierto, 0, selectedProvinciaId ?? selectedRegionId);
     }
 
-    // Aplicar filtros desde la barra lateral
     function handleApplyFilters() {
         setAppliedSector(sectorActivo);
         setAppliedAbierto(soloAbiertas);
@@ -138,13 +126,20 @@ export default function HomePage() {
         buscar(appliedQuery, sectorActivo, nivel, soloAbiertas, 0, selectedProvinciaId ?? selectedRegionId);
     }
 
-    // Limpiar todos los filtros
     function handleClearFilters() {
-        setQuery(""); setNivel(""); setSoloAbiertas(true);
-        setSectorActivo(""); setTipoConvocatoria(""); setPlazoCierre("");
-        setPresupuestoMin(0); setTipoBeneficiario(""); setSelectedRegionId(null);
+        setQuery("");
+        setNivel("");
+        setSoloAbiertas(true);
+        setSectorActivo("");
+        setTipoConvocatoria("");
+        setPlazoCierre("");
+        setPresupuestoMin(0);
+        setTipoBeneficiario("");
+        setSelectedRegionId(null);
         setSelectedProvinciaId(null);
-        setAppliedQuery(""); setAppliedSector(""); setAppliedAbierto(true);
+        setAppliedQuery("");
+        setAppliedSector("");
+        setAppliedAbierto(true);
         setPage(0);
         buscar("", "", "", true, 0, null);
     }
@@ -155,7 +150,6 @@ export default function HomePage() {
         document.getElementById("listado-section")?.scrollIntoView({ behavior: "smooth" });
     }
 
-    // Encuentra el nodo CCAA en el árbol para obtener sus provincias
     function findCcaaNode(regionId: number | null): RegionNodo | null {
         if (!regionId) return null;
         for (const macroRegion of regiones) {
@@ -168,26 +162,24 @@ export default function HomePage() {
 
     const ccaaNode = findCcaaNode(selectedRegionId);
     const provincias = ccaaNode?.children ?? [];
-
     const displayList = resultados ? sortResults(resultados.content, sortBy) : [];
 
     return (
         <div className="flex flex-col">
             {modalAcceso && <ModalAccesoRequerido onClose={() => setModalAcceso(false)} />}
 
-            {/* ── Hero + buscador ──────────────────────────────────────────── */}
             <section className="px-4 pt-16 pb-10 text-center">
                 <div className="max-w-3xl mx-auto">
                     <h1 className="text-4xl sm:text-5xl font-bold text-foreground leading-tight mb-4">
                         Descubre subvenciones{" "}
                         <span className="text-primary">para tu proyecto</span>
                     </h1>
+
                     <p className="text-lg text-foreground-muted mb-8 max-w-xl mx-auto leading-relaxed">
                         Busca entre miles de convocatorias públicas o explora por sector.
                         {!autenticado && " Crea una cuenta para acceder a recomendaciones personalizadas."}
                     </p>
 
-                    {/* Barra de búsqueda principal */}
                     <form onSubmit={handleQuickSearch} className="relative max-w-2xl mx-auto mb-4">
                         <div className="flex items-center gap-0 bg-surface border-2 border-border rounded-2xl shadow-sm focus-within:border-primary transition-colors overflow-hidden">
                             <Search className="w-5 h-5 text-foreground-muted ml-4 shrink-0" />
@@ -208,36 +200,46 @@ export default function HomePage() {
                         </div>
                     </form>
 
-                    {/* Filtros rápidos junto al buscador */}
                     <div className="max-w-2xl mx-auto flex items-center gap-2">
-                        {/* Nivel */}
                         <select
                             value={nivel}
-                            onChange={(e) => { setNivel(e.target.value); applyQuickFilters(query.trim(), sectorActivo, e.target.value, soloAbiertas); }}
+                            onChange={(e) => {
+                                setNivel(e.target.value);
+                                applyQuickFilters(query.trim(), sectorActivo, e.target.value, soloAbiertas);
+                            }}
                             className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground-muted focus:outline-none focus:border-primary transition-colors"
                         >
                             <option value="">Todos los niveles</option>
                             {tipos.map((t) => (
-                                <option key={t} value={t}>{t}</option>
+                                <option key={t} value={t}>
+                                    {t}
+                                </option>
                             ))}
                         </select>
 
-                        {/* Sector */}
                         <select
                             value={sectorActivo}
-                            onChange={(e) => { setSectorActivo(e.target.value); applyQuickFilters(query.trim(), e.target.value, nivel, soloAbiertas); }}
+                            onChange={(e) => {
+                                setSectorActivo(e.target.value);
+                                applyQuickFilters(query.trim(), e.target.value, nivel, soloAbiertas);
+                            }}
                             className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground-muted focus:outline-none focus:border-primary transition-colors"
                         >
                             <option value="">Explorar por sector</option>
                             {finalidades.map((f) => (
-                                <option key={f} value={f}>{f}</option>
+                                <option key={f} value={f}>
+                                    {f}
+                                </option>
                             ))}
                         </select>
 
-                        {/* Toggle abiertas/cerradas */}
                         <button
                             type="button"
-                            onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), sectorActivo, nivel, next); }}
+                            onClick={() => {
+                                const next = !soloAbiertas;
+                                setSoloAbiertas(next);
+                                applyQuickFilters(query.trim(), sectorActivo, nivel, next);
+                            }}
                             className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
                                 soloAbiertas
                                     ? "border-primary bg-primary-light text-primary"
@@ -261,15 +263,11 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* ── Listado con sidebar ──────────────────────────────────────── */}
             <section id="listado-section" className="px-4 pb-16">
                 <div className="max-w-6xl mx-auto">
                     <div className={`flex flex-col gap-8 ${sidebarVisible ? "lg:flex-row" : ""}`}>
-
-                        {/* Sidebar de filtros avanzados */}
                         <aside className={`flex-shrink-0 transition-all duration-300 ${sidebarVisible ? "w-full lg:w-72" : "w-full lg:w-auto"}`}>
                             <div className="bg-surface border border-border rounded-2xl sticky top-24 overflow-hidden flex flex-col max-h-[calc(100vh-7rem)]">
-                                {/* Cabecera siempre visible */}
                                 <div className="flex items-center justify-between px-6 py-4 flex-shrink-0">
                                     <button
                                         onClick={() => setSidebarVisible((v) => !v)}
@@ -277,12 +275,16 @@ export default function HomePage() {
                                     >
                                         <svg
                                             className={`w-4 h-4 transition-transform duration-300 ${sidebarVisible ? "rotate-0" : "-rotate-90"}`}
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            strokeWidth={2.5}
                                         >
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                                         </svg>
                                         Filtros Avanzados
                                     </button>
+
                                     {sidebarVisible && (
                                         <button
                                             onClick={handleClearFilters}
@@ -293,158 +295,152 @@ export default function HomePage() {
                                     )}
                                 </div>
 
-                                {/* Contenido colapsable */}
                                 {sidebarVisible && (
-                                <div className="flex flex-col flex-1 min-h-0 border-t border-border">
+                                    <div className="flex flex-col flex-1 min-h-0 border-t border-border">
+                                        <div className="overflow-y-auto flex-1 px-6 pt-4 space-y-7">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                    Tipo de Convocatoria
+                                                </label>
+                                                <select
+                                                    value={tipoConvocatoria}
+                                                    onChange={(e) => setTipoConvocatoria(e.target.value)}
+                                                    className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                                >
+                                                    <option value="">Todos los tipos</option>
+                                                    {TIPOS_CONVOCATORIA.map((t) => (
+                                                        <option key={t} value={t}>
+                                                            {t}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
 
-                                <div className="overflow-y-auto flex-1 px-6 pt-4 space-y-7">
-                                    {/* Tipo de convocatoria */}
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                            Tipo de Convocatoria
-                                        </label>
-                                        <select
-                                            value={tipoConvocatoria}
-                                            onChange={(e) => setTipoConvocatoria(e.target.value)}
-                                            className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
-                                        >
-                                            <option value="">Todos los tipos</option>
-                                            {TIPOS_CONVOCATORIA.map((t) => (
-                                                <option key={t} value={t}>{t}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                    Plazo de Cierre
+                                                </label>
+                                                <select
+                                                    value={plazoCierre}
+                                                    onChange={(e) => setPlazoCierre(e.target.value)}
+                                                    className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                                >
+                                                    {PLAZOS_CIERRE.map((p) => (
+                                                        <option key={p.value} value={p.value}>
+                                                            {p.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
 
-                                    {/* Plazo de cierre */}
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                            Plazo de Cierre
-                                        </label>
-                                        <select
-                                            value={plazoCierre}
-                                            onChange={(e) => setPlazoCierre(e.target.value)}
-                                            className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
-                                        >
-                                            {PLAZOS_CIERRE.map((p) => (
-                                                <option key={p.value} value={p.value}>{p.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                    Presupuesto Mínimo
+                                                    {presupuestoMin > 0 && (
+                                                        <span className="ml-2 text-primary normal-case tracking-normal">
+                                                            {presupuestoMin >= 1_000_000
+                                                                ? `${(presupuestoMin / 1_000_000).toFixed(1)}M€`
+                                                                : presupuestoMin >= 1_000
+                                                                    ? `${Math.round(presupuestoMin / 1_000)}k€`
+                                                                    : `${presupuestoMin}€`}
+                                                        </span>
+                                                    )}
+                                                </label>
+                                                <input
+                                                    type="range"
+                                                    min={0}
+                                                    max={1000000}
+                                                    step={10000}
+                                                    value={presupuestoMin}
+                                                    onChange={(e) => setPresupuestoMin(Number(e.target.value))}
+                                                    className="w-full h-1.5 rounded-full accent-[var(--color-primary)] bg-surface-muted"
+                                                />
+                                                <div className="flex justify-between">
+                                                    <span className="text-[10px] font-bold text-foreground-muted">0€</span>
+                                                    <span className="text-[10px] font-bold text-foreground-muted">1M€+</span>
+                                                </div>
+                                            </div>
 
-                                    {/* Presupuesto mínimo */}
-                                    <div className="space-y-3">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                            Presupuesto Mínimo
-                                            {presupuestoMin > 0 && (
-                                                <span className="ml-2 text-primary normal-case tracking-normal">
-                                                    {presupuestoMin >= 1_000_000
-                                                        ? `${(presupuestoMin / 1_000_000).toFixed(1)}M€`
-                                                        : presupuestoMin >= 1_000
-                                                        ? `${Math.round(presupuestoMin / 1_000)}k€`
-                                                        : `${presupuestoMin}€`}
-                                                </span>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                    Tipo de Beneficiario
+                                                </label>
+                                                <select
+                                                    value={tipoBeneficiario}
+                                                    onChange={(e) => setTipoBeneficiario(e.target.value)}
+                                                    className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                                >
+                                                    <option value="">Todos</option>
+                                                    {TIPOS_BENEFICIARIO.map((t) => (
+                                                        <option key={t} value={t}>
+                                                            {t}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            {regiones.length > 0 && (
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                        Comunidad Autónoma
+                                                    </label>
+                                                    <select
+                                                        value={selectedRegionId ?? ""}
+                                                        onChange={(e) => {
+                                                            setSelectedRegionId(e.target.value ? Number(e.target.value) : null);
+                                                            setSelectedProvinciaId(null);
+                                                        }}
+                                                        className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                                    >
+                                                        <option value="">Toda España</option>
+                                                        {regiones.map((macroRegion) => (
+                                                            <optgroup key={macroRegion.id} label={stripCodigo(macroRegion.descripcion)}>
+                                                                {macroRegion.children.map((ccaa) => (
+                                                                    <option key={ccaa.id} value={ccaa.id}>
+                                                                        {stripCodigo(ccaa.descripcion)}
+                                                                    </option>
+                                                                ))}
+                                                            </optgroup>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                             )}
-                                        </label>
-                                        <input
-                                            type="range"
-                                            min={0}
-                                            max={1000000}
-                                            step={10000}
-                                            value={presupuestoMin}
-                                            onChange={(e) => setPresupuestoMin(Number(e.target.value))}
-                                            className="w-full h-1.5 rounded-full accent-[var(--color-primary)] bg-surface-muted"
-                                        />
-                                        <div className="flex justify-between">
-                                            <span className="text-[10px] font-bold text-foreground-muted">0€</span>
-                                            <span className="text-[10px] font-bold text-foreground-muted">1M€+</span>
-                                        </div>
-                                    </div>
 
-                                    {/* Tipo de beneficiario (futuro) */}
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                            Tipo de Beneficiario
-                                        </label>
-                                        <select
-                                            value={tipoBeneficiario}
-                                            onChange={(e) => setTipoBeneficiario(e.target.value)}
-                                            className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
-                                        >
-                                            <option value="">Todos</option>
-                                            {TIPOS_BENEFICIARIO.map((t) => (
-                                                <option key={t} value={t}>{t}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    {/* Región / Comunidad Autónoma */}
-                                    {regiones.length > 0 && (
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                                Comunidad Autónoma
-                                            </label>
-                                            <select
-                                                value={selectedRegionId ?? ""}
-                                                onChange={(e) => {
-                                                    setSelectedRegionId(e.target.value ? Number(e.target.value) : null);
-                                                    setSelectedProvinciaId(null);
-                                                }}
-                                                className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
-                                            >
-                                                <option value="">Toda España</option>
-                                                {regiones.map((macroRegion) => (
-                                                    <optgroup key={macroRegion.id} label={stripCodigo(macroRegion.descripcion)}>
-                                                        {macroRegion.children.map((ccaa) => (
-                                                            <option key={ccaa.id} value={ccaa.id}>
-                                                                {stripCodigo(ccaa.descripcion)}
+                                            {provincias.length > 0 && (
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                        Provincia
+                                                    </label>
+                                                    <select
+                                                        value={selectedProvinciaId ?? ""}
+                                                        onChange={(e) => setSelectedProvinciaId(e.target.value ? Number(e.target.value) : null)}
+                                                        className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                                    >
+                                                        <option value="">Toda la comunidad</option>
+                                                        {provincias.map((p) => (
+                                                            <option key={p.id} value={p.id}>
+                                                                {stripCodigo(p.descripcion)}
                                                             </option>
                                                         ))}
-                                                    </optgroup>
-                                                ))}
-                                            </select>
+                                                    </select>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
 
-                                    {/* Provincia (aparece solo cuando hay CCAA seleccionada con provincias) */}
-                                    {provincias.length > 0 && (
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                                Provincia
-                                            </label>
-                                            <select
-                                                value={selectedProvinciaId ?? ""}
-                                                onChange={(e) => setSelectedProvinciaId(e.target.value ? Number(e.target.value) : null)}
-                                                className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                        <div className="px-6 py-4 border-t border-border flex-shrink-0">
+                                            <button
+                                                onClick={handleApplyFilters}
+                                                className="w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
                                             >
-                                                <option value="">Toda la comunidad</option>
-                                                {provincias.map((p) => (
-                                                    <option key={p.id} value={p.id}>
-                                                        {stripCodigo(p.descripcion)}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                Aplicar Filtros
+                                            </button>
                                         </div>
-                                    )}
-
-                                </div>
-
-                                <div className="px-6 py-4 border-t border-border flex-shrink-0">
-                                <button
-                                    onClick={handleApplyFilters}
-                                    className="w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
-                                >
-                                    Aplicar Filtros
-                                </button>
-                                </div>
-                                </div>
+                                    </div>
                                 )}
                             </div>
                         </aside>
 
-                        {/* Área de resultados */}
                         <div className="flex-1 space-y-5 min-w-0">
-
-                            {/* Barra de resultados + ordenación */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface border border-border p-4 rounded-2xl">
                                 <div className="flex items-center gap-3">
                                     {loading ? (
@@ -458,20 +454,24 @@ export default function HomePage() {
                                         </span>
                                     )}
                                 </div>
+
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs font-bold text-foreground-muted uppercase tracking-widest">Ordenar por:</span>
+                                    <span className="text-xs font-bold text-foreground-muted uppercase tracking-widest">
+                                        Ordenar por:
+                                    </span>
+
                                     <div className="flex bg-surface-muted p-1 rounded-lg">
                                         {[
                                             { id: "relevancia", label: "Relevancia" },
-                                            { id: "plazo",      label: "Plazo"      },
-                                            { id: "cuantia",    label: "Cuantía"    },
+                                            { id: "plazo", label: "Plazo" },
+                                            { id: "cuantia", label: "Cuantía" },
                                         ].map((opt) => (
                                             <button
                                                 key={opt.id}
                                                 onClick={() => setSortBy(opt.id)}
                                                 className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
                                                     sortBy === opt.id
-                                                        ? "bg-white shadow-sm text-primary"
+                                                        ? "bg-surface shadow-sm text-primary ring-1 ring-border"
                                                         : "text-foreground-muted hover:text-foreground"
                                                 }`}
                                             >
@@ -482,7 +482,6 @@ export default function HomePage() {
                                 </div>
                             </div>
 
-                            {/* Tarjetas */}
                             {loading ? (
                                 <div className="grid grid-cols-1 gap-4">
                                     {[...Array(6)].map((_, i) => (
@@ -517,7 +516,6 @@ export default function HomePage() {
                                 </div>
                             )}
 
-                            {/* Paginación */}
                             {resultados && resultados.totalPages > 1 && !loading && (
                                 <div className="flex items-center justify-center gap-2 pt-4">
                                     <button
@@ -530,12 +528,14 @@ export default function HomePage() {
 
                                     {Array.from({ length: Math.min(resultados.totalPages, 7) }, (_, i) => {
                                         const total = resultados.totalPages;
-                                        const cur   = resultados.page;
+                                        const cur = resultados.page;
                                         let p: number;
-                                        if      (total <= 7)       p = i;
-                                        else if (cur   <= 3)       p = i;
-                                        else if (cur   >= total-4) p = total - 7 + i;
-                                        else                        p = cur - 3 + i;
+
+                                        if (total <= 7) p = i;
+                                        else if (cur <= 3) p = i;
+                                        else if (cur >= total - 4) p = total - 7 + i;
+                                        else p = cur - 3 + i;
+
                                         return (
                                             <button
                                                 key={p}
@@ -565,10 +565,9 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* ── CTA para no autenticados ─────────────────────────────────── */}
             {!autenticado && (
                 <section className="px-4 pb-16">
-                    <div className="max-w-3xl mx-auto bg-primary-light border border-primary/20 rounded-3xl p-10 text-center">
+                    <div className="max-w-3xl mx-auto bg-primary-light border border-primary/20 rounded-3xl p-10 text-center dark:bg-surface dark:border-border">
                         <h2 className="text-2xl font-bold text-foreground mb-3">
                             Obtén recomendaciones personalizadas
                         </h2>

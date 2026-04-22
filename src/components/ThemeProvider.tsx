@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 
 type Theme = "light" | "dark";
 
@@ -21,33 +27,52 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("syntia-theme") as Theme | null;
-    if (stored) {
-      setTheme(stored);
-      document.documentElement.classList.toggle("dark", stored === "dark");
-    } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (prefersDark) {
-        setTheme("dark");
-        document.documentElement.classList.add("dark");
-      }
+    // 1. Leer preferencia guardada o del sistema
+    const stored = (typeof window !== "undefined"
+        ? (localStorage.getItem("syntia-theme") as Theme | null)
+        : null);
+
+    let initialTheme: Theme = "light";
+
+    if (stored === "light" || stored === "dark") {
+      initialTheme = stored;
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      initialTheme = "dark";
     }
+
+    // 2. Aplicar clase al <html>
+    if (initialTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+
+    setTheme(initialTheme);
     setMounted(true);
   }, []);
 
   const toggleTheme = useCallback(() => {
     setTheme((prev) => {
-      const newTheme = prev === "light" ? "dark" : "light";
-      localStorage.setItem("syntia-theme", newTheme);
-      document.documentElement.classList.toggle("dark", newTheme === "dark");
+      const newTheme: Theme = prev === "light" ? "dark" : "light";
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("syntia-theme", newTheme);
+      }
+
+      if (newTheme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
       return newTheme;
     });
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, mounted }}>
-      {children}
-    </ThemeContext.Provider>
+      <ThemeContext.Provider value={{ theme, toggleTheme, mounted }}>
+        {children}
+      </ThemeContext.Provider>
   );
 }
 
