@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { ArrowRight, BookOpen, Search, X } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface Guia {
   id: number;
@@ -128,6 +129,7 @@ export default function GuiasPage() {
   const [categoria, setCategoria] = useState("Todas");
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState<Guia | null>(null);
+  const { theme } = useTheme();
 
   const filtered = GUIAS.filter(
       (g) =>
@@ -234,11 +236,17 @@ export default function GuiasPage() {
                           {guia.pasos && <span>{guia.pasos} pasos</span>}
                         </div>
                         <button
-                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                            className={`inline-flex items-center gap-1.5 text-sm font-semibold hover:underline ${
+                                theme === "dark" ? "text-blue-300" : "text-primary"
+                            }`}
                             aria-label={`Ver guía: ${guia.titulo}`}
                         >
                           Ver guía
-                          <ArrowRight className="w-3.5 h-3.5" />
+                          <ArrowRight
+                              className={`w-3.5 h-3.5 ${
+                                  theme === "dark" ? "text-blue-300" : "text-primary"
+                              }`}
+                          />
                         </button>
                       </div>
                     </div>

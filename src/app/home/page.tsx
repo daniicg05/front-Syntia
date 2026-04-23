@@ -6,6 +6,7 @@ import { Search, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
 import { ModalAccesoRequerido } from "@/components/ModalAccesoRequerido";
 import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
+import { useTheme } from "@/components/ThemeProvider";
 import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica, BusquedaPublicaResponse, RegionNodo } from "@/lib/api";
 
 const stripCodigo = (d: string) => d.replace(/^[A-Z0-9]+ - /, "").trim();
@@ -35,6 +36,8 @@ function sortResults(list: ConvocatoriaPublica[], sortBy: string): ConvocatoriaP
 }
 
 export default function HomePage() {
+    const { theme } = useTheme();
+
     const [autenticado, setAutenticado] = useState(false);
     useEffect(() => setAutenticado(isAuthenticated()), []);
 
@@ -166,7 +169,10 @@ export default function HomePage() {
             <section className="px-4 pt-16 pb-10 text-center">
                 <div className="max-w-3xl mx-auto">
                     <h1 className="text-4xl sm:text-5xl font-bold text-foreground leading-tight mb-4">
-                        Descubre subvenciones <span className="text-primary">para tu proyecto</span>
+                        Descubre subvenciones{" "}
+                        <span className={theme === "dark" ? "text-blue-300" : "text-primary"}>
+                            para tu proyecto
+                        </span>
                     </h1>
                     <p className="text-lg text-foreground-muted mb-8 max-w-xl mx-auto leading-relaxed">
                         Busca entre miles de convocatorias públicas o explora por sector.
@@ -225,7 +231,14 @@ export default function HomePage() {
                                         <svg className={`w-4 h-4 transition-transform duration-300 ${sidebarVisible ? "rotate-0" : "-rotate-90"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                                         Filtros Avanzados
                                     </button>
-                                    {sidebarVisible && (<button onClick={handleClearFilters} className="text-xs text-primary font-semibold hover:underline">Limpiar</button>)}
+                                    {sidebarVisible && (
+                                        <button
+                                            onClick={handleClearFilters}
+                                            className={`text-xs font-semibold hover:underline ${theme === "dark" ? "text-blue-300" : "text-primary"}`}
+                                        >
+                                            Limpiar
+                                        </button>
+                                    )}
                                 </div>
 
                                 {sidebarVisible && (
@@ -296,7 +309,7 @@ export default function HomePage() {
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface border border-border p-4 rounded-2xl">
                                 <div className="flex items-center gap-3">
                                     {loading ? <div className="h-4 w-44 bg-surface-muted rounded-full animate-pulse" /> : (
-                                        <span className="text-sm text-foreground-muted"><strong className="text-foreground">{resultados?.totalElements.toLocaleString() ?? 0}</strong> subvenciones encontradas</span>
+                                        <span className="text-sm text-foreground-muted"><strong className={theme === "dark" ? "text-blue-300" : "text-primary"}>{resultados?.totalElements.toLocaleString() ?? 0}</strong> subvenciones encontradas</span>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-3">

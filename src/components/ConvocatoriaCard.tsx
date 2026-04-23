@@ -5,6 +5,7 @@ import { ConvocatoriaPublica } from "@/lib/api";
 import { FAVORITAS_UPDATED_EVENT, getFavoritaById, type EstadoSolicitud } from "@/lib/favoritos";
 import { ArrowRight, ExternalLink, Lock, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface Props {
     convocatoria: ConvocatoriaPublica;
@@ -24,8 +25,8 @@ function calcDaysLeft(fechaCierre?: string): number | null {
 }
 
 function calcProgress(daysLeft: number): number {
-    if (daysLeft <= 0)  return 100;
-    if (daysLeft <= 7)  return 90;
+    if (daysLeft <= 0) return 100;
+    if (daysLeft <= 7) return 90;
     if (daysLeft <= 14) return 75;
     if (daysLeft <= 30) return 55;
     if (daysLeft <= 60) return 30;
@@ -39,13 +40,15 @@ function formatFecha(fecha?: string): string {
         return new Date(fecha).toLocaleDateString("es-ES", {
             day: "numeric", month: "short", year: "numeric",
         });
-    } catch { return fecha; }
+    } catch {
+        return fecha;
+    }
 }
 
 function formatPresupuesto(p?: number): string | null {
     if (p == null || p === 0) return null;
     if (p >= 1_000_000) return `${(p / 1_000_000).toFixed(1).replace(".", ",")}M€`;
-    if (p >= 100_000)   return `${Math.round(p / 1_000)}k€`;
+    if (p >= 100_000) return `${Math.round(p / 1_000)}k€`;
     return `${new Intl.NumberFormat("es-ES").format(Math.round(p))}€`;
 }
 
@@ -59,53 +62,51 @@ function buildBdnsUrl(idBdns?: string): string | null {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function ConvocatoriaCard({
-    convocatoria: c,
-    onAccesoRequerido,
-    autenticado,
-    showMatch = false,
-    compactTitle = false,
-    estadoSolicitud: estadoSolicitudProp,
-    onEstadoSolicitudChange,
-}: Props) {
+                                     convocatoria: c,
+                                     onAccesoRequerido,
+                                     autenticado,
+                                     showMatch = false,
+                                     compactTitle = false,
+                                     estadoSolicitud: estadoSolicitudProp,
+                                     onEstadoSolicitudChange,
+                                 }: Props) {
     const router = useRouter();
+    const { theme } = useTheme();
     const [favorita, setFavorita] = useState(false);
     const [estadoSolicitudLocal, setEstadoSolicitudLocal] = useState<EstadoSolicitud | null>(null);
     const esCerrada = c.abierto === false;
-    const daysLeft  = calcDaysLeft(c.fechaCierre);
+    const daysLeft = calcDaysLeft(c.fechaCierre);
     const highMatch = showMatch && (c.matchScore ?? 0) >= 70;
-    const urgent    = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
-    const moderate  = daysLeft !== null && daysLeft > 7 && daysLeft <= 30;
+    const urgent = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
+    const moderate = daysLeft !== null && daysLeft > 7 && daysLeft <= 30;
 
     const presupuestoFmt = formatPresupuesto(c.presupuesto);
-    const progress       = daysLeft != null && daysLeft > 0 ? calcProgress(daysLeft) : null;
+    const progress = daysLeft != null && daysLeft > 0 ? calcProgress(daysLeft) : null;
     const fuenteOficialUrl = c.urlOficial || buildBdnsUrl(c.idBdns);
 
-    // Left accent bar
     const accentBar =
         esCerrada ? null :
-        urgent    ? "bg-red-500" :
-        highMatch ? "bg-emerald-500" :
-        moderate  ? "bg-amber-400" :
-        null;
+            urgent ? "bg-red-500" :
+                highMatch ? "bg-emerald-500" :
+                    moderate ? "bg-amber-400" :
+                        null;
 
-    // Status badge
     const badge =
-        esCerrada                 ? { label: "Cerrada",            bg: "bg-red-50",     text: "text-red-800"     } :
-        urgent                    ? { label: "Cierre próximo",     bg: "bg-red-100",    text: "text-red-900"     } :
-        highMatch                 ? { label: "Alta compatibilidad",bg: "bg-emerald-100",text: "text-emerald-900" } :
-        c.abierto === true        ? { label: "Abierta",            bg: "bg-[#b9eaff]",  text: "text-[#004d62]"  } :
-        null;
+        esCerrada ? { label: "Cerrada", bg: "bg-red-50", text: "text-red-800" } :
+            urgent ? { label: "Cierre próximo", bg: "bg-red-100", text: "text-red-900" } :
+                highMatch ? { label: "Alta compatibilidad", bg: "bg-emerald-100", text: "text-emerald-900" } :
+                    c.abierto === true ? { label: "Abierta", bg: "bg-[#b9eaff]", text: "text-[#004d62]" } :
+                        null;
 
-    // Progress bar + label color
     const progressBarColor =
-        urgent   ? "bg-red-500" :
-        moderate ? "bg-amber-400" :
-        "bg-primary";
+        urgent ? "bg-red-500" :
+            moderate ? "bg-amber-400" :
+                "bg-primary";
 
     const daysTextColor =
-        urgent   ? "text-red-600" :
-        moderate ? "text-amber-600" :
-        "text-foreground-muted";
+        urgent ? "text-red-600" :
+            moderate ? "text-amber-600" :
+                "text-foreground-muted";
 
     const favoritaMostrada = typeof c.favorita === "boolean" ? c.favorita : favorita;
     const estadoSolicitudMostrada = estadoSolicitudProp ?? estadoSolicitudLocal ?? c.estadoSolicitud ?? null;
@@ -114,7 +115,10 @@ export function ConvocatoriaCard({
     const mostrarTipo = Boolean(c.tipo) && tipoNormalizado !== sectorNormalizado;
 
     function handleClick() {
-        if (!autenticado) { onAccesoRequerido?.(); return; }
+        if (!autenticado) {
+            onAccesoRequerido?.();
+            return;
+        }
         router.push(`/convocatorias/${c.id}`);
     }
 
@@ -139,17 +143,12 @@ export function ConvocatoriaCard({
 
     return (
         <div className="bg-surface hover:shadow-xl transition-all duration-200 p-6 rounded-2xl group relative overflow-hidden border border-border">
-            {/* Left accent bar */}
             {accentBar && (
                 <div className={`absolute top-0 left-0 w-1 h-full ${accentBar}`} />
             )}
 
             <div className="flex flex-col md:flex-row justify-between gap-6">
-
-                {/* ── Left content ─────────────────────────────────────── */}
                 <div className="flex-1 space-y-4 min-w-0">
-
-                    {/* Badge + ID row */}
                     <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -180,24 +179,24 @@ export function ConvocatoriaCard({
                                     </span>
                                 )}
                                 {estadoSolicitudMostrada && (
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tight ${
-                                        estadoSolicitudMostrada === "solicitada"
-                                            ? "bg-emerald-100 text-emerald-900"
-                                            : "bg-slate-200 text-slate-700"
-                                    }`}>
+                                    <span
+                                        className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tight ${
+                                            estadoSolicitudMostrada === "solicitada"
+                                                ? "bg-emerald-100 text-emerald-900"
+                                                : "bg-slate-200 text-slate-700"
+                                        }`}
+                                    >
                                         {estadoSolicitudMostrada === "solicitada" ? "Ya solicitada" : "No solicitada"}
                                     </span>
                                 )}
                             </div>
 
-                            {/* Title */}
                             <h3 className={`${compactTitle ? "text-[15px] md:text-base line-clamp-none break-words [overflow-wrap:anywhere]" : "text-lg md:text-xl line-clamp-2"} font-bold text-foreground leading-snug group-hover:text-primary transition-colors duration-150`}>
                                 {c.titulo}
                             </h3>
                         </div>
                     </div>
 
-                    {/* Tags: tipo + sector + ubicacion */}
                     {(c.tipo || c.sector || c.ubicacion) && (
                         <div className="flex flex-wrap gap-2">
                             {mostrarTipo && (
@@ -218,7 +217,6 @@ export function ConvocatoriaCard({
                         </div>
                     )}
 
-                    {/* Organismo + fecha publicación */}
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                         {c.organismo && (
                             <span className="text-xs text-foreground-muted font-medium truncate max-w-[280px]">
@@ -232,7 +230,6 @@ export function ConvocatoriaCard({
                         )}
                     </div>
 
-                    {/* Progress bar */}
                     {!esCerrada && progress != null && daysLeft != null && daysLeft > 0 && (
                         <div className="space-y-2">
                             <div className="flex justify-between text-xs font-bold">
@@ -251,16 +248,13 @@ export function ConvocatoriaCard({
                     )}
                 </div>
 
-                {/* ── Right metrics ─────────────────────────────────────── */}
                 <div className="md:w-56 shrink-0 flex flex-col justify-between gap-4 border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
-
-                    {/* Presupuesto */}
                     <div className="space-y-1">
                         <p className="text-[10px] font-bold text-foreground-muted uppercase tracking-widest">
                             Presupuesto total
                         </p>
                         {presupuestoFmt ? (
-                            <p className="text-3xl font-bold text-primary leading-none">
+                            <p className={`text-3xl font-bold leading-none ${theme === "dark" ? "text-blue-300" : "text-primary"}`}>
                                 {presupuestoFmt}
                             </p>
                         ) : (
@@ -268,7 +262,6 @@ export function ConvocatoriaCard({
                         )}
                     </div>
 
-                    {/* Fecha cierre */}
                     {c.fechaCierre && (
                         <div className="space-y-1">
                             <p className="text-[10px] font-bold text-foreground-muted uppercase tracking-widest">
@@ -280,7 +273,6 @@ export function ConvocatoriaCard({
                         </div>
                     )}
 
-                    {/* CTA */}
                     <button
                         onClick={handleClick}
                         className={`w-full py-2.5 rounded-xl cursor-pointer font-bold text-sm hover:brightness-110 transition-all ${
