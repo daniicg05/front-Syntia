@@ -5,7 +5,9 @@ import { ConvocatoriaPublica } from "@/lib/api";
 import { FAVORITAS_UPDATED_EVENT, getFavoritaById, type EstadoSolicitud } from "@/lib/favoritos";
 import { ArrowRight, ExternalLink, Lock, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "@/components/ThemeProvider";
 import { motion } from "framer-motion";
+desarrollo
 
 interface Props {
     convocatoria: ConvocatoriaPublica;
@@ -73,9 +75,12 @@ export function ConvocatoriaCard({
                                      onEstadoSolicitudChange,
                                  }: Props) {
     const router = useRouter();
+    const { theme } = useTheme();
     const [favorita, setFavorita] = useState(false);
     const [estadoSolicitudLocal, setEstadoSolicitudLocal] = useState<EstadoSolicitud | null>(null);
+    const esCerrada = c.abierto === false;
     const esCerrada = c.abierto !== true;
+ desarrollo
     const daysLeft = calcDaysLeft(c.fechaCierre);
     const highMatch = showMatch && (c.matchScore ?? 0) >= 70;
     const urgent = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
@@ -93,7 +98,9 @@ export function ConvocatoriaCard({
                         null;
 
     const badge =
+        esCerrada ? { label: "Cerrada", bg: "bg-red-50", text: "text-red-800" } :
         esCerrada ? { label: "Cerrada", bg: "bg-[#b9eaff]", text: "text-red-800" } :
+desarrollo
             urgent ? { label: "Cierre próximo", bg: "bg-red-100", text: "text-red-900" } :
                 highMatch ? { label: "Alta compatibilidad", bg: "bg-emerald-100", text: "text-emerald-900" } :
                     c.abierto === true ? { label: "Abierta", bg: "bg-[#b9eaff]", text: "text-[#004d62]" } :
@@ -143,6 +150,7 @@ export function ConvocatoriaCard({
     }, [c.id, c.favorita, c.estadoSolicitud]);
 
     return (
+        <div className="bg-surface hover:shadow-xl transition-all duration-200 p-6 rounded-2xl group relative overflow-hidden border border-border">
         <motion.article
             className="bg-surface border border-border rounded-2xl p-6 group relative overflow-hidden"
             whileHover={{
@@ -158,6 +166,8 @@ export function ConvocatoriaCard({
             )}
 
             <div className="flex flex-col md:flex-row justify-between gap-6">
+
+                <div className="flex-1 space-y-4 min-w-0">
 
                 <div className="flex-1 space-y-4 min-w-0">
 
@@ -265,13 +275,12 @@ export function ConvocatoriaCard({
                 </div>
 
                 <div className="md:w-56 shrink-0 flex flex-col justify-between gap-4 border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
-
                     <div className="space-y-1">
                         <p className="text-[10px] font-bold text-foreground-muted uppercase tracking-widest">
                             Presupuesto total
                         </p>
                         {presupuestoFmt ? (
-                            <p className="text-3xl font-bold text-primary leading-none">
+                            <p className={`text-3xl font-bold leading-none ${theme === "dark" ? "text-blue-300" : "text-primary"}`}>
                                 {presupuestoFmt}
                             </p>
                         ) : (                            

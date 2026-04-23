@@ -16,27 +16,27 @@ import {
     Moon,
     Sun,
 } from "lucide-react";
-import {useTheme} from "@/components/ThemeProvider";
+import { useTheme } from "@/components/ThemeProvider";
 
-import {motion} from "framer-motion";
+import { motion } from "framer-motion";
 
 const FEATURES = [
     {
-        icon: <Sparkles className="w-6 h-6"/>,
+        icon: <Sparkles className="w-6 h-6" />,
         title: "IA Inteligente",
         description:
             "Nuestro motor analiza tu proyecto y lo compara con miles de convocatorias para encontrar las más compatibles, con una puntuación de compatibilidad precisa.",
         color: "bg-primary-light text-primary",
     },
     {
-        icon: <Database className="w-6 h-6"/>,
+        icon: <Database className="w-6 h-6" />,
         title: "Datos oficiales BDNS",
         description:
             "Acceso directo a la Base de Datos Nacional de Subvenciones, actualizada en tiempo real con convocatorias de todas las administraciones públicas españolas.",
         color: "bg-blue-50 text-blue-600",
     },
     {
-        icon: <BookOpen className="w-6 h-6"/>,
+        icon: <BookOpen className="w-6 h-6" />,
         title: "Guías paso a paso",
         description:
             "Para cada subvención compatible, genera automáticamente una guía de solicitud adaptada a tu proyecto y perfil de entidad.",
@@ -63,24 +63,24 @@ const HOW_IT_WORKS = [
 ];
 
 const STATS = [
-    {value: "+12.000", label: "Convocatorias analizadas"},
-    {value: "98%", label: "Precisión del matching"},
-    {value: "-5 min", label: "Para tener resultados"},
-    {value: "0 €", label: "Para empezar"},
+    { value: "+12.000", label: "Convocatorias analizadas" },
+    { value: "98%", label: "Precisión del matching" },
+    { value: "-5 min", label: "Para tener resultados" },
+    { value: "0 €", label: "Para empezar" },
 ];
 
 const fadeInUp = {
-    hidden: {opacity: 0, y: 30},
-    visible: {opacity: 1, y: 0},
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0 },
 };
 
 const fadeInScale = {
-    hidden: {opacity: 0, scale: 0.9},
-    visible: {opacity: 1, scale: 1},
+    hidden: { opacity: 0, scale: 0.9 },
+    visible: { opacity: 1, scale: 1 },
 };
 
 const staggerContainer = {
-    hidden: {opacity: 0},
+    hidden: { opacity: 0 },
     visible: {
         opacity: 1,
         transition: {
@@ -91,7 +91,7 @@ const staggerContainer = {
 };
 
 const cardVariants = {
-    hidden: {opacity: 0, y: 40},
+    hidden: { opacity: 0, y: 40 },
     visible: {
         opacity: 1,
         y: 0,
@@ -104,7 +104,7 @@ const cardVariants = {
 };
 
 const stepVariants = {
-    hidden: {opacity: 0, x: -30},
+    hidden: { opacity: 0, x: -30 },
     visible: {
         opacity: 1,
         x: 0,
@@ -117,12 +117,18 @@ const stepVariants = {
 };
 
 export default function LandingPage() {
-    const {theme, toggleTheme, mounted} = useTheme();
+    const { theme, toggleTheme, mounted } = useTheme();
+
+    const accentText = theme === "light" ? "text-primary" : "text-sky-300";
+    const accentStep = theme === "light" ? "text-primary" : "text-sky-300";
+    const accentBgSoft = theme === "light" ? "bg-primary-light" : "bg-sky-950/60";
+    const accentLine = theme === "light" ? "bg-primary/30" : "bg-sky-300/40";
+    const heroAccent = "text-blue-300";
 
     const scrollToSection = (sectionId: string) => {
         const element = document.getElementById(sectionId);
         if (element) {
-            element.scrollIntoView({behavior: "smooth", block: "start"});
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
         }
     };
 
@@ -131,9 +137,9 @@ export default function LandingPage() {
             {/* Header */}
             <motion.header
                 className="sticky top-0 z-50 border-b border-border bg-background"
-                initial={{y: -100}}
-                animate={{y: 0}}
-                transition={{type: "spring", stiffness: 100, damping: 20}}
+                initial={{ y: -100 }}
+                animate={{ y: 0 }}
+                transition={{ type: "spring", stiffness: 100, damping: 20 }}
             >
                 <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
                     <Image
@@ -144,6 +150,7 @@ export default function LandingPage() {
                         className="w-[60px] md:w-[100px] h-auto"
                         priority
                     />
+
                     <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-foreground-muted">
                         <button
                             onClick={() => scrollToSection("funcionalidades")}
@@ -170,6 +177,7 @@ export default function LandingPage() {
                             Planes de suscripcion
                         </Link>
                     </nav>
+
                     <div className="flex items-center gap-4">
                         {mounted && (
                             <button
@@ -179,15 +187,12 @@ export default function LandingPage() {
                                 aria-label={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
                                 title={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
                             >
-                                <span
-                                    className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-tr from-primary/10 to-transparent"></span>
+                                <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-tr from-primary/10 to-transparent"></span>
 
                                 {theme === "light" ? (
-                                    <Moon
-                                        className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:rotate-12"/>
+                                    <Moon className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:rotate-12" />
                                 ) : (
-                                    <Sun
-                                        className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:rotate-12"/>
+                                    <Sun className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:rotate-12" />
                                 )}
                             </button>
                         )}
@@ -204,8 +209,7 @@ export default function LandingPage() {
                             className="relative inline-flex items-center justify-center text-sm font-semibold text-white px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
                         >
                             <span className="relative z-10">Empezar gratis</span>
-                            <span
-                                className="absolute inset-0 rounded-xl bg-gradient-to-tr from-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity"></span>
+                            <span className="absolute inset-0 rounded-xl bg-gradient-to-tr from-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity"></span>
                         </Link>
                     </div>
                 </div>
@@ -221,7 +225,8 @@ export default function LandingPage() {
                         backgroundRepeat: "no-repeat",
                     }}
                 >
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/40"/>
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/40" />
+
                     <motion.div
                         className="relative max-w-3xl mx-auto px-6"
                         initial="hidden"
@@ -229,24 +234,26 @@ export default function LandingPage() {
                         variants={staggerContainer}
                     >
                         <motion.div
-                            className="inline-flex items-center gap-2 bg-white/90 text-primary text-sm font-semibold px-4 py-2 rounded-full mb-8 shadow-lg backdrop-blur-sm"
+                            className={`inline-flex items-center gap-2 bg-white/90 text-sm font-semibold px-4 py-2 rounded-full mb-8 shadow-lg backdrop-blur-sm ${theme === "light" ? "text-primary" : "text-sky-700"}`}
                             variants={fadeInScale}
                         >
-                            <span className="w-2 h-2 bg-primary rounded-full animate-pulse"/>
+    <span
+        className={`w-2 h-2 rounded-full animate-pulse ${theme === "light" ? "bg-primary" : "bg-sky-700"}`}
+    />
                             Impulsado por IA
                         </motion.div>
+
                         <motion.h1
                             className="text-5xl sm:text-6xl font-bold text-white leading-tight mb-6 text-balance drop-shadow-lg [text-shadow:_0_2px_12px_rgb(0_0_0_/_40%)]"
                             variants={fadeInUp}
                         >
                             Encuentra subvenciones{" "}
-                            <span
-                                className={`drop-shadow-lg ${theme === "light" ? "text-blue-300" : "text-primary"}`}
-                            >
-                perfectas
-              </span>{" "}
+                            <span className={`drop-shadow-lg ${heroAccent}`}>
+                                perfectas
+                            </span>{" "}
                             para tu proyecto
                         </motion.h1>
+
                         <motion.p
                             className="text-lg text-white mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-md [text-shadow:_0_1px_8px_rgb(0_0_0_/_50%)]"
                             variants={fadeInUp}
@@ -254,24 +261,28 @@ export default function LandingPage() {
                             Syntia analiza tu proyecto y encuentra automáticamente las subvenciones públicas más
                             compatibles directamente desde la BDNS.
                         </motion.p>
+
                         <motion.div
                             className="flex items-center justify-center gap-4 flex-wrap"
                             variants={fadeInUp}
                         >
                             <Link
                                 href="/home"
-                                className="inline-flex items-center gap-2 bg-white border-[1px] border-primary text-primary px-7 py-3.5 rounded-xl hover:bg-primary-hover hover:text-white font-semibold text-base transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95">
+                                className="inline-flex items-center gap-2 bg-white border-[1px] border-primary text-primary px-7 py-3.5 rounded-xl hover:bg-primary-hover hover:text-white font-semibold text-base transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                            >
                                 Explorar subvenciones
-                                <Search className="w-4 h-4"/>
+                                <Search className="w-4 h-4" />
                             </Link>
+
                             <Link
                                 href="/home"
                                 className="inline-flex items-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl hover:bg-primary-hover font-semibold text-base transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                             >
                                 Empezar gratis
-                                <ArrowRight className="w-4 h-4"/>
+                                <ArrowRight className="w-4 h-4" />
                             </Link>
                         </motion.div>
+
                         <motion.p
                             className="mt-5 text-sm text-white font-medium drop-shadow-md [text-shadow:_0_1px_6px_rgb(0_0_0_/_50%)]"
                             variants={fadeInUp}
@@ -287,7 +298,7 @@ export default function LandingPage() {
                         className="max-w-5xl mx-auto px-6 py-10 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center"
                         initial="hidden"
                         whileInView="visible"
-                        viewport={{once: true, margin: "-100px"}}
+                        viewport={{ once: true, margin: "-100px" }}
                         variants={staggerContainer}
                     >
                         {STATS.map((s) => (
@@ -306,21 +317,22 @@ export default function LandingPage() {
                             className="text-center mb-14"
                             initial="hidden"
                             whileInView="visible"
-                            viewport={{once: true, margin: "-100px"}}
+                            viewport={{ once: true, margin: "-100px" }}
                             variants={fadeInUp}
                         >
-              <span className="text-sm font-semibold text-primary uppercase tracking-wider">
-                Funcionalidades
-              </span>
+                            <span className={`text-sm font-semibold uppercase tracking-wider ${accentText}`}>
+                                Funcionalidades
+                            </span>
                             <h2 className="mt-3 text-3xl sm:text-4xl font-bold text-foreground text-balance">
                                 Todo lo necesario para encontrar y gestionar subvenciones de forma eficiente
                             </h2>
                         </motion.div>
+
                         <motion.div
                             className="grid grid-cols-1 md:grid-cols-3 gap-6"
                             initial="hidden"
                             whileInView="visible"
-                            viewport={{once: true, margin: "-50px"}}
+                            viewport={{ once: true, margin: "-50px" }}
                             variants={staggerContainer}
                         >
                             {FEATURES.map((f) => (
@@ -332,16 +344,21 @@ export default function LandingPage() {
                                         y: -8,
                                         scale: 1.02,
                                         boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.15)",
-                                        transition: {type: "spring", stiffness: 300, damping: 20}
+                                        transition: { type: "spring", stiffness: 300, damping: 20 }
                                     }}
-                                    whileTap={{scale: 0.98}}
+                                    whileTap={{ scale: 0.98 }}
                                 >
                                     <motion.div
-                                        className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${f.color}`}
-                                        whileHover={{rotate: [0, -10, 10, -10, 0], transition: {duration: 0.5}}}
+                                        className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${
+                                            f.title === "IA Inteligente"
+                                                ? `${accentBgSoft} ${accentText}`
+                                                : f.color
+                                        }`}
+                                        whileHover={{ rotate: [0, -10, 10, -10, 0], transition: { duration: 0.5 } }}
                                     >
                                         {f.icon}
                                     </motion.div>
+
                                     <h3 className="font-bold text-foreground text-lg mb-3">{f.title}</h3>
                                     <p className="text-foreground-muted text-sm leading-relaxed">{f.description}</p>
                                 </motion.div>
@@ -357,21 +374,22 @@ export default function LandingPage() {
                             className="text-center mb-14"
                             initial="hidden"
                             whileInView="visible"
-                            viewport={{once: true, margin: "-100px"}}
+                            viewport={{ once: true, margin: "-100px" }}
                             variants={fadeInUp}
                         >
-              <span className="text-sm font-semibold text-primary uppercase tracking-wider">
-                Cómo funciona
-              </span>
+                            <span className={`text-sm font-semibold uppercase tracking-wider ${accentText}`}>
+                                Cómo funciona
+                            </span>
                             <h2 className="mt-3 text-3xl sm:text-4xl font-bold text-foreground text-balance">
                                 Resultados en menos de 5 minutos
                             </h2>
                         </motion.div>
+
                         <motion.div
                             className="grid grid-cols-1 md:grid-cols-3 gap-8 relative"
                             initial="hidden"
                             whileInView="visible"
-                            viewport={{once: true, margin: "-50px"}}
+                            viewport={{ once: true, margin: "-50px" }}
                             variants={staggerContainer}
                         >
                             {HOW_IT_WORKS.map((step, i) => (
@@ -381,15 +399,15 @@ export default function LandingPage() {
                                     variants={stepVariants}
                                     whileHover={{
                                         scale: 1.03,
-                                        transition: {type: "spring", stiffness: 300, damping: 20}
+                                        transition: { type: "spring", stiffness: 300, damping: 20 }
                                     }}
                                 >
                                     <div className="flex items-center gap-3 mb-4">
                                         <motion.span
-                                            className="text-4xl font-bold text-primary font-serif"
-                                            initial={{opacity: 0, scale: 0}}
-                                            whileInView={{opacity: 1, scale: 1}}
-                                            viewport={{once: true}}
+                                            className={`text-4xl font-bold font-serif ${accentStep}`}
+                                            initial={{ opacity: 0, scale: 0 }}
+                                            whileInView={{ opacity: 1, scale: 1 }}
+                                            viewport={{ once: true }}
                                             transition={{
                                                 type: "spring",
                                                 stiffness: 200,
@@ -399,17 +417,19 @@ export default function LandingPage() {
                                         >
                                             {step.step}
                                         </motion.span>
+
                                         {i < HOW_IT_WORKS.length - 1 && (
                                             <motion.div
-                                                className="hidden md:block h-px flex-1 bg-primary/30"
-                                                initial={{scaleX: 0}}
-                                                whileInView={{scaleX: 1}}
-                                                viewport={{once: true}}
-                                                transition={{duration: 0.8, delay: i * 0.2 + 0.3}}
-                                                style={{originX: 0}}
+                                                className={`hidden md:block h-px flex-1 ${accentLine}`}
+                                                initial={{ scaleX: 0 }}
+                                                whileInView={{ scaleX: 1 }}
+                                                viewport={{ once: true }}
+                                                transition={{ duration: 0.8, delay: i * 0.2 + 0.3 }}
+                                                style={{ originX: 0 }}
                                             />
                                         )}
                                     </div>
+
                                     <h3 className="font-bold text-foreground text-lg mb-2">{step.title}</h3>
                                     <p className="text-foreground-muted text-sm leading-relaxed">{step.description}</p>
                                 </motion.div>
@@ -425,11 +445,11 @@ export default function LandingPage() {
                             className="bg-surface border border-border rounded-3xl p-10 sm:p-14 text-center"
                             initial="hidden"
                             whileInView="visible"
-                            viewport={{once: true, margin: "-100px"}}
+                            viewport={{ once: true, margin: "-100px" }}
                             variants={fadeInScale}
                             whileHover={{
                                 boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.1)",
-                                transition: {duration: 0.3}
+                                transition: { duration: 0.3 }
                             }}
                         >
                             <motion.div
@@ -437,30 +457,32 @@ export default function LandingPage() {
                                 variants={staggerContainer}
                                 initial="hidden"
                                 whileInView="visible"
-                                viewport={{once: true}}
+                                viewport={{ once: true }}
                             >
                                 {[
-                                    {icon: <Zap className="w-4 h-4"/>, label: "Resultados instantáneos"},
-                                    {icon: <Shield className="w-4 h-4"/>, label: "Datos oficiales BDNS"},
-                                    {icon: <TrendingUp className="w-4 h-4"/>, label: "Alta precisión"},
+                                    { icon: <Zap className="w-4 h-4" />, label: "Resultados instantáneos" },
+                                    { icon: <Shield className="w-4 h-4" />, label: "Datos oficiales BDNS" },
+                                    { icon: <TrendingUp className="w-4 h-4" />, label: "Alta precisión" },
                                 ].map((item) => (
                                     <motion.div
                                         key={item.label}
                                         className="flex items-center gap-2 text-sm font-medium text-foreground-muted"
                                         variants={fadeInUp}
-                                        whileHover={{scale: 1.05, color: "var(--color-primary)"}}
+                                        whileHover={{ scale: 1.05, color: theme === "light" ? "var(--color-primary)" : "#7dd3fc" }}
                                     >
-                                        <span className="text-primary">{item.icon}</span>
+                                        <span className={accentText}>{item.icon}</span>
                                         {item.label}
                                     </motion.div>
                                 ))}
                             </motion.div>
+
                             <motion.h2
                                 className="text-3xl sm:text-4xl font-bold text-foreground mb-5 text-balance"
                                 variants={fadeInUp}
                             >
                                 Empieza a encontrar subvenciones hoy
                             </motion.h2>
+
                             <motion.p
                                 className="text-foreground-muted mb-8 max-w-xl mx-auto leading-relaxed"
                                 variants={fadeInUp}
@@ -468,6 +490,7 @@ export default function LandingPage() {
                                 Sin compromisos. Crea tu cuenta gratis, describe tu proyecto y obtén un listado
                                 personalizado de subvenciones públicas compatibles en segundos.
                             </motion.p>
+
                             <motion.div
                                 className="flex items-center justify-center gap-4 flex-wrap"
                                 variants={fadeInUp}
@@ -477,22 +500,24 @@ export default function LandingPage() {
                                     className="inline-flex items-center gap-2 bg-white border-[1px] border-primary text-primary px-7 py-3.5 rounded-xl hover:bg-primary-hover hover:text-white font-semibold text-base transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                                 >
                                     Explorar subvenciones
-                                    <Search className="w-4 h-4"/>
+                                    <Search className="w-4 h-4" />
                                 </Link>
+
                                 <Link
                                     href="/registro"
                                     className="inline-flex items-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl hover:bg-primary-hover font-semibold text-base transition-all shadow-md hover:shadow-xl hover:scale-105 active:scale-95"
                                 >
                                     Crear cuenta gratis
-                                    <ArrowRight className="w-4 h-4"/>
+                                    <ArrowRight className="w-4 h-4" />
                                 </Link>
                             </motion.div>
+
                             <motion.div
                                 className="mt-6 flex items-center justify-center gap-4 text-sm text-foreground-subtle flex-wrap"
                                 variants={staggerContainer}
                                 initial="hidden"
                                 whileInView="visible"
-                                viewport={{once: true}}
+                                viewport={{ once: true }}
                             >
                                 {["Sin tarjeta de crédito", "Cancela cuando quieras", "Soporte en español"].map((t) => (
                                     <motion.span
@@ -500,7 +525,7 @@ export default function LandingPage() {
                                         className="flex items-center gap-1.5"
                                         variants={fadeInUp}
                                     >
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-primary"/>
+                                        <CheckCircle2 className={`w-3.5 h-3.5 ${accentText}`} />
                                         {t}
                                     </motion.span>
                                 ))}
@@ -509,7 +534,6 @@ export default function LandingPage() {
                     </div>
                 </section>
             </main>
-
         </div>
     );
 }

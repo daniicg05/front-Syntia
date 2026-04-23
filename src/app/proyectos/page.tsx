@@ -10,6 +10,7 @@ import { SkeletonCard } from "@/components/ui/Skeleton";
 import { staggerChildren, staggerItem, fadeIn } from "@/lib/motion";
 import { useReducedMotion } from "framer-motion";
 import { FolderOpen, Plus, Trash2, ArrowRight, Pencil, MoreVertical, Banknote, Tag } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface Proyecto {
   id: number;
@@ -81,6 +82,7 @@ export default function ProyectosPage() {
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState<number | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const { theme } = useTheme();
 
   const motionProps = shouldReduce ? {} : { initial: "hidden", animate: "visible" };
 
