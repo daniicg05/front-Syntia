@@ -21,9 +21,6 @@ export default function PerfilFavoritasPage() {
   return (
     <div>
       <div className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-wider text-foreground-subtle mb-1">
-          Perfil
-        </p>
         <h1 className="text-2xl font-bold text-foreground">Convocatorias favoritas</h1>
         <p className="text-sm text-foreground-muted mt-1.5">
           Gestiona tus convocatorias guardadas y marca su estado de solicitud.
