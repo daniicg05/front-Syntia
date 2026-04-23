@@ -30,11 +30,12 @@ const NAV_LINKS = [
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user] = useState<ReturnType<typeof getUser>>(() => getUser());
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const { theme, toggleTheme, mounted } = useTheme();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  // Keep SSR and first client render identical; resolve auth only after mount.
+  const user = mounted ? getUser() : null;
 
 
   useEffect(() => {
