@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { ConvocatoriaPublica } from "@/lib/api";
-import { FAVORITAS_UPDATED_EVENT, getFavoritaById, type EstadoSolicitud } from "@/lib/favoritos";
+import {
+    FAVORITAS_UPDATED_EVENT,
+    getFavoritaById,
+    type EstadoSolicitud,
+} from "@/lib/favoritos";
 import { ArrowRight, ExternalLink, Lock, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/ThemeProvider";
 import { motion } from "framer-motion";
-desarrollo
 
 interface Props {
     convocatoria: ConvocatoriaPublica;
@@ -18,8 +21,6 @@ interface Props {
     estadoSolicitud?: "no_solicitada" | "solicitada";
     onEstadoSolicitudChange?: (estado: "no_solicitada" | "solicitada") => void;
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function calcDaysLeft(fechaCierre?: string): number | null {
     if (!fechaCierre) return null;
@@ -63,8 +64,6 @@ function buildBdnsUrl(idBdns?: string): string | null {
     return `https://www.infosubvenciones.es/bdnstrans/GE/es/convocatoria/${encodeURIComponent(clean)}`;
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
 export function ConvocatoriaCard({
                                      convocatoria: c,
                                      onAccesoRequerido,
@@ -78,9 +77,8 @@ export function ConvocatoriaCard({
     const { theme } = useTheme();
     const [favorita, setFavorita] = useState(false);
     const [estadoSolicitudLocal, setEstadoSolicitudLocal] = useState<EstadoSolicitud | null>(null);
-    const esCerrada = c.abierto === false;
+
     const esCerrada = c.abierto !== true;
- desarrollo
     const daysLeft = calcDaysLeft(c.fechaCierre);
     const highMatch = showMatch && (c.matchScore ?? 0) >= 70;
     const urgent = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
@@ -90,31 +88,37 @@ export function ConvocatoriaCard({
     const progress = daysLeft != null && daysLeft > 0 ? calcProgress(daysLeft) : null;
     const fuenteOficialUrl = c.urlOficial || buildBdnsUrl(c.idBdns);
 
-    const accentBar =
-        esCerrada ? null :
-            urgent ? "bg-red-500" :
-                highMatch ? "bg-emerald-500" :
-                    moderate ? "bg-amber-400" :
-                        null;
+    const accentBar = esCerrada
+        ? null
+        : urgent
+            ? "bg-red-500"
+            : highMatch
+                ? "bg-emerald-500"
+                : moderate
+                    ? "bg-amber-400"
+                    : null;
 
-    const badge =
-        esCerrada ? { label: "Cerrada", bg: "bg-red-50", text: "text-red-800" } :
-        esCerrada ? { label: "Cerrada", bg: "bg-[#b9eaff]", text: "text-red-800" } :
-desarrollo
-            urgent ? { label: "Cierre próximo", bg: "bg-red-100", text: "text-red-900" } :
-                highMatch ? { label: "Alta compatibilidad", bg: "bg-emerald-100", text: "text-emerald-900" } :
-                    c.abierto === true ? { label: "Abierta", bg: "bg-[#b9eaff]", text: "text-[#004d62]" } :
-                        null;
+    const badge = esCerrada
+        ? { label: "Cerrada", bg: "bg-red-50", text: "text-red-800" }
+        : urgent
+            ? { label: "Cierre próximo", bg: "bg-red-100", text: "text-red-900" }
+            : highMatch
+                ? { label: "Alta compatibilidad", bg: "bg-emerald-100", text: "text-emerald-900" }
+                : c.abierto === true
+                    ? { label: "Abierta", bg: "bg-[#b9eaff]", text: "text-[#004d62]" }
+                    : null;
 
-    const progressBarColor =
-        urgent ? "bg-red-500" :
-            moderate ? "bg-amber-400" :
-                "bg-primary";
+    const progressBarColor = urgent
+        ? "bg-red-500"
+        : moderate
+            ? "bg-amber-400"
+            : "bg-primary";
 
-    const daysTextColor =
-        urgent ? "text-red-600" :
-            moderate ? "text-amber-600" :
-                "text-foreground-muted";
+    const daysTextColor = urgent
+        ? "text-red-600"
+        : moderate
+            ? "text-amber-600"
+            : "text-foreground-muted";
 
     const favoritaMostrada = typeof c.favorita === "boolean" ? c.favorita : favorita;
     const estadoSolicitudMostrada = estadoSolicitudProp ?? estadoSolicitudLocal ?? c.estadoSolicitud ?? null;
@@ -150,7 +154,6 @@ desarrollo
     }, [c.id, c.favorita, c.estadoSolicitud]);
 
     return (
-        <div className="bg-surface hover:shadow-xl transition-all duration-200 p-6 rounded-2xl group relative overflow-hidden border border-border">
         <motion.article
             className="bg-surface border border-border rounded-2xl p-6 group relative overflow-hidden"
             whileHover={{
@@ -161,47 +164,43 @@ desarrollo
             }}
             whileTap={{ scale: 0.985 }}
         >
-            {accentBar && (
-                <div className={`absolute top-0 left-0 w-1 h-full ${accentBar}`} />
-            )}
+            {accentBar && <div className={`absolute top-0 left-0 w-1 h-full ${accentBar}`} />}
 
             <div className="flex flex-col md:flex-row justify-between gap-6">
-
                 <div className="flex-1 space-y-4 min-w-0">
-
-                <div className="flex-1 space-y-4 min-w-0">
-
                     <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                                 {badge && (
-                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tight ${badge.bg} ${badge.text}`}>
-                                        {badge.label}
-                                    </span>
+                                    <span
+                                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tight ${badge.bg} ${badge.text}`}
+                                    >
+                    {badge.label}
+                  </span>
                                 )}
 
                                 {c.numeroConvocatoria && (
                                     <span className="text-[10px] font-bold text-foreground-subtle uppercase tracking-widest">
-                                        Ref: {c.numeroConvocatoria}
-                                    </span>
+                    Ref: {c.numeroConvocatoria}
+                  </span>
                                 )}
 
                                 {c.idBdns && (
                                     <span className="text-[10px] font-bold text-foreground-subtle uppercase tracking-widest">
-                                        BDNS: {c.idBdns}
-                                    </span>
+                    BDNS: {c.idBdns}
+                  </span>
                                 )}
 
                                 {showMatch && c.matchScore != null && !highMatch && (
                                     <span className="text-[10px] font-bold text-foreground-subtle uppercase tracking-widest">
-                                        {c.matchScore}% match
-                                    </span>
+                    {c.matchScore}% match
+                  </span>
                                 )}
 
                                 {favoritaMostrada && (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tight bg-amber-100 text-amber-900">
-                                        <Star className="w-3 h-3 fill-current" /> Favorita
-                                    </span>
+                    <Star className="w-3 h-3 fill-current" /> Favorita
+                  </span>
                                 )}
 
                                 {estadoSolicitudMostrada && (
@@ -212,12 +211,20 @@ desarrollo
                                                 : "bg-slate-200 text-slate-700"
                                         }`}
                                     >
-                                        {estadoSolicitudMostrada === "solicitada" ? "Ya solicitada" : "No solicitada"}
-                                    </span>
+                    {estadoSolicitudMostrada === "solicitada"
+                        ? "Ya solicitada"
+                        : "No solicitada"}
+                  </span>
                                 )}
                             </div>
 
-                            <h3 className={`${compactTitle ? "text-[15px] md:text-base line-clamp-none break-words [overflow-wrap:anywhere]" : "text-lg md:text-xl line-clamp-2"} font-bold text-foreground leading-snug group-hover:text-primary transition-colors duration-150`}>
+                            <h3
+                                className={`${
+                                    compactTitle
+                                        ? "text-[15px] md:text-base line-clamp-none break-words [overflow-wrap:anywhere]"
+                                        : "text-lg md:text-xl line-clamp-2"
+                                } font-bold text-foreground leading-snug group-hover:text-primary transition-colors duration-150`}
+                            >
                                 {c.titulo}
                             </h3>
                         </div>
@@ -227,18 +234,18 @@ desarrollo
                         <div className="flex flex-wrap gap-2">
                             {mostrarTipo && (
                                 <span className="px-3 py-1 rounded-full bg-primary-light text-primary text-xs font-semibold">
-                                    {c.tipo}
-                                </span>
+                  {c.tipo}
+                </span>
                             )}
                             {c.sector && (
                                 <span className="px-3 py-1 rounded-full bg-surface-muted text-foreground-muted text-xs font-semibold">
-                                    {c.sector}
-                                </span>
+                  {c.sector}
+                </span>
                             )}
                             {c.ubicacion && (
                                 <span className="px-3 py-1 rounded-full bg-surface-muted text-foreground-muted text-xs font-semibold">
-                                    {c.ubicacion}
-                                </span>
+                  {c.ubicacion}
+                </span>
                             )}
                         </div>
                     )}
@@ -246,13 +253,13 @@ desarrollo
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                         {c.organismo && (
                             <span className="text-xs text-foreground-muted font-medium truncate max-w-[280px]">
-                                🏛 {c.organismo}
-                            </span>
+                🏛 {c.organismo}
+              </span>
                         )}
                         {c.fechaPublicacion && (
                             <span className="text-xs text-foreground-subtle">
-                                Publicada el {formatFecha(c.fechaPublicacion)}
-                            </span>
+                Publicada el {formatFecha(c.fechaPublicacion)}
+              </span>
                         )}
                     </div>
 
@@ -261,8 +268,8 @@ desarrollo
                             <div className="flex justify-between text-xs font-bold">
                                 <span className="text-foreground-muted">Progreso del plazo</span>
                                 <span className={daysTextColor}>
-                                    Quedan {daysLeft} día{daysLeft !== 1 ? "s" : ""} ({progress}%)
-                                </span>
+                  Quedan {daysLeft} día{daysLeft !== 1 ? "s" : ""} ({progress}%)
+                </span>
                             </div>
                             <div className="w-full h-1.5 bg-surface-muted rounded-full overflow-hidden">
                                 <div
@@ -280,11 +287,17 @@ desarrollo
                             Presupuesto total
                         </p>
                         {presupuestoFmt ? (
-                            <p className={`text-3xl font-bold leading-none ${theme === "dark" ? "text-blue-300" : "text-primary"}`}>
+                            <p
+                                className={`text-3xl font-bold leading-none ${
+                                    theme === "dark" ? "text-blue-300" : "text-primary"
+                                }`}
+                            >
                                 {presupuestoFmt}
                             </p>
-                        ) : (                            
-                            <p className="text-sm text-foreground-subtle italic">sin presupuesto detallado</p>
+                        ) : (
+                            <p className="text-sm text-foreground-subtle italic">
+                                sin presupuesto detallado
+                            </p>
                         )}
                     </div>
 
@@ -309,12 +322,12 @@ desarrollo
                     >
                         {autenticado ? (
                             <span className="flex items-center justify-center gap-1.5">
-                                <ArrowRight className="w-3.5 h-3.5" /> Ver detalles
-                            </span>
+                <ArrowRight className="w-3.5 h-3.5" /> Ver detalles
+              </span>
                         ) : (
                             <span className="flex items-center justify-center gap-1.5">
-                                <Lock className="w-3.5 h-3.5" /> Iniciar sesión
-                            </span>
+                <Lock className="w-3.5 h-3.5" /> Iniciar sesión
+              </span>
                         )}
                     </button>
 
