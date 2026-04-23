@@ -428,7 +428,7 @@ export default function ConvocatoriaDetallePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="rounded-xl border border-border p-4 bg-surface">
                 <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted inline-flex items-center gap-1.5">
-                  <Hash className="w-3.5 h-3.5" /> Nº Convocatoria
+                  <Hash className="w-3.5 h-3.5" /> Código BDNS
                 </p>
                 <p className="mt-2 text-sm text-foreground">
                   {detalle.numeroConvocatoria ??

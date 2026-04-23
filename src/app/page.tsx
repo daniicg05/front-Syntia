@@ -170,6 +170,12 @@ export default function LandingPage() {
                         >
                             Empezar a buscar
                         </button>
+                        <Link
+                            href="/suscripcion"
+                            className="hover:text-foreground transition-colors cursor-pointer"
+                        >
+                            Planes de suscripcion
+                        </Link>
                     </nav>
 
                     <div className="flex items-center gap-4">
