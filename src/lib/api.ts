@@ -70,6 +70,7 @@ export interface ConvocatoriaPublica {
     matchRazon?: string;
     presupuesto?: number;
     regionId?: number;
+    tiposBeneficiario?: string[];
 }
 
 export interface RegionNodo {
@@ -80,10 +81,35 @@ export interface RegionNodo {
 
 export interface ConvocatoriaDetalle {
     id: number;
-    codigoBdns: string | null;
+    titulo: string | null;
+    tipo: string | null;
     sector: string | null;
+    ubicacion: string | null;
+    organismo: string | null;
     descripcion: string | null;
+    textoCompleto: string | null;
+    urlOficial: string | null;
+    idBdns: string | null;
+    numeroConvocatoria: string | null;
+    finalidad: string | null;
+    presupuesto: number | null;
+    abierto: boolean | null;
+    mrr: boolean | null;
+    fechaCierre: string | null;
+    fechaPublicacion: string | null;
+    fechaInicio: string | null;
+    regionId: number | null;
+    provinciaId: number | null;
     tiposBeneficiario: string[];
+    finalidades: string[];
+    instrumentos: string[];
+    organos: string[];
+    regiones: string[];
+    tipoAdmin: string | null;
+    actividades: string[];
+    reglamentos: string[];
+    objetivos: string[];
+    sectoresProducto: string[];
 }
 
 export interface BusquedaPublicaResponse {
@@ -95,7 +121,7 @@ export interface BusquedaPublicaResponse {
 }
 
 export const convocatoriasPublicasApi = {
-    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; regionId?: number; page?: number; size?: number }) =>
+    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; regionId?: number; presupuestoMin?: number; page?: number; size?: number }) =>
         api.get<BusquedaPublicaResponse>("/convocatorias/publicas/buscar", { params }),
     destacadas: () => api.get<ConvocatoriaPublica[]>("/convocatorias/publicas/destacadas"),
     finalidades: () => api.get<string[]>("/convocatorias/publicas/finalidades"),
@@ -104,12 +130,57 @@ export const convocatoriasPublicasApi = {
     detalle: (id: number) => api.get<ConvocatoriaDetalle>(`/convocatorias/publicas/${id}`),
 };
 
+// ── Guía de subvención (generada por IA) ─────────────────────────────────────
+export interface GuiaVisualStep {
+    step: number;
+    phase: string;
+    title: string;
+    description: string;
+    screen_hint?: string;
+    image_prompt?: string;
+    official_link?: string;
+}
+
+export interface GuiaWorkflowStep {
+    step: number;
+    phase: string;
+    title: string;
+    description: string;
+    user_action?: string;
+    portal_action?: string;
+    required_documents?: string[];
+    official_link?: string;
+    estimated_time_minutes?: number;
+}
+
+export interface GuiaSubvencion {
+    grant_summary: {
+        title: string;
+        organism: string;
+        objective: string;
+        who_can_apply: string;
+        deadline: string;
+        official_link?: string;
+        legal_basis?: string;
+    };
+    application_methods: { method: string; description: string; official_portal?: string }[];
+    required_documents: string[];
+    universal_requirements_lgs_art13: string[];
+    workflows: { method: string; steps: GuiaWorkflowStep[] }[];
+    visual_guides: { method: string; steps: GuiaVisualStep[] }[];
+    legal_disclaimer: string;
+}
+
 // ── Convocatorias autenticadas (con match score) ───────────────────────────────
 export const convocatoriasUsuarioApi = {
     recomendadas: (params?: { page?: number; size?: number }) =>
         api.get<ConvocatoriaPublica[]>("/usuario/convocatorias/recomendadas", { params }),
-    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; regionId?: number; page?: number; size?: number }) =>
+    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; regionId?: number; presupuestoMin?: number; sort?: string; page?: number; size?: number }) =>
         api.get<BusquedaPublicaResponse>("/usuario/convocatorias/buscar", { params }),
+    analisis: (convocatoriaId: number) =>
+        api.get<{ explicacion: string; guia: string; guiaCompleta: GuiaSubvencion }>(
+            `/usuario/convocatorias/${convocatoriaId}/analisis`
+        ),
 };
 
 // ── Dashboard usuario ─────────────────────────────────────────────────────────
@@ -164,6 +235,14 @@ export const recomendacionesApi = {
         api.get(`/usuario/proyectos/${proyectoId}/recomendaciones/${recId}/guia-enriquecida`),
 };
 
+// ── Favoritos ────────────────────────────────────────────────────────────────
+export const favoritosApi = {
+    list: () => api.get<ConvocatoriaPublica[]>("/usuario/favoritos"),
+    ids: () => api.get<number[]>("/usuario/favoritos/ids"),
+    agregar: (convocatoriaId: number) => api.post(`/usuario/favoritos/${convocatoriaId}`),
+    eliminar: (convocatoriaId: number) => api.delete(`/usuario/favoritos/${convocatoriaId}`),
+};
+
 // ── Admin ─────────────────────────────────────────────────────────────────────
 export const adminApi = {
     dashboard: () => api.get("/admin/dashboard"),
@@ -204,5 +283,14 @@ export const adminApi = {
         enriquecer: () => api.post("/admin/bdns/enriquecer"),
         estadoEnriquecimiento: () => api.get("/admin/bdns/enriquecer/estado"),
         cancelarEnriquecimiento: () => api.delete("/admin/bdns/enriquecer"),
+    },
+    etl: {
+        // Fase 1: Catálogos
+        conteoCatalogos: () => api.get("/admin/etl/catalogos"),
+        importarCatalogos: () => api.post("/admin/etl/catalogos"),
+        // Fase 2: Índices
+        estadoIndices: () => api.get("/admin/etl/indices"),
+        construirIndices: () => api.post("/admin/etl/indices"),
+        cancelarIndices: () => api.delete("/admin/etl/indices"),
     },
 };

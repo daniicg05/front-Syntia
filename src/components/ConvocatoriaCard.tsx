@@ -1,14 +1,17 @@
 "use client";
 
-import { ConvocatoriaPublica } from "@/lib/api";
-import { ArrowRight, ExternalLink, Lock } from "lucide-react";
+import { ConvocatoriaPublica, favoritosApi } from "@/lib/api";
+import { ArrowRight, ExternalLink, Lock, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface Props {
     convocatoria: ConvocatoriaPublica;
     onAccesoRequerido?: () => void;
     autenticado: boolean;
     showMatch?: boolean;
+    esFavorito?: boolean;
+    onFavoritoChange?: (convocatoriaId: number, esFavorito: boolean) => void;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -46,8 +49,9 @@ function formatPresupuesto(p?: number): string | null {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autenticado, showMatch = false }: Props) {
+export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autenticado, showMatch = false, esFavorito = false, onFavoritoChange }: Props) {
     const router = useRouter();
+    const [favLoading, setFavLoading] = useState(false);
     const esCerrada = c.abierto === false;
     const daysLeft  = calcDaysLeft(c.fechaCierre);
     const highMatch = showMatch && (c.matchScore ?? 0) >= 70;
@@ -84,6 +88,23 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
         moderate ? "text-amber-600" :
         "text-foreground-muted";
 
+    async function toggleFavorito(e: React.MouseEvent) {
+        e.stopPropagation();
+        if (!autenticado) { onAccesoRequerido?.(); return; }
+        if (favLoading) return;
+        setFavLoading(true);
+        try {
+            if (esFavorito) {
+                await favoritosApi.eliminar(c.id);
+                onFavoritoChange?.(c.id, false);
+            } else {
+                await favoritosApi.agregar(c.id);
+                onFavoritoChange?.(c.id, true);
+            }
+        } catch { /* silently fail */ }
+        finally { setFavLoading(false); }
+    }
+
     function handleClick() {
         if (!autenticado) { onAccesoRequerido?.(); return; }
         router.push(`/convocatorias/${c.id}`);
@@ -103,7 +124,7 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
 
                     {/* Badge + ID row */}
                     <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1 min-w-0">
+                        <div className="space-y-1 min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                                 {badge && (
                                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tight ${badge.bg} ${badge.text}`}>
@@ -127,6 +148,21 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                                 {c.titulo}
                             </h3>
                         </div>
+                        {autenticado && (
+                            <button
+                                type="button"
+                                onClick={toggleFavorito}
+                                disabled={favLoading}
+                                aria-label={esFavorito ? "Quitar de favoritos" : "Añadir a favoritos"}
+                                className="shrink-0 p-1.5 rounded-lg hover:bg-surface-muted transition-colors disabled:opacity-50"
+                            >
+                                <Star className={`w-5 h-5 transition-colors ${
+                                    esFavorito
+                                        ? "text-amber-500 fill-amber-500"
+                                        : "text-foreground-muted hover:text-amber-400"
+                                }`} />
+                            </button>
+                        )}
                     </div>
 
                     {/* Tags: tipo + sector + ubicacion */}

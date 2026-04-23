@@ -6,7 +6,7 @@ import { Search, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
 import { ModalAccesoRequerido } from "@/components/ModalAccesoRequerido";
 import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
-import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica, BusquedaPublicaResponse, RegionNodo } from "@/lib/api";
+import { convocatoriasPublicasApi, convocatoriasUsuarioApi, favoritosApi, ConvocatoriaPublica, BusquedaPublicaResponse, RegionNodo } from "@/lib/api";
 
 // ── Datos estáticos ────────────────────────────────────────────────────────────
 
@@ -15,7 +15,7 @@ import { convocatoriasPublicasApi, convocatoriasUsuarioApi, ConvocatoriaPublica,
 
 const stripCodigo = (d: string) => d.replace(/^[A-Z0-9]+ - /, "").trim();
 
-const TIPOS_CONVOCATORIA = ["Subvención", "Préstamo", "Garantía", "Premio", "Subvención + Préstamo"];
+const TIPOS_BENEFICIARIO = ["Pyme", "Autónomo", "Gran Empresa", "Startup", "Entidad sin ánimo de lucro"];
 
 const PLAZOS_CIERRE = [
     { value: "",   label: "Cualquier plazo"     },
@@ -24,32 +24,29 @@ const PLAZOS_CIERRE = [
     { value: "90", label: "Cierra en 90 días"   },
 ];
 
-const TIPOS_BENEFICIARIO = ["Pyme", "Autónomo", "Gran Empresa", "Startup", "Entidad sin ánimo de lucro"];
-
-// ── Helpers de orden local ─────────────────────────────────────────────────────
-
-function sortResults(list: ConvocatoriaPublica[], sortBy: string): ConvocatoriaPublica[] {
-    if (sortBy === "plazo") {
-        return [...list].sort((a, b) => {
-            if (!a.fechaCierre) return 1;
-            if (!b.fechaCierre) return -1;
-            return new Date(a.fechaCierre).getTime() - new Date(b.fechaCierre).getTime();
-        });
-    }
-    if (sortBy === "cuantia") {
-        return [...list].sort((a, b) => (b.presupuesto ?? 0) - (a.presupuesto ?? 0));
-    }
-    return list;
-}
-
 // ── Componente ─────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
     const [autenticado, setAutenticado] = useState(false);
 
+    const [favIds, setFavIds] = useState<Set<number>>(new Set());
+
     useEffect(() => {
-        setAutenticado(isAuthenticated());
+        const auth = isAuthenticated();
+        setAutenticado(auth);
+        if (auth) {
+            setSortBy("relevancia");
+            favoritosApi.ids().then(r => setFavIds(new Set(r.data))).catch(() => {});
+        }
     }, []);
+
+    function handleFavoritoChange(convocatoriaId: number, esFav: boolean) {
+        setFavIds(prev => {
+            const next = new Set(prev);
+            if (esFav) next.add(convocatoriaId); else next.delete(convocatoriaId);
+            return next;
+        });
+    }
 
     const [modalAcceso,  setModalAcceso]  = useState(false);
     const [finalidades,  setFinalidades]  = useState<string[]>([]);
@@ -63,13 +60,13 @@ export default function HomePage() {
 
     // Filtros de la barra lateral
     const [sectorActivo,      setSectorActivo]      = useState("");
-    const [tipoConvocatoria,  setTipoConvocatoria]  = useState("");
     const [plazoCierre,       setPlazoCierre]        = useState("");
     const [presupuestoMin,    setPresupuestoMin]     = useState(0);
     const [tipoBeneficiario,  setTipoBeneficiario]  = useState("");
     const [selectedRegionId,  setSelectedRegionId]  = useState<number | null>(null);
     const [selectedProvinciaId, setSelectedProvinciaId] = useState<number | null>(null);
-    const [sortBy,            setSortBy]             = useState("relevancia");
+
+    const [sortBy,            setSortBy]             = useState("plazo");
     const [sidebarVisible,    setSidebarVisible]     = useState(true);
 
     // Estado de resultados
@@ -82,20 +79,21 @@ export default function HomePage() {
     const [appliedSector,  setAppliedSector]  = useState("");
     const [appliedAbierto, setAppliedAbierto] = useState(true);
 
-    const buscar = useCallback((q: string, sec: string, tipo: string, abierto: boolean, p: number, regionId?: number | null) => {
+    const buscar = useCallback((q: string, sec: string, tipo: string, abierto: boolean, p: number, regionId?: number | null, orden?: string, minPresupuesto?: number) => {
         setLoading(true);
-        const params = {
-            q:        q    || undefined,
-            sector:   sec  || undefined,
-            tipo:     tipo || undefined,
-            abierto:  abierto ? true : undefined,
-            regionId: regionId ?? undefined,
-            page:     p,
-            size:     20,
+        const baseParams = {
+            q:               q    || undefined,
+            sector:          sec  || undefined,
+            tipo:            tipo || undefined,
+            abierto:         abierto ? true : undefined,
+            regionId:        regionId ?? undefined,
+            presupuestoMin:  minPresupuesto && minPresupuesto > 0 ? minPresupuesto : undefined,
+            page:            p,
+            size:            20,
         };
         const request = autenticado
-            ? convocatoriasUsuarioApi.buscar(params)
-            : convocatoriasPublicasApi.buscar(params);
+            ? convocatoriasUsuarioApi.buscar({ ...baseParams, sort: orden || "relevancia" })
+            : convocatoriasPublicasApi.buscar(baseParams);
 
         request
             .then((res) => setResultados(res.data))
@@ -104,7 +102,7 @@ export default function HomePage() {
     }, [autenticado]);
 
     useEffect(() => {
-        buscar("", "", "", true, 0);
+        buscar("", "", "", true, 0, null, sortBy);
         convocatoriasPublicasApi.finalidades()
             .then((res) => setFinalidades(res.data))
             .catch(() => {});
@@ -127,7 +125,7 @@ export default function HomePage() {
         setAppliedSector(sec);
         setAppliedAbierto(abierto);
         setPage(0);
-        buscar(q, sec, niv, abierto, 0, selectedProvinciaId ?? selectedRegionId);
+        buscar(q, sec, niv, abierto, 0, selectedProvinciaId ?? selectedRegionId, sortBy, presupuestoMin);
     }
 
     // Aplicar filtros desde la barra lateral
@@ -135,23 +133,23 @@ export default function HomePage() {
         setAppliedSector(sectorActivo);
         setAppliedAbierto(soloAbiertas);
         setPage(0);
-        buscar(appliedQuery, sectorActivo, nivel, soloAbiertas, 0, selectedProvinciaId ?? selectedRegionId);
+        buscar(appliedQuery, sectorActivo, nivel, soloAbiertas, 0, selectedProvinciaId ?? selectedRegionId, sortBy, presupuestoMin);
     }
 
     // Limpiar todos los filtros
     function handleClearFilters() {
         setQuery(""); setNivel(""); setSoloAbiertas(true);
-        setSectorActivo(""); setTipoConvocatoria(""); setPlazoCierre("");
+        setSectorActivo(""); setPlazoCierre("");
         setPresupuestoMin(0); setTipoBeneficiario(""); setSelectedRegionId(null);
         setSelectedProvinciaId(null);
         setAppliedQuery(""); setAppliedSector(""); setAppliedAbierto(true);
         setPage(0);
-        buscar("", "", "", true, 0, null);
+        buscar("", "", "", true, 0, null, sortBy, 0);
     }
 
     function goToPage(p: number) {
         setPage(p);
-        buscar(appliedQuery, appliedSector, nivel, appliedAbierto, p, selectedProvinciaId ?? selectedRegionId);
+        buscar(appliedQuery, appliedSector, nivel, appliedAbierto, p, selectedProvinciaId ?? selectedRegionId, sortBy, presupuestoMin);
         document.getElementById("listado-section")?.scrollIntoView({ behavior: "smooth" });
     }
 
@@ -169,7 +167,47 @@ export default function HomePage() {
     const ccaaNode = findCcaaNode(selectedRegionId);
     const provincias = ccaaNode?.children ?? [];
 
-    const displayList = resultados ? sortResults(resultados.content, sortBy) : [];
+    const displayList = (() => {
+        if (!resultados) return [];
+        let list = resultados.content;
+
+        // Filtro cliente: plazo de cierre (dentro de N días)
+        if (plazoCierre) {
+            const maxDays = Number(plazoCierre);
+            const now = new Date();
+            const limit = new Date(now.getTime() + maxDays * 86_400_000);
+            list = list.filter((c) => {
+                if (!c.fechaCierre) return false;
+                const cierre = new Date(c.fechaCierre);
+                return cierre >= now && cierre <= limit;
+            });
+        }
+
+        // Filtro cliente: tipo de beneficiario
+        if (tipoBeneficiario) {
+            list = list.filter((c) =>
+                (c.tiposBeneficiario ?? []).some((t) =>
+                    t.toLowerCase().includes(tipoBeneficiario.toLowerCase())
+                )
+            );
+        }
+
+        // Para usuarios no autenticados, aplicar sort client-side (el backend público no soporta sort)
+        if (!autenticado) {
+            if (sortBy === "plazo") {
+                list = [...list].sort((a, b) => {
+                    if (!a.fechaCierre) return 1;
+                    if (!b.fechaCierre) return -1;
+                    return new Date(a.fechaCierre).getTime() - new Date(b.fechaCierre).getTime();
+                });
+            } else if (sortBy === "cuantia") {
+                list = [...list].sort((a, b) => (b.presupuesto ?? 0) - (a.presupuesto ?? 0));
+            }
+        }
+        // Para autenticados, el sort viene del backend (parámetro sort)
+
+        return list;
+    })();
 
     return (
         <div className="flex flex-col">
@@ -298,18 +336,18 @@ export default function HomePage() {
                                 <div className="flex flex-col flex-1 min-h-0 border-t border-border">
 
                                 <div className="overflow-y-auto flex-1 px-6 pt-4 space-y-7">
-                                    {/* Tipo de convocatoria */}
+                                    {/* Tipo de beneficiario */}
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                            Tipo de Convocatoria
+                                            Tipo de Beneficiario
                                         </label>
                                         <select
-                                            value={tipoConvocatoria}
-                                            onChange={(e) => setTipoConvocatoria(e.target.value)}
+                                            value={tipoBeneficiario}
+                                            onChange={(e) => setTipoBeneficiario(e.target.value)}
                                             className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
                                         >
-                                            <option value="">Todos los tipos</option>
-                                            {TIPOS_CONVOCATORIA.map((t) => (
+                                            <option value="">Todos</option>
+                                            {TIPOS_BENEFICIARIO.map((t) => (
                                                 <option key={t} value={t}>{t}</option>
                                             ))}
                                         </select>
@@ -358,23 +396,6 @@ export default function HomePage() {
                                             <span className="text-[10px] font-bold text-foreground-muted">0€</span>
                                             <span className="text-[10px] font-bold text-foreground-muted">1M€+</span>
                                         </div>
-                                    </div>
-
-                                    {/* Tipo de beneficiario (futuro) */}
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                            Tipo de Beneficiario
-                                        </label>
-                                        <select
-                                            value={tipoBeneficiario}
-                                            onChange={(e) => setTipoBeneficiario(e.target.value)}
-                                            className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
-                                        >
-                                            <option value="">Todos</option>
-                                            {TIPOS_BENEFICIARIO.map((t) => (
-                                                <option key={t} value={t}>{t}</option>
-                                            ))}
-                                        </select>
                                     </div>
 
                                     {/* Región / Comunidad Autónoma */}
@@ -462,17 +483,28 @@ export default function HomePage() {
                                     <span className="text-xs font-bold text-foreground-muted uppercase tracking-widest">Ordenar por:</span>
                                     <div className="flex bg-surface-muted p-1 rounded-lg">
                                         {[
-                                            { id: "relevancia", label: "Relevancia" },
-                                            { id: "plazo",      label: "Plazo"      },
-                                            { id: "cuantia",    label: "Cuantía"    },
+                                            { id: "relevancia", label: "Relevancia", requiresAuth: true },
+                                            { id: "plazo",      label: "Plazo",      requiresAuth: false },
+                                            { id: "cuantia",    label: "Cuantía",     requiresAuth: false },
                                         ].map((opt) => (
                                             <button
                                                 key={opt.id}
-                                                onClick={() => setSortBy(opt.id)}
+                                                onClick={() => {
+                                                    if (opt.requiresAuth && !autenticado) {
+                                                        setModalAcceso(true);
+                                                        return;
+                                                    }
+                                                    setSortBy(opt.id);
+                                                    setPage(0);
+                                                    buscar(appliedQuery, appliedSector, nivel, appliedAbierto, 0, selectedProvinciaId ?? selectedRegionId, opt.id, presupuestoMin);
+                                                }}
+                                                title={opt.requiresAuth && !autenticado ? "Inicia sesión para ordenar por relevancia según tu perfil" : undefined}
                                                 className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
                                                     sortBy === opt.id
                                                         ? "bg-white shadow-sm text-primary"
-                                                        : "text-foreground-muted hover:text-foreground"
+                                                        : opt.requiresAuth && !autenticado
+                                                            ? "text-foreground-muted/50 cursor-not-allowed"
+                                                            : "text-foreground-muted hover:text-foreground"
                                                 }`}
                                             >
                                                 {opt.label}
@@ -498,6 +530,8 @@ export default function HomePage() {
                                             autenticado={autenticado}
                                             showMatch={autenticado && c.matchScore != null}
                                             onAccesoRequerido={() => setModalAcceso(true)}
+                                            esFavorito={favIds.has(c.id)}
+                                            onFavoritoChange={handleFavoritoChange}
                                         />
                                     ))}
                                 </div>

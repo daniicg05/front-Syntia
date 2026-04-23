@@ -17,4 +17,6 @@ export interface RecomendacionDTO {
   organismo?: string;
   presupuesto?: number;
   fechaPublicacion?: string;
+  numeroConvocatoria?: string;
+  abierto?: boolean;
 }
