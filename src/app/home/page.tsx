@@ -10,9 +10,6 @@ import { convocatoriasPublicasApi, convocatoriasUsuarioApi, favoritosApi, Convoc
 
 // ── Datos estáticos ────────────────────────────────────────────────────────────
 
- 
-
-
 const stripCodigo = (d: string) => d.replace(/^[A-Z0-9]+ - /, "").trim();
 
 const TIPOS_BENEFICIARIO = ["Pyme", "Autónomo", "Gran Empresa", "Startup", "Entidad sin ánimo de lucro"];
@@ -204,7 +201,6 @@ export default function HomePage() {
                 list = [...list].sort((a, b) => (b.presupuesto ?? 0) - (a.presupuesto ?? 0));
             }
         }
-        // Para autenticados, el sort viene del backend (parámetro sort)
 
         return list;
     })();
@@ -218,7 +214,7 @@ export default function HomePage() {
                 <div className="max-w-3xl mx-auto">
                     <h1 className="text-4xl sm:text-5xl font-bold text-foreground leading-tight mb-4">
                         Descubre subvenciones{" "}
-                        <span className="text-primary">para tu proyecto</span>
+                        <span className="text-blue-300">para tu proyecto</span>
                     </h1>
                     <p className="text-lg text-foreground-muted mb-8 max-w-xl mx-auto leading-relaxed">
                         Busca entre miles de convocatorias públicas o explora por sector.
@@ -248,7 +244,6 @@ export default function HomePage() {
 
                     {/* Filtros rápidos junto al buscador */}
                     <div className="max-w-2xl mx-auto flex items-center gap-2">
-                        {/* Nivel */}
                         <select
                             value={nivel}
                             onChange={(e) => { setNivel(e.target.value); applyQuickFilters(query.trim(), sectorActivo, e.target.value, soloAbiertas); }}
@@ -260,7 +255,6 @@ export default function HomePage() {
                             ))}
                         </select>
 
-                        {/* Sector */}
                         <select
                             value={sectorActivo}
                             onChange={(e) => { setSectorActivo(e.target.value); applyQuickFilters(query.trim(), e.target.value, nivel, soloAbiertas); }}
@@ -272,13 +266,12 @@ export default function HomePage() {
                             ))}
                         </select>
 
-                        {/* Toggle abiertas/cerradas */}
                         <button
                             type="button"
                             onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), sectorActivo, nivel, next); }}
                             className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
                                 soloAbiertas
-                                    ? "border-primary bg-primary-light text-primary"
+                                    ? "border-primary bg-primary-light text-primary dark:text-blue-300"
                                     : "border-border text-foreground-muted hover:border-primary/50"
                             }`}
                         >
@@ -303,11 +296,8 @@ export default function HomePage() {
             <section id="listado-section" className="px-4 pb-16">
                 <div className="max-w-6xl mx-auto">
                     <div className={`flex flex-col gap-8 ${sidebarVisible ? "lg:flex-row" : ""}`}>
-
-                        {/* Sidebar de filtros avanzados */}
                         <aside className={`flex-shrink-0 transition-all duration-300 ${sidebarVisible ? "w-full lg:w-72" : "w-full lg:w-auto"}`}>
                             <div className="bg-surface border border-border rounded-2xl sticky top-24 overflow-hidden flex flex-col max-h-[calc(100vh-7rem)]">
-                                {/* Cabecera siempre visible */}
                                 <div className="flex items-center justify-between px-6 py-4 flex-shrink-0">
                                     <button
                                         onClick={() => setSidebarVisible((v) => !v)}
@@ -324,148 +314,137 @@ export default function HomePage() {
                                     {sidebarVisible && (
                                         <button
                                             onClick={handleClearFilters}
-                                            className="text-xs text-primary font-semibold hover:underline"
+                                            className="text-xs text-blue-300 font-semibold hover:underline"
                                         >
                                             Limpiar
                                         </button>
                                     )}
                                 </div>
 
-                                {/* Contenido colapsable */}
                                 {sidebarVisible && (
-                                <div className="flex flex-col flex-1 min-h-0 border-t border-border">
+                                    <div className="flex flex-col flex-1 min-h-0 border-t border-border">
+                                        <div className="overflow-y-auto flex-1 px-6 pt-4 space-y-7">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                    Tipo de Beneficiario
+                                                </label>
+                                                <select
+                                                    value={tipoBeneficiario}
+                                                    onChange={(e) => setTipoBeneficiario(e.target.value)}
+                                                    className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                                >
+                                                    <option value="">Todos</option>
+                                                    {TIPOS_BENEFICIARIO.map((t) => (
+                                                        <option key={t} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
 
-                                <div className="overflow-y-auto flex-1 px-6 pt-4 space-y-7">
-                                    {/* Tipo de beneficiario */}
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                            Tipo de Beneficiario
-                                        </label>
-                                        <select
-                                            value={tipoBeneficiario}
-                                            onChange={(e) => setTipoBeneficiario(e.target.value)}
-                                            className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
-                                        >
-                                            <option value="">Todos</option>
-                                            {TIPOS_BENEFICIARIO.map((t) => (
-                                                <option key={t} value={t}>{t}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                    Plazo de Cierre
+                                                </label>
+                                                <select
+                                                    value={plazoCierre}
+                                                    onChange={(e) => setPlazoCierre(e.target.value)}
+                                                    className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                                >
+                                                    {PLAZOS_CIERRE.map((p) => (
+                                                        <option key={p.value} value={p.value}>{p.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
 
-                                    {/* Plazo de cierre */}
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                            Plazo de Cierre
-                                        </label>
-                                        <select
-                                            value={plazoCierre}
-                                            onChange={(e) => setPlazoCierre(e.target.value)}
-                                            className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
-                                        >
-                                            {PLAZOS_CIERRE.map((p) => (
-                                                <option key={p.value} value={p.value}>{p.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    {/* Presupuesto mínimo */}
-                                    <div className="space-y-3">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                            Presupuesto Mínimo
-                                            {presupuestoMin > 0 && (
-                                                <span className="ml-2 text-primary normal-case tracking-normal">
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                    Presupuesto Mínimo
+                                                    {presupuestoMin > 0 && (
+                                                        <span className="ml-2 text-primary normal-case tracking-normal">
                                                     {presupuestoMin >= 1_000_000
                                                         ? `${(presupuestoMin / 1_000_000).toFixed(1)}M€`
                                                         : presupuestoMin >= 1_000
-                                                        ? `${Math.round(presupuestoMin / 1_000)}k€`
-                                                        : `${presupuestoMin}€`}
+                                                            ? `${Math.round(presupuestoMin / 1_000)}k€`
+                                                            : `${presupuestoMin}€`}
                                                 </span>
-                                            )}
-                                        </label>
-                                        <input
-                                            type="range"
-                                            min={0}
-                                            max={1000000}
-                                            step={10000}
-                                            value={presupuestoMin}
-                                            onChange={(e) => setPresupuestoMin(Number(e.target.value))}
-                                            className="w-full h-1.5 rounded-full accent-[var(--color-primary)] bg-surface-muted"
-                                        />
-                                        <div className="flex justify-between">
-                                            <span className="text-[10px] font-bold text-foreground-muted">0€</span>
-                                            <span className="text-[10px] font-bold text-foreground-muted">1M€+</span>
-                                        </div>
-                                    </div>
+                                                    )}
+                                                </label>
+                                                <input
+                                                    type="range"
+                                                    min={0}
+                                                    max={1000000}
+                                                    step={10000}
+                                                    value={presupuestoMin}
+                                                    onChange={(e) => setPresupuestoMin(Number(e.target.value))}
+                                                    className="w-full h-1.5 rounded-full accent-[var(--color-primary)] bg-surface-muted"
+                                                />
+                                                <div className="flex justify-between">
+                                                    <span className="text-[10px] font-bold text-foreground-muted">0€</span>
+                                                    <span className="text-[10px] font-bold text-foreground-muted">1M€+</span>
+                                                </div>
+                                            </div>
 
-                                    {/* Región / Comunidad Autónoma */}
-                                    {regiones.length > 0 && (
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                                Comunidad Autónoma
-                                            </label>
-                                            <select
-                                                value={selectedRegionId ?? ""}
-                                                onChange={(e) => {
-                                                    setSelectedRegionId(e.target.value ? Number(e.target.value) : null);
-                                                    setSelectedProvinciaId(null);
-                                                }}
-                                                className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
-                                            >
-                                                <option value="">Toda España</option>
-                                                {regiones.map((macroRegion) => (
-                                                    <optgroup key={macroRegion.id} label={stripCodigo(macroRegion.descripcion)}>
-                                                        {macroRegion.children.map((ccaa) => (
-                                                            <option key={ccaa.id} value={ccaa.id}>
-                                                                {stripCodigo(ccaa.descripcion)}
+                                            {regiones.length > 0 && (
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                        Comunidad Autónoma
+                                                    </label>
+                                                    <select
+                                                        value={selectedRegionId ?? ""}
+                                                        onChange={(e) => {
+                                                            setSelectedRegionId(e.target.value ? Number(e.target.value) : null);
+                                                            setSelectedProvinciaId(null);
+                                                        }}
+                                                        className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                                    >
+                                                        <option value="">Toda España</option>
+                                                        {regiones.map((macroRegion) => (
+                                                            <optgroup key={macroRegion.id} label={stripCodigo(macroRegion.descripcion)}>
+                                                                {macroRegion.children.map((ccaa) => (
+                                                                    <option key={ccaa.id} value={ccaa.id}>
+                                                                        {stripCodigo(ccaa.descripcion)}
+                                                                    </option>
+                                                                ))}
+                                                            </optgroup>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {provincias.length > 0 && (
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
+                                                        Provincia
+                                                    </label>
+                                                    <select
+                                                        value={selectedProvinciaId ?? ""}
+                                                        onChange={(e) => setSelectedProvinciaId(e.target.value ? Number(e.target.value) : null)}
+                                                        className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                                    >
+                                                        <option value="">Toda la comunidad</option>
+                                                        {provincias.map((p) => (
+                                                            <option key={p.id} value={p.id}>
+                                                                {stripCodigo(p.descripcion)}
                                                             </option>
                                                         ))}
-                                                    </optgroup>
-                                                ))}
-                                            </select>
+                                                    </select>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
 
-                                    {/* Provincia (aparece solo cuando hay CCAA seleccionada con provincias) */}
-                                    {provincias.length > 0 && (
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted block">
-                                                Provincia
-                                            </label>
-                                            <select
-                                                value={selectedProvinciaId ?? ""}
-                                                onChange={(e) => setSelectedProvinciaId(e.target.value ? Number(e.target.value) : null)}
-                                                className="w-full bg-surface-muted border border-border rounded-xl text-sm py-2.5 px-3 focus:outline-none focus:border-primary transition-colors text-foreground"
+                                        <div className="px-6 py-4 border-t border-border flex-shrink-0">
+                                            <button
+                                                onClick={handleApplyFilters}
+                                                className="w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
                                             >
-                                                <option value="">Toda la comunidad</option>
-                                                {provincias.map((p) => (
-                                                    <option key={p.id} value={p.id}>
-                                                        {stripCodigo(p.descripcion)}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                Aplicar Filtros
+                                            </button>
                                         </div>
-                                    )}
-
-                                </div>
-
-                                <div className="px-6 py-4 border-t border-border flex-shrink-0">
-                                <button
-                                    onClick={handleApplyFilters}
-                                    className="w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
-                                >
-                                    Aplicar Filtros
-                                </button>
-                                </div>
-                                </div>
+                                    </div>
                                 )}
                             </div>
                         </aside>
 
-                        {/* Área de resultados */}
                         <div className="flex-1 space-y-5 min-w-0">
-
-                            {/* Barra de resultados + ordenación */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface border border-border p-4 rounded-2xl">
                                 <div className="flex items-center gap-3">
                                     {loading ? (
@@ -514,7 +493,6 @@ export default function HomePage() {
                                 </div>
                             </div>
 
-                            {/* Tarjetas */}
                             {loading ? (
                                 <div className="grid grid-cols-1 gap-4">
                                     {[...Array(6)].map((_, i) => (
@@ -551,7 +529,6 @@ export default function HomePage() {
                                 </div>
                             )}
 
-                            {/* Paginación */}
                             {resultados && resultados.totalPages > 1 && !loading && (
                                 <div className="flex items-center justify-center gap-2 pt-4">
                                     <button
@@ -599,7 +576,6 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* ── CTA para no autenticados ─────────────────────────────────── */}
             {!autenticado && (
                 <section className="px-4 pb-16">
                     <div className="max-w-3xl mx-auto bg-primary-light border border-primary/20 rounded-3xl p-10 text-center">

@@ -96,8 +96,8 @@ export default function NuevoProyectoPage() {
 
       {/* Tip */}
       <div className="flex items-start gap-3 bg-primary-light border border-primary/20 rounded-xl p-4 mb-6">
-        <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-        <p className="text-sm text-primary/90 leading-relaxed">
+        <Sparkles className="w-4 h-4 text-primary dark:text-blue-300 mt-0.5 shrink-0" />
+        <p className="text-sm text-primary/90 dark:text-blue-300 leading-relaxed">
           <strong>Consejo:</strong> Cuanto más detallada sea la descripción de tu proyecto
           (objetivos, tecnologías, público objetivo, impacto), mejores serán los resultados
           del matching con IA.

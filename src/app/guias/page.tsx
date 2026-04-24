@@ -234,7 +234,7 @@ export default function GuiasPage() {
                           {guia.pasos && <span>{guia.pasos} pasos</span>}
                         </div>
                         <button
-                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary dark:text-blue-300 hover:underline"
                             aria-label={`Ver guía: ${guia.titulo}`}
                         >
                           Ver guía
