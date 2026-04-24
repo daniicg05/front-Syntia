@@ -78,18 +78,18 @@ export function Navbar() {
             {NAV_LINKS.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || (href !== "/home" && pathname.startsWith(href));
               return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-primary-light text-primary"
-                      : "text-foreground-muted hover:text-foreground hover:bg-surface-muted"
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {label}
-                </Link>
+                  <Link
+                      key={href}
+                      href={href}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          active
+                              ? "bg-primary text-white hover:bg-primary-hover"
+                              : "text-foreground-muted hover:text-foreground hover:bg-surface-muted"
+                      }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </Link>
               );
             })}
           </nav>
@@ -180,19 +180,19 @@ export function Navbar() {
               {NAV_LINKS.map(({ href, label, icon: Icon }) => {
                 const active = pathname === href || (href !== "/home" && pathname.startsWith(href));
                 return (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      active
-                        ? "bg-primary-light text-primary"
-                        : "text-foreground-muted hover:text-foreground hover:bg-surface-muted"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {label}
-                  </Link>
+                    <Link
+                        key={href}
+                        href={href}
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                            active
+                                ? "bg-primary text-white hover:bg-primary-hover"
+                                : "text-foreground-muted hover:text-foreground hover:bg-surface-muted"
+                        }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {label}
+                    </Link>
                 );
               })}
               <div className="border-t border-border mt-2 pt-2 flex flex-col gap-1">

@@ -165,8 +165,8 @@ export default function DashboardPage() {
               Top recomendaciones por proyecto
             </h2>
             <Link
-              href="/proyectos"
-              className="text-sm text-primary hover:underline font-medium flex items-center gap-1"
+                href="/proyectos"
+                className="text-sm text-primary dark:text-blue-300 hover:underline font-medium flex items-center gap-1"
             >
               Ver todos
               <ArrowRight className="w-3.5 h-3.5" />
@@ -245,8 +245,8 @@ export default function DashboardPage() {
             Convocatorias favoritas
           </h2>
           <Link
-            href="/home"
-            className="text-sm text-primary hover:underline font-medium flex items-center gap-1"
+              href="/home"
+              className="text-sm text-primary dark:text-blue-300 hover:underline font-medium flex items-center gap-1"
           >
             Explorar más
             <ArrowRight className="w-3.5 h-3.5" />

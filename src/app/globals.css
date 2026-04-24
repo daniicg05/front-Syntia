@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   /* Brand */
@@ -57,10 +58,10 @@
 /* Dark mode */
 .dark {
   /* Brand */
-  --primary: #81d1f0;
-  --primary-hover: #b9eaff;
-  --primary-light: #003c4f;
-  --primary-muted: #005a71;
+  --primary: #005a71;        /* igual que en :root para que los botones no cambien */
+  --primary-hover: #0e7490;  /* igual que en :root */
+  --primary-light: #003c4f;  /* puedes dejar este para acentos oscuros */
+  --primary-muted: #81d1f0;  /* aquí metes el azul nuevo para textos/detalles */
 
   /* Neutrals */
   --background: #0f1110;

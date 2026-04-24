@@ -22,16 +22,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const stored = localStorage.getItem("syntia-theme") as Theme | null;
-    if (stored) {
-      setTheme(stored);
-      document.documentElement.classList.toggle("dark", stored === "dark");
+
+    if (stored === "dark") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTheme("dark");
+      document.documentElement.classList.add("dark");
     } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (prefersDark) {
-        setTheme("dark");
-        document.documentElement.classList.add("dark");
-      }
+      setTheme("light");
+      document.documentElement.classList.remove("dark");
     }
+
     setMounted(true);
   }, []);
 
@@ -45,9 +45,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, mounted }}>
-      {children}
-    </ThemeContext.Provider>
+      <ThemeContext.Provider value={{ theme, toggleTheme, mounted }}>
+        {children}
+      </ThemeContext.Provider>
   );
 }
 

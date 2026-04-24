@@ -4,6 +4,7 @@ import { ConvocatoriaPublica, favoritosApi } from "@/lib/api";
 import { ArrowRight, ExternalLink, Lock, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface Props {
     convocatoria: ConvocatoriaPublica;
@@ -35,9 +36,13 @@ function formatFecha(fecha?: string): string {
     if (!fecha) return "";
     try {
         return new Date(fecha).toLocaleDateString("es-ES", {
-            day: "numeric", month: "short", year: "numeric",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
         });
-    } catch { return fecha; }
+    } catch {
+        return fecha;
+    }
 }
 
 function formatPresupuesto(p?: number): string | null {
@@ -49,9 +54,18 @@ function formatPresupuesto(p?: number): string | null {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autenticado, showMatch = false, esFavorito = false, onFavoritoChange }: Props) {
+export function ConvocatoriaCard({
+                                     convocatoria: c,
+                                     onAccesoRequerido,
+                                     autenticado,
+                                     showMatch = false,
+                                     esFavorito = false,
+                                     onFavoritoChange,
+                                 }: Props) {
     const router = useRouter();
     const [favLoading, setFavLoading] = useState(false);
+    const { theme } = useTheme();
+
     const esCerrada = c.abierto === false;
     const daysLeft  = calcDaysLeft(c.fechaCierre);
     const highMatch = showMatch && (c.matchScore ?? 0) >= 70;
@@ -61,36 +75,42 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
     const presupuestoFmt = formatPresupuesto(c.presupuesto);
     const progress       = daysLeft != null && daysLeft > 0 ? calcProgress(daysLeft) : null;
 
-    // Left accent bar
+    const themedPrimaryText = theme === "dark" ? "text-blue-300" : "text-primary";
+
     const accentBar =
         esCerrada ? null :
-        urgent    ? "bg-red-500" :
-        highMatch ? "bg-emerald-500" :
-        moderate  ? "bg-amber-400" :
-        null;
+            urgent    ? "bg-destructive" :
+                highMatch ? "bg-accent-green" :
+                    moderate  ? "bg-accent-amber" :
+                        null;
 
-    // Status badge
     const badge =
-        esCerrada                 ? { label: "Cerrada",            bg: "bg-red-50",     text: "text-red-800"     } :
-        urgent                    ? { label: "Cierre próximo",     bg: "bg-red-100",    text: "text-red-900"     } :
-        highMatch                 ? { label: "Alta compatibilidad",bg: "bg-emerald-100",text: "text-emerald-900" } :
-        c.abierto === true        ? { label: "Abierta",            bg: "bg-[#b9eaff]",  text: "text-[#004d62]"  } :
-        null;
+        esCerrada
+            ? { label: "Cerrada", bg: "bg-destructive-light", text: "text-destructive" }
+            : urgent
+                ? { label: "Cierre próximo", bg: "bg-destructive-light", text: "text-destructive" }
+                : highMatch
+                    ? { label: "Alta compatibilidad", bg: "bg-accent-emerald/10", text: "text-accent-emerald" }
+                    : c.abierto === true
+                        ? { label: "Abierta", bg: "bg-primary-light", text: themedPrimaryText }
+                        : null;
 
-    // Progress bar + label color
     const progressBarColor =
-        urgent   ? "bg-red-500" :
-        moderate ? "bg-amber-400" :
-        "bg-primary";
+        urgent   ? "bg-destructive" :
+            moderate ? "bg-accent-amber" :
+                "bg-primary";
 
     const daysTextColor =
-        urgent   ? "text-red-600" :
-        moderate ? "text-amber-600" :
-        "text-foreground-muted";
+        urgent   ? "text-destructive" :
+            moderate ? "text-accent-amber" :
+                "text-foreground-muted";
 
     async function toggleFavorito(e: React.MouseEvent) {
         e.stopPropagation();
-        if (!autenticado) { onAccesoRequerido?.(); return; }
+        if (!autenticado) {
+            onAccesoRequerido?.();
+            return;
+        }
         if (favLoading) return;
         setFavLoading(true);
         try {
@@ -101,41 +121,57 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                 await favoritosApi.agregar(c.id);
                 onFavoritoChange?.(c.id, true);
             }
-        } catch { /* silently fail */ }
-        finally { setFavLoading(false); }
+        } catch {
+        } finally {
+            setFavLoading(false);
+        }
     }
 
     function handleClick() {
-        if (!autenticado) { onAccesoRequerido?.(); return; }
+        if (!autenticado) {
+            onAccesoRequerido?.();
+            return;
+        }
         router.push(`/convocatorias/${c.id}`);
     }
 
     return (
-        <div className="bg-white hover:shadow-xl hover:shadow-black/[0.03] transition-all duration-200 p-6 rounded-2xl group relative overflow-hidden border border-border">
-            {/* Left accent bar */}
+        <div
+            className="
+                bg-surface
+                hover:shadow-xl hover:shadow-black/[0.03]
+                transition-all duration-200
+                p-6 rounded-2xl group relative overflow-hidden
+                border border-border
+            "
+        >
             {accentBar && (
                 <div className={`absolute top-0 left-0 w-1 h-full ${accentBar}`} />
             )}
 
             <div className="flex flex-col md:flex-row justify-between gap-6">
-
-                {/* ── Left content ─────────────────────────────────────── */}
                 <div className="flex-1 space-y-4 min-w-0">
-
-                    {/* Badge + ID row */}
                     <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1 min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                                 {badge && (
-                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tight ${badge.bg} ${badge.text}`}>
+                                    <span
+                                        className={`
+                                            px-2.5 py-0.5 rounded-full
+                                            text-[10px] font-black uppercase tracking-tight
+                                            ${badge.bg} ${badge.text}
+                                        `}
+                                    >
                                         {badge.label}
                                     </span>
                                 )}
+
                                 {c.numeroConvocatoria && (
                                     <span className="text-[10px] font-bold text-foreground-subtle uppercase tracking-widest">
                                         ID: #{c.numeroConvocatoria}
                                     </span>
                                 )}
+
                                 {showMatch && c.matchScore != null && !highMatch && (
                                     <span className="text-[10px] font-bold text-foreground-subtle uppercase tracking-widest">
                                         {c.matchScore}% match
@@ -143,11 +179,11 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                                 )}
                             </div>
 
-                            {/* Title */}
                             <h3 className="text-xl font-bold text-foreground leading-tight group-hover:text-primary transition-colors duration-150 line-clamp-2">
                                 {c.titulo}
                             </h3>
                         </div>
+
                         {autenticado && (
                             <button
                                 type="button"
@@ -156,37 +192,40 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                                 aria-label={esFavorito ? "Quitar de favoritos" : "Añadir a favoritos"}
                                 className="shrink-0 p-1.5 rounded-lg hover:bg-surface-muted transition-colors disabled:opacity-50"
                             >
-                                <Star className={`w-5 h-5 transition-colors ${
-                                    esFavorito
-                                        ? "text-amber-500 fill-amber-500"
-                                        : "text-foreground-muted hover:text-amber-400"
-                                }`} />
+                                <Star
+                                    className={`
+                                        w-5 h-5 transition-colors
+                                        ${
+                                        esFavorito
+                                            ? "text-amber-500 fill-amber-500"
+                                            : "text-foreground-muted hover:text-amber-400"
+                                    }
+                                    `}
+                                />
                             </button>
                         )}
                     </div>
 
-                    {/* Tags: tipo + sector + ubicacion */}
                     {(c.tipo || c.sector || c.ubicacion) && (
                         <div className="flex flex-wrap gap-2">
                             {c.tipo && (
-                                <span className="px-3 py-1 rounded-full bg-primary-light text-primary text-xs font-semibold">
+                                <span className={`px-3 py-1 rounded-full bg-primary-light text-xs font-semibold ${themedPrimaryText}`}>
                                     {c.tipo}
                                 </span>
                             )}
                             {c.sector && (
-                                <span className="px-3 py-1 rounded-full bg-surface-muted text-foreground-muted text-xs font-semibold">
+                                <span className={`px-3 py-1 rounded-full bg-surface-muted text-xs font-semibold ${themedPrimaryText}`}>
                                     {c.sector}
                                 </span>
                             )}
                             {c.ubicacion && (
-                                <span className="px-3 py-1 rounded-full bg-surface-muted text-foreground-muted text-xs font-semibold">
+                                <span className={`px-3 py-1 rounded-full bg-surface-muted text-xs font-semibold ${themedPrimaryText}`}>
                                     {c.ubicacion}
                                 </span>
                             )}
                         </div>
                     )}
 
-                    {/* Organismo + fecha publicación */}
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                         {c.organismo && (
                             <span className="text-xs text-foreground-muted font-medium truncate max-w-[280px]">
@@ -200,7 +239,6 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                         )}
                     </div>
 
-                    {/* Progress bar */}
                     {!esCerrada && progress != null && daysLeft != null && daysLeft > 0 && (
                         <div className="space-y-2">
                             <div className="flex justify-between text-xs font-bold">
@@ -219,24 +257,27 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                     )}
                 </div>
 
-                {/* ── Right metrics ─────────────────────────────────────── */}
                 <div className="md:w-56 shrink-0 flex flex-col justify-between gap-4 border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
-
-                    {/* Presupuesto */}
                     <div className="space-y-1">
                         <p className="text-[10px] font-bold text-foreground-muted uppercase tracking-widest">
                             Presupuesto total
                         </p>
                         {presupuestoFmt ? (
-                            <p className="text-3xl font-bold text-primary leading-none">
+                            <p
+                                className={`
+                                    text-3xl font-bold leading-none
+                                    ${theme === "dark" ? "text-blue-300" : "text-primary"}
+                                `}
+                            >
                                 {presupuestoFmt}
                             </p>
                         ) : (
-                            <p className="text-sm text-foreground-subtle italic">No especificado</p>
+                            <p className="text-sm text-foreground-subtle italic">
+                                No especificado
+                            </p>
                         )}
                     </div>
 
-                    {/* Fecha cierre */}
                     {c.fechaCierre && (
                         <div className="space-y-1">
                             <p className="text-[10px] font-bold text-foreground-muted uppercase tracking-widest">
@@ -248,23 +289,28 @@ export function ConvocatoriaCard({ convocatoria: c, onAccesoRequerido, autentica
                         </div>
                     )}
 
-                    {/* CTA */}
                     <button
                         onClick={handleClick}
-                        className={`w-full py-2.5 rounded-xl font-bold text-sm hover:brightness-110 transition-all ${
+                        className={`
+                            w-full rounded-xl font-semibold text-sm
+                            flex items-center justify-center gap-2
+                            transition-colors
+                            ${
                             autenticado
-                                ? "bg-[#0e7490] text-[#d3f1ff]"
-                                : "bg-surface-muted text-foreground-muted"
-                        }`}
+                                ? "bg-primary text-white px-5 py-3 hover:bg-primary-hover"
+                                : "bg-surface-muted text-foreground-muted py-2.5"
+                        }
+                        `}
                     >
                         {autenticado ? (
-                            <span className="flex items-center justify-center gap-1.5">
-                                <ArrowRight className="w-3.5 h-3.5" /> Ver detalles
-                            </span>
+                            <>
+                                Ver detalles
+                                <ArrowRight className="w-4 h-4" />
+                            </>
                         ) : (
-                            <span className="flex items-center justify-center gap-1.5">
+                            <>
                                 <Lock className="w-3.5 h-3.5" /> Iniciar sesión
-                            </span>
+                            </>
                         )}
                     </button>
 

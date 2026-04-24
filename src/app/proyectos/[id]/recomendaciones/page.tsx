@@ -211,13 +211,15 @@ export default function RecomendacionesPage() {
   );
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <Link href="/proyectos" className="text-sm text-primary hover:underline">&larr; Proyectos</Link>
-        <h1 className="text-2xl font-bold text-foreground mt-2">
-          Recomendaciones{proyecto ? ` — ${proyecto.nombre}` : ""}
-        </h1>
-      </div>
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <Link href="/proyectos" className="text-sm text-primary dark:text-blue-300 hover:underline">
+            &larr; Proyectos
+          </Link>
+          <h1 className="text-2xl font-bold text-foreground mt-2">
+            Recomendaciones{proyecto ? ` — ${proyecto.nombre}` : ""}
+          </h1>
+        </div>
 
       {/* Buscador estilo Home */}
       <form
@@ -276,8 +278,8 @@ export default function RecomendacionesPage() {
           onClick={() => setSoloAbiertas(!soloAbiertas)}
           className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
             soloAbiertas
-              ? "border-primary bg-primary-light text-primary"
-              : "border-border text-foreground-muted hover:border-primary/50"
+                ? "border-primary bg-primary-light text-primary dark:text-blue-300"
+                : "border-border text-foreground-muted hover:border-primary/50"
           }`}
         >
           <span className={`w-2 h-2 rounded-full ${soloAbiertas ? "bg-primary" : "bg-foreground-subtle"}`} />
