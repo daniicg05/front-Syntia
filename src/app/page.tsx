@@ -230,7 +230,7 @@ export default function LandingPage() {
               variants={fadeInUp}
             >
               Encuentra subvenciones{" "}
-              <span className="text-emerald-300 drop-shadow-lg">perfectas</span> para tu proyecto
+              <span className="text-blue-500 drop-shadow-lg">perfectas</span> para tu proyecto
             </motion.h1>
             <motion.p
               className="text-lg text-white mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-md [text-shadow:_0_1px_8px_rgb(0_0_0_/_50%)]"
