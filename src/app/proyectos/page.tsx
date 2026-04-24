@@ -10,6 +10,7 @@ import { SkeletonCard } from "@/components/ui/Skeleton";
 import { staggerChildren, staggerItem, fadeIn } from "@/lib/motion";
 import { useReducedMotion } from "framer-motion";
 import { FolderOpen, Plus, Trash2, ArrowRight, Pencil, MoreVertical, Banknote, Tag } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface Proyecto {
   id: number;
@@ -81,6 +82,7 @@ export default function ProyectosPage() {
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState<number | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const { theme } = useTheme();
 
   const motionProps = shouldReduce ? {} : { initial: "hidden", animate: "visible" };
 
@@ -257,10 +259,10 @@ export default function ProyectosPage() {
                     {/* Footer */}
                     <div className="mt-4 pt-4 border-t border-border">
                       <Link
-                        href={`/proyectos/${proyecto.id}/recomendaciones`}
+                        href={`/proyectos/${proyecto.id}`}
                         className="flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl text-sm font-semibold bg-primary-light text-primary hover:bg-primary hover:text-white transition-all duration-200"
                       >
-                        Ver subvenciones
+                        Ver detalles
                         <ArrowRight className="w-4 h-4" />
                       </Link>
                     </div>

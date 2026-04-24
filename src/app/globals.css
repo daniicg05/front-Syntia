@@ -56,11 +56,12 @@
 
 /* Dark mode */
 .dark {
-  /* Brand */
-  --primary: #81d1f0;
-  --primary-hover: #b9eaff;
-  --primary-light: #003c4f;
-  --primary-muted: #005a71;
+  /* Brand — mantener el mismo azul que en modo claro */
+  --primary: #005a71;
+  --primary-hover: #0e7490;
+  --primary-light: #b9eaff;
+  --primary-muted: #81d1f0;
+  --primary-rgb: 0,90,113;
 
   /* Neutrals */
   --background: #0f1110;
@@ -83,7 +84,6 @@
   --destructive: #ef4444;
   --destructive-light: #450a0a;
 }
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
