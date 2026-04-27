@@ -285,6 +285,9 @@ export default function BdnsPage() {
   const [lanzandoIdx, setLanzandoIdx] = useState(false);
   const [cancelandoIdx, setCancelandoIdx] = useState(false);
   const pollingIdxRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollingIdxWarmupRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollingIdxBusyRef = useRef(false);
+  const pollingIdxWarmupBusyRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
   const [coberturaAbierta, setCoberturaAbierta] = useState(false);
@@ -306,6 +309,44 @@ export default function BdnsPage() {
     setIndiceJob(res.data.job);
     setConteoIdx(res.data.conteos);
     return res.data;
+  };
+
+  const detenerWarmupIndices = () => {
+    if (pollingIdxWarmupRef.current) {
+      clearInterval(pollingIdxWarmupRef.current);
+      pollingIdxWarmupRef.current = null;
+    }
+    pollingIdxWarmupBusyRef.current = false;
+  };
+
+  const iniciarWarmupIndices = () => {
+    if (pollingIdxWarmupRef.current) return;
+
+    let intentos = 0;
+    pollingIdxWarmupRef.current = setInterval(async () => {
+      if (pollingIdxWarmupBusyRef.current) return;
+      pollingIdxWarmupBusyRef.current = true;
+      intentos += 1;
+
+      try {
+        const res = await adminApi.etl.estadoIndices().catch(() => null);
+        if (!res) {
+          if (intentos >= 40) detenerWarmupIndices();
+          return;
+        }
+
+        setIndiceJob(res.data.job);
+        setConteoIdx(res.data.conteos);
+
+        const estado = res.data.job?.estado;
+        const esTerminal = estado === "COMPLETADO" || estado === "FALLIDO" || estado === "CANCELADO";
+        if (estado === "EN_CURSO" || esTerminal || intentos >= 40) {
+          detenerWarmupIndices();
+        }
+      } finally {
+        pollingIdxWarmupBusyRef.current = false;
+      }
+    }, 1000);
   };
 
   const cargarEtl = async () => {
@@ -384,21 +425,30 @@ export default function BdnsPage() {
 
   useEffect(() => {
     if (indiceJob?.estado === "EN_CURSO" && !pollingIdxRef.current) {
+      detenerWarmupIndices();
       pollingIdxRef.current = setInterval(async () => {
-        const res = await adminApi.etl.estadoIndices().catch(() => null);
-        if (!res) return;
-        setIndiceJob(res.data.job);
-        setConteoIdx(res.data.conteos);
-        if (res.data.job.estado !== "EN_CURSO" && pollingIdxRef.current) {
-          clearInterval(pollingIdxRef.current);
-          pollingIdxRef.current = null;
-          adminApi.etl.conteoCatalogos()
-            .then((r) => {
-              const data = r.data as CatalogoEtlResponse;
-              setCatalogoJob(data.job);
-              setConteoCats(data.conteos);
-            })
-            .catch(() => null);
+        if (pollingIdxBusyRef.current) return;
+        pollingIdxBusyRef.current = true;
+
+        try {
+          const res = await adminApi.etl.estadoIndices().catch(() => null);
+          if (!res) return;
+          setIndiceJob(res.data.job);
+          setConteoIdx(res.data.conteos);
+          const estado = res.data.job?.estado;
+          if (estado !== "EN_CURSO" && pollingIdxRef.current) {
+            clearInterval(pollingIdxRef.current);
+            pollingIdxRef.current = null;
+            adminApi.etl.conteoCatalogos()
+              .then((r) => {
+                const data = r.data as CatalogoEtlResponse;
+                setCatalogoJob(data.job);
+                setConteoCats(data.conteos);
+              })
+              .catch(() => null);
+          }
+        } finally {
+          pollingIdxBusyRef.current = false;
         }
       }, 1500);
     }
@@ -408,8 +458,22 @@ export default function BdnsPage() {
         clearInterval(pollingIdxRef.current);
         pollingIdxRef.current = null;
       }
+      pollingIdxBusyRef.current = false;
     };
   }, [indiceJob?.estado]);
+
+  useEffect(() => {
+    return () => {
+      if (pollingIdxRef.current) {
+        clearInterval(pollingIdxRef.current);
+        pollingIdxRef.current = null;
+      }
+      if (pollingIdxWarmupRef.current) {
+        clearInterval(pollingIdxWarmupRef.current);
+        pollingIdxWarmupRef.current = null;
+      }
+    };
+  }, []);
 
   const handleConfirmar = async () => {
     setConfirmando(false);
@@ -455,20 +519,24 @@ export default function BdnsPage() {
 
     try {
       await adminApi.etl.importarCatalogos();
-      const data = await cargarCatalogos();
-      setTimeout(() => { void cargarCatalogos(); }, 500);
-      setTimeout(() => { void cargarCatalogos(); }, 1500);
-      toast.update(
-        loadingId,
-        "success",
-        data.job?.estado === "EN_CURSO" ? "Construcción de catálogos iniciada." : "Catálogos actualizados."
-      );
+      // Estado optimista para habilitar pausa mientras el backend consolida EN_CURSO.
+      setCatalogoJob((prev) => ({
+        estado: "EN_CURSO",
+        fase: prev?.fase ?? "Iniciando...",
+        iniciadoEn: prev?.iniciadoEn ?? new Date().toISOString(),
+        finalizadoEn: null,
+        error: null,
+        resultado: prev?.resultado ?? null,
+      }));
+      void cargarCatalogos().catch(() => null);
+      toast.update(loadingId, "success", "Construcción de catálogos iniciada.");
     } catch (error: unknown) {
       const status = (error as { response?: { status?: number } })?.response?.status;
       if (status === 409) {
         await cargarCatalogos().catch(() => null);
         toast.update(loadingId, "info", "Ya hay una construcción de catálogos en curso.");
       } else {
+        await cargarCatalogos().catch(() => null);
         toast.update(loadingId, "error", getErrorMessage(error, "No se pudo iniciar la construcción de catálogos."));
       }
     } finally {
@@ -495,9 +563,17 @@ export default function BdnsPage() {
 
     try {
       await adminApi.etl.construirIndices();
-      await cargarIndices();
-      setTimeout(() => { void cargarIndices(); }, 500);
-      setTimeout(() => { void cargarIndices(); }, 1500);
+      // Estado optimista para habilitar pausa mientras el backend consolida EN_CURSO.
+      setIndiceJob((prev) => ({
+        estado: "EN_CURSO",
+        fase: prev?.fase ?? "Iniciando...",
+        totalRegistros: prev?.totalRegistros ?? 0,
+        iniciadoEn: prev?.iniciadoEn ?? new Date().toISOString(),
+        finalizadoEn: null,
+        error: null,
+      }));
+      void cargarIndices().catch(() => null);
+      iniciarWarmupIndices();
       toast.update(loadingId, "success", "Construcción de índices iniciada.");
     } catch (error: unknown) {
       const status = (error as { response?: { status?: number } })?.response?.status;
@@ -505,6 +581,7 @@ export default function BdnsPage() {
         await cargarIndices().catch(() => null);
         toast.update(loadingId, "info", "Ya hay un job de índices en curso.");
       } else {
+        await cargarIndices().catch(() => null);
         toast.update(loadingId, "error", getErrorMessage(error, "No se pudo iniciar la construcción de índices."));
       }
     } finally {
@@ -515,6 +592,7 @@ export default function BdnsPage() {
   const handleCancelarIndices = async () => {
     setCancelandoIdx(true);
     try {
+      detenerWarmupIndices();
       await adminApi.etl.cancelarIndices();
       toast.success("Pausa solicitada para la construcción de índices.");
     } catch (error: unknown) {
@@ -542,8 +620,8 @@ export default function BdnsPage() {
   };
 
   const enCurso = estadoJob?.estado === "EN_CURSO";
-  const catsEnCurso = catalogoJob?.estado === "EN_CURSO";
-  const idxEnCurso = indiceJob?.estado === "EN_CURSO";
+  const catsEnCurso = catalogoJob?.estado === "EN_CURSO" || lanzandoCats;
+  const idxEnCurso = indiceJob?.estado === "EN_CURSO" || lanzandoIdx;
   const pagInfo = parsePaginas(estadoJob?.ejeActual ?? null);
   const progresoPct = pagInfo?.total ? (pagInfo.current / pagInfo.total) * 100 : 0;
 
