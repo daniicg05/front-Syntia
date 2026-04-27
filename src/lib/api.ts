@@ -218,7 +218,7 @@ export const convocatoriasUsuarioApi = {
     analisis: (convocatoriaId: number, proyectoId?: number) =>
         api.get<AnalisisCompleto>(
             `/usuario/convocatorias/${convocatoriaId}/analisis`,
-            { params: proyectoId ? { proyectoId } : {} }
+            { params: proyectoId ? { proyectoId } : {}, timeout: 120_000 }
         ),
 };
 
