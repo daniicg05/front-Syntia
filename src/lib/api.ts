@@ -324,10 +324,11 @@ export const adminApi = {
     },
     etl: {
         // Fase 1: Catálogos
-        conteoCatalogos: () => api.get("/admin/etl/catalogos"),
+        conteoCatalogos: () => api.get(`/admin/etl/catalogos?_=${Date.now()}`),
         importarCatalogos: () => api.post("/admin/etl/catalogos"),
+        cancelarCatalogos: () => api.delete("/admin/etl/catalogos"),
         // Fase 2: Índices
-        estadoIndices: () => api.get("/admin/etl/indices"),
+        estadoIndices: () => api.get(`/admin/etl/indices?_=${Date.now()}`),
         construirIndices: () => api.post("/admin/etl/indices"),
         cancelarIndices: () => api.delete("/admin/etl/indices"),
     },
