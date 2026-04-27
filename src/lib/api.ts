@@ -78,7 +78,6 @@ export interface RegionNodo {
     descripcion: string;
     children: RegionNodo[];
 }
-
 export interface ConvocatoriaDetalle {
     id: number;
     titulo: string | null;
