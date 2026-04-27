@@ -171,15 +171,54 @@ export interface GuiaSubvencion {
     legal_disclaimer: string;
 }
 
+// ── Análisis completo IA (nuevo) ────────────────────────────────────────────
+export interface AnalisisCompleto {
+    compatibilidad: {
+        nivel: "ALTA" | "MEDIA" | "BAJA" | "NO_EVALUABLE";
+        puntuacion: number;
+        explicacion: string;
+    };
+    slides: AnalisisSlide[];
+    recursos: {
+        url_convocatoria?: string;
+        url_bases_reguladoras?: string;
+        url_sede_electronica?: string;
+        documentos?: { nombre: string; descripcion?: string; url?: string }[];
+    };
+    disclaimer: string;
+}
+
+export interface AnalisisSlide {
+    tipo: string;
+    titulo: string;
+    icono: string;
+    contenido: string;
+    items: AnalisisItem[];
+    consejo?: string;
+    alerta?: string;
+}
+
+export interface AnalisisItem {
+    titulo: string;
+    descripcion: string;
+    tipo: string;
+    estado?: "cumple" | "no_cumple" | "verificar" | null;
+    url?: string;
+    peso?: number;
+    tiempo_minutos?: number;
+    sub_items?: string[];
+}
+
 // ── Convocatorias autenticadas (con match score) ───────────────────────────────
 export const convocatoriasUsuarioApi = {
     recomendadas: (params?: { page?: number; size?: number }) =>
         api.get<ConvocatoriaPublica[]>("/usuario/convocatorias/recomendadas", { params }),
     buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; regionId?: number; presupuestoMin?: number; sort?: string; page?: number; size?: number }) =>
         api.get<BusquedaPublicaResponse>("/usuario/convocatorias/buscar", { params }),
-    analisis: (convocatoriaId: number) =>
-        api.get<{ explicacion: string; guia: string; guiaCompleta: GuiaSubvencion }>(
-            `/usuario/convocatorias/${convocatoriaId}/analisis`
+    analisis: (convocatoriaId: number, proyectoId?: number) =>
+        api.get<AnalisisCompleto>(
+            `/usuario/convocatorias/${convocatoriaId}/analisis`,
+            { params: proyectoId ? { proyectoId } : {} }
         ),
 };
 

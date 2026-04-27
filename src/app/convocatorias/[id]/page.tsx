@@ -11,8 +11,9 @@ import {
 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import {
-  ConvocatoriaDetalle, GuiaSubvencion, GuiaVisualStep, convocatoriasPublicasApi,
+  ConvocatoriaDetalle, convocatoriasPublicasApi,
   convocatoriasUsuarioApi, favoritosApi,
+  AnalisisCompleto, AnalisisSlide, AnalisisItem,
 } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
 import { Card } from "@/components/ui/Card";
@@ -91,171 +92,44 @@ function SidebarCard({ icon: Icon, title, accent, children }: {
   );
 }
 
-// ── Analisis IA Card ─────────────────────────────────────────────────────────
+// ── Analisis IA Card (new: comprehensive analysis with slides gallery) ──────
 
-interface AnalisisResultado {
-  explicacion: string;
-  guia: string;
+const SLIDE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  resumen: Sparkles, elegibilidad: Users, gastos: Euro, criterios: Target,
+  documentacion: FileText, procedimiento: Landmark, plazos: CalendarDays,
+  obligaciones: Scale, justificacion: FileCheck, advertencias: Star,
+};
+
+const SLIDE_COLORS: Record<string, string> = {
+  resumen: "from-violet-500 to-primary", elegibilidad: "from-emerald-500 to-teal-600",
+  gastos: "from-blue-500 to-cyan-600", criterios: "from-amber-500 to-orange-600",
+  documentacion: "from-indigo-500 to-violet-600", procedimiento: "from-teal-500 to-emerald-600",
+  plazos: "from-orange-500 to-red-500", obligaciones: "from-purple-500 to-indigo-600",
+  justificacion: "from-cyan-500 to-blue-600", advertencias: "from-red-500 to-rose-600",
+};
+
+function compatBadge(nivel: string) {
+  switch (nivel) {
+    case "ALTA": return { bg: "bg-emerald-500/10 text-emerald-600 border-emerald-200", text: "Alta compatibilidad" };
+    case "MEDIA": return { bg: "bg-amber-500/10 text-amber-600 border-amber-200", text: "Compatibilidad media" };
+    case "BAJA": return { bg: "bg-red-500/10 text-red-600 border-red-200", text: "Baja compatibilidad" };
+    default: return { bg: "bg-gray-500/10 text-gray-600 border-gray-200", text: "No evaluable" };
+  }
 }
 
-function AnalisisIaCard({ convocatoriaId, onGuiaReady }: {
-  convocatoriaId: number;
-  onGuiaReady: (guia: GuiaSubvencion) => void;
-}) {
-  const [autenticado, setAutenticado] = useState(false);
-  const [analizando, setAnalizando] = useState(false);
-  const [resultado, setResultado] = useState<AnalisisResultado | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [expandedStep, setExpandedStep] = useState<number | null>(null);
-
-  useEffect(() => {
-    setAutenticado(isAuthenticated());
-  }, []);
-
-  const analizar = async () => {
-    if (analizando) return;
-    setAnalizando(true);
-    setError(null);
-    try {
-      const res = await convocatoriasUsuarioApi.analisis(convocatoriaId);
-      setResultado({ explicacion: res.data.explicacion, guia: res.data.guia });
-      if (res.data.guiaCompleta) onGuiaReady(res.data.guiaCompleta);
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || "Error al analizar. Inténtalo de nuevo.");
-    } finally {
-      setAnalizando(false);
-    }
-  };
-
-  const pasos = useMemo(() => {
-    if (!resultado?.guia) return [];
-    return resultado.guia.split("|").map((raw) => {
-      const match = raw.match(/^PASO\s*\d+\s*:\s*(.+?)(?:\s*[—–-]\s*(.+))?$/i);
-      if (match) return { titulo: match[1].trim(), detalle: match[2]?.trim() || raw.replace(/^PASO\s*\d+\s*:\s*/i, "").trim() };
-      return { titulo: raw.trim(), detalle: "" };
-    });
-  }, [resultado?.guia]);
-
-  if (!autenticado) {
-    return (
-      <Card padding="sm">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center">
-            <Sparkles className="w-3.5 h-3.5 text-white" />
-          </div>
-          <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted">
-            Analizar con <span className="text-primary">IA</span>
-          </p>
-        </div>
-        <p className="text-sm text-foreground-muted mb-3">
-          Inicia sesión para analizar esta convocatoria con IA.
-        </p>
-        <Link
-          href="/login"
-          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover transition-colors"
-        >
-          <Lock className="w-4 h-4" /> Iniciar sesión
-        </Link>
-      </Card>
-    );
+function estadoIcon(estado?: string | null) {
+  switch (estado) {
+    case "cumple": return <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />;
+    case "no_cumple": return <X className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />;
+    case "verificar": return <Clock className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />;
+    default: return <span className="w-4 h-4 shrink-0" />;
   }
-
-  if (resultado) {
-    return (
-      <Card padding="sm">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center">
-            <Sparkles className="w-3.5 h-3.5 text-white" />
-          </div>
-          <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted">
-            Análisis <span className="text-primary">IA</span>
-          </p>
-        </div>
-
-        <p className="text-sm text-foreground leading-relaxed mb-3">
-          {resultado.explicacion}
-        </p>
-
-        {pasos.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-wider text-foreground-muted mb-1.5">Pasos clave</p>
-            {pasos.map((paso, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setExpandedStep(expandedStep === i ? null : i)}
-                className="w-full text-left"
-              >
-                <div className={`rounded-lg border transition-colors ${
-                  expandedStep === i ? "border-primary/30 bg-primary/5" : "border-border/50 hover:border-border"
-                }`}>
-                  <div className="flex items-center gap-2 px-3 py-2">
-                    <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 ${
-                      expandedStep === i ? "bg-primary text-white" : "bg-surface-muted text-foreground-muted"
-                    }`}>
-                      {i + 1}
-                    </span>
-                    <span className="text-xs font-medium text-foreground truncate">{paso.titulo}</span>
-                  </div>
-                  {expandedStep === i && paso.detalle && (
-                    <div className="px-3 pb-2.5 pt-0">
-                      <p className="text-xs text-foreground-muted leading-relaxed pl-7">
-                        {paso.detalle}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </Card>
-    );
-  }
-
-  return (
-    <Card padding="sm">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center">
-          <Sparkles className="w-3.5 h-3.5 text-white" />
-        </div>
-        <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted">
-          Analizar con <span className="text-primary">IA</span>
-        </p>
-      </div>
-
-      <p className="text-sm text-foreground-muted mb-3">
-        Resumen inteligente de requisitos, documentación y plazos.
-      </p>
-
-      <button
-        type="button"
-        onClick={analizar}
-        disabled={analizando}
-        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {analizando ? (
-          <><Loader2 className="w-4 h-4 animate-spin" /> Analizando...</>
-        ) : (
-          <><Sparkles className="w-4 h-4" /> Analizar con IA</>
-        )}
-      </button>
-
-      {error && (
-        <p className="mt-2 text-xs text-red-600 bg-red-50 dark:bg-red-950/30 rounded-lg px-3 py-2">{error}</p>
-      )}
-    </Card>
-  );
 }
 
-// ── Guía IA Card ─────────────────────────────────────────────────────────────
-
-function GuiaGalleryModal({ guia, onClose }: { guia: GuiaSubvencion; onClose: () => void }) {
-  const allSteps: GuiaVisualStep[] = guia.visual_guides?.flatMap((g) => g.steps) ?? [];
-  const workflowSteps = guia.workflows?.flatMap((w) => w.steps) ?? [];
+function AnalisisGalleryModal({ analisis, onClose }: { analisis: AnalisisCompleto; onClose: () => void }) {
+  const slides = analisis.slides ?? [];
+  const totalSlides = slides.length + 1; // slides + resources/disclaimer
   const [current, setCurrent] = useState(0);
-  const totalSlides = 1 + allSteps.length + 1; // summary + visual steps + docs/requirements
 
   const prev = () => setCurrent((c) => Math.max(0, c - 1));
   const next = () => setCurrent((c) => Math.min(totalSlides - 1, c + 1));
@@ -270,24 +144,91 @@ function GuiaGalleryModal({ guia, onClose }: { guia: GuiaSubvencion; onClose: ()
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const phaseColor = (phase: string) => {
-    switch (phase) {
-      case "preparation": return "bg-blue-500";
-      case "submission": return "bg-emerald-500";
-      case "review": return "bg-amber-500";
-      case "post_submission": return "bg-purple-500";
-      default: return "bg-primary";
-    }
-  };
+  const renderSlide = (slide: AnalisisSlide, idx: number) => {
+    const Icon = SLIDE_ICONS[slide.tipo] ?? FileText;
+    const gradient = SLIDE_COLORS[slide.tipo] ?? "from-primary to-primary";
+    return (
+      <motion.div key={`slide-${idx}`} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+            <Icon className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-foreground">{slide.titulo}</h3>
+            <span className="text-xs text-foreground-muted capitalize">{slide.tipo}</span>
+          </div>
+        </div>
 
-  const phaseLabel = (phase: string) => {
-    switch (phase) {
-      case "preparation": return "Preparación";
-      case "submission": return "Presentación";
-      case "review": return "Revisión";
-      case "post_submission": return "Post-envío";
-      default: return phase;
-    }
+        {slide.contenido && (
+          <p className="text-sm text-foreground leading-relaxed">{slide.contenido}</p>
+        )}
+
+        {slide.items?.length > 0 && (
+          <div className="space-y-2">
+            {slide.items.map((item, i) => (
+              <div key={i} className={`rounded-xl border p-3 ${
+                item.estado === "cumple" ? "border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800" :
+                item.estado === "no_cumple" ? "border-red-200 bg-red-50/50 dark:bg-red-950/20 dark:border-red-800" :
+                item.estado === "verificar" ? "border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800" :
+                item.tipo === "advertencia" ? "border-red-200 bg-red-50/50 dark:bg-red-950/20 dark:border-red-800" :
+                item.tipo === "consejo" ? "border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800" :
+                "border-border/50 bg-surface-muted/30"
+              }`}>
+                <div className="flex items-start gap-2.5">
+                  {item.estado ? estadoIcon(item.estado) : (
+                    item.tipo === "criterio" && item.peso != null ? (
+                      <span className="inline-flex items-center justify-center w-8 h-5 rounded bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">{item.peso}%</span>
+                    ) : item.tipo === "paso" ? (
+                      <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                    ) : (
+                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-foreground-muted/40 shrink-0" />
+                    )
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">{item.titulo}</p>
+                    {item.descripcion && <p className="text-xs text-foreground-muted mt-0.5 leading-relaxed">{item.descripcion}</p>}
+                    {item.sub_items && item.sub_items.length > 0 && (
+                      <ul className="mt-1.5 space-y-0.5">
+                        {item.sub_items.map((sub, si) => (
+                          <li key={si} className="text-xs text-foreground-muted flex items-start gap-1.5">
+                            <span className="mt-1.5 h-1 w-1 rounded-full bg-foreground-muted/30 shrink-0" />
+                            {sub}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {item.tiempo_minutos && (
+                      <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-foreground-muted">
+                        <Clock className="w-3 h-3" /> ~{item.tiempo_minutos} min
+                      </span>
+                    )}
+                  </div>
+                  {item.url && (
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline shrink-0 mt-0.5">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {slide.consejo && (
+          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">Consejo personalizado</p>
+            <p className="text-sm text-blue-900 dark:text-blue-100">{slide.consejo}</p>
+          </div>
+        )}
+
+        {slide.alerta && (
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1">Atención</p>
+            <p className="text-sm text-amber-900 dark:text-amber-100">{slide.alerta}</p>
+          </div>
+        )}
+      </motion.div>
+    );
   };
 
   return (
@@ -304,14 +245,24 @@ function GuiaGalleryModal({ guia, onClose }: { guia: GuiaSubvencion; onClose: ()
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-surface-muted/50">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-primary flex items-center justify-center">
-              <BookOpen className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="text-sm font-bold text-foreground">Guía paso a paso</p>
+              <p className="text-sm font-bold text-foreground">Análisis completo</p>
               <p className="text-xs text-foreground-muted">{current + 1} / {totalSlides}</p>
             </div>
           </div>
+          {analisis.compatibilidad && (
+            <div className="flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border ${compatBadge(analisis.compatibilidad.nivel).bg}`}>
+                {compatBadge(analisis.compatibilidad.nivel).text}
+                {analisis.compatibilidad.puntuacion > 0 && (
+                  <span className="font-bold">{analisis.compatibilidad.puntuacion}%</span>
+                )}
+              </span>
+            </div>
+          )}
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-surface-muted transition-colors">
             <X className="w-5 h-5 text-foreground-muted" />
           </button>
@@ -319,187 +270,85 @@ function GuiaGalleryModal({ guia, onClose }: { guia: GuiaSubvencion; onClose: ()
 
         {/* Progress bar */}
         <div className="h-1 bg-surface-muted">
-          <div
-            className="h-1 bg-primary transition-all duration-300 rounded-r"
-            style={{ width: `${((current + 1) / totalSlides) * 100}%` }}
-          />
+          <div className="h-1 bg-primary transition-all duration-300 rounded-r" style={{ width: `${((current + 1) / totalSlides) * 100}%` }} />
         </div>
 
-        {/* Slides */}
+        {/* Slide tabs */}
+        <div className="flex items-center gap-1 px-6 py-2 border-b border-border/50 overflow-x-auto scrollbar-hide">
+          {slides.map((s, i) => {
+            const Icon = SLIDE_ICONS[s.tipo] ?? FileText;
+            return (
+              <button key={i} onClick={() => setCurrent(i)}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${
+                  current === i ? "bg-primary/10 text-primary" : "text-foreground-muted hover:bg-surface-muted"
+                }`}>
+                <Icon className="w-3 h-3" />
+                <span className="hidden sm:inline">{s.titulo.split(" ").slice(0, 2).join(" ")}</span>
+              </button>
+            );
+          })}
+          <button onClick={() => setCurrent(totalSlides - 1)}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${
+              current === totalSlides - 1 ? "bg-primary/10 text-primary" : "text-foreground-muted hover:bg-surface-muted"
+            }`}>
+            <ExternalLink className="w-3 h-3" />
+            <span className="hidden sm:inline">Recursos</span>
+          </button>
+        </div>
+
+        {/* Content */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           <AnimatePresence mode="wait">
-            {/* SLIDE 0: Summary */}
-            {current === 0 && (
-              <motion.div key="summary" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <div className="text-center mb-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold">
-                    <Sparkles className="w-3.5 h-3.5" /> Resumen
-                  </span>
+            {current < slides.length && renderSlide(slides[current], current)}
+
+            {current === totalSlides - 1 && (
+              <motion.div key="recursos" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center">
+                    <ExternalLink className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-base font-bold text-foreground">Enlaces y recursos</h3>
                 </div>
-                <h3 className="text-lg font-bold text-foreground text-center leading-snug">
-                  {guia.grant_summary?.title ?? "Guía de solicitud"}
-                </h3>
-                {guia.grant_summary?.organism && (
-                  <p className="text-sm text-foreground-muted text-center">{guia.grant_summary.organism}</p>
-                )}
-                {guia.grant_summary?.objective && (
-                  <div className="bg-surface-muted rounded-xl p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-foreground-muted mb-1">Objetivo</p>
-                    <p className="text-sm text-foreground">{guia.grant_summary.objective}</p>
-                  </div>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {guia.grant_summary?.who_can_apply && (
-                    <div className="bg-surface-muted rounded-xl p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-foreground-muted mb-1">Quién puede solicitar</p>
-                      <p className="text-sm text-foreground">{guia.grant_summary.who_can_apply}</p>
-                    </div>
-                  )}
-                  {guia.grant_summary?.deadline && (
-                    <div className="bg-surface-muted rounded-xl p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-foreground-muted mb-1">Plazo</p>
-                      <p className="text-sm text-foreground font-medium">{guia.grant_summary.deadline}</p>
-                    </div>
-                  )}
-                </div>
-                {guia.application_methods?.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-foreground-muted mb-2">Métodos de solicitud</p>
-                    <div className="flex flex-wrap gap-2">
-                      {guia.application_methods.map((m, i) => (
-                        <span key={i} className="px-3 py-1.5 rounded-lg bg-primary/8 text-primary text-xs font-medium border border-primary/15">
-                          {m.method === "online" ? "Telemático" : m.method === "presencial" ? "Presencial" : m.method}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            )}
 
-            {/* SLIDES 1..N: Visual steps */}
-            {current > 0 && current <= allSteps.length && (() => {
-              const step = allSteps[current - 1];
-              const wStep = workflowSteps.find((w) => w.step === step.step);
-              return (
-                <motion.div key={`step-${step.step}`} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-white ${phaseColor(step.phase)}`}>
-                      {phaseLabel(step.phase)}
-                    </span>
-                    <span className="text-xs text-foreground-muted font-mono">Paso {step.step}</span>
-                  </div>
-
-                  {/* Step number circle + title */}
-                  <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-full ${phaseColor(step.phase)} flex items-center justify-center text-white text-lg font-bold shrink-0`}>
-                      {step.step}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-foreground">{step.title}</h3>
-                      <p className="text-sm text-foreground-muted mt-1">{step.description}</p>
-                    </div>
-                  </div>
-
-                  {/* User action */}
-                  {wStep?.user_action && (
-                    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1 flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5" /> Qué hacer
-                      </p>
-                      <p className="text-sm text-blue-900 dark:text-blue-100">{wStep.user_action}</p>
-                    </div>
-                  )}
-
-                  {/* Portal action */}
-                  {wStep?.portal_action && (
-                    <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Resultado esperado
-                      </p>
-                      <p className="text-sm text-emerald-900 dark:text-emerald-100">{wStep.portal_action}</p>
-                    </div>
-                  )}
-
-                  {/* Documents for this step */}
-                  {wStep?.required_documents && wStep.required_documents.length > 0 && (
-                    <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-2 flex items-center gap-1.5">
-                        <FileCheck className="w-3.5 h-3.5" /> Documentos necesarios
-                      </p>
-                      <ul className="space-y-1">
-                        {wStep.required_documents.map((doc, i) => (
-                          <li key={i} className="text-sm text-amber-900 dark:text-amber-100 flex items-start gap-2">
-                            <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
-                            {doc}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Time + link */}
-                  <div className="flex items-center justify-between pt-2">
-                    {wStep?.estimated_time_minutes && (
-                      <span className="inline-flex items-center gap-1.5 text-xs text-foreground-muted">
-                        <Clock className="w-3.5 h-3.5" /> ~{wStep.estimated_time_minutes} min
-                      </span>
-                    )}
-                    {(step.official_link || wStep?.official_link) && (
-                      <a
-                        href={step.official_link || wStep?.official_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
-                      >
-                        Ir al portal <ExternalLink className="w-3 h-3" />
+                {analisis.recursos && (
+                  <div className="space-y-2">
+                    {analisis.recursos.url_convocatoria && (
+                      <a href={analisis.recursos.url_convocatoria} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-3 rounded-xl border border-border/50 p-3 hover:border-primary/30 hover:bg-primary/5 transition-colors">
+                        <BookOpen className="w-5 h-5 text-primary shrink-0" />
+                        <div className="flex-1"><p className="text-sm font-medium text-foreground">Convocatoria oficial</p><p className="text-xs text-foreground-muted truncate">Portal BDNS</p></div>
+                        <ExternalLink className="w-4 h-4 text-foreground-muted" />
                       </a>
                     )}
-                  </div>
-                </motion.div>
-              );
-            })()}
-
-            {/* LAST SLIDE: Documents + Requirements */}
-            {current === totalSlides - 1 && (
-              <motion.div key="docs" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <div className="text-center mb-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 text-emerald-600 px-3 py-1 text-xs font-semibold">
-                    <FileCheck className="w-3.5 h-3.5" /> Documentación y requisitos
-                  </span>
-                </div>
-
-                {guia.required_documents?.length > 0 && (
-                  <div>
-                    <p className="text-sm font-bold text-foreground mb-2">Documentos requeridos</p>
-                    <ul className="space-y-1.5">
-                      {guia.required_documents.map((doc, i) => (
-                        <li key={i} className="text-sm text-foreground flex items-start gap-2">
-                          <FileText className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                          {doc}
-                        </li>
-                      ))}
-                    </ul>
+                    {analisis.recursos.url_bases_reguladoras && (
+                      <a href={analisis.recursos.url_bases_reguladoras} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-3 rounded-xl border border-border/50 p-3 hover:border-primary/30 hover:bg-primary/5 transition-colors">
+                        <FileText className="w-5 h-5 text-primary shrink-0" />
+                        <div className="flex-1"><p className="text-sm font-medium text-foreground">Bases reguladoras</p><p className="text-xs text-foreground-muted truncate">Texto integro</p></div>
+                        <ExternalLink className="w-4 h-4 text-foreground-muted" />
+                      </a>
+                    )}
+                    {analisis.recursos.url_sede_electronica && (
+                      <a href={analisis.recursos.url_sede_electronica} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-3 rounded-xl border border-border/50 p-3 hover:border-primary/30 hover:bg-primary/5 transition-colors">
+                        <Landmark className="w-5 h-5 text-primary shrink-0" />
+                        <div className="flex-1"><p className="text-sm font-medium text-foreground">Sede electrónica</p><p className="text-xs text-foreground-muted truncate">Presentar solicitud</p></div>
+                        <ExternalLink className="w-4 h-4 text-foreground-muted" />
+                      </a>
+                    )}
+                    {analisis.recursos.documentos?.map((doc, i) => (
+                      <div key={i} className="flex items-center gap-3 rounded-xl border border-border/50 p-3">
+                        <FileCheck className="w-5 h-5 text-foreground-muted shrink-0" />
+                        <div className="flex-1"><p className="text-sm font-medium text-foreground">{doc.nombre}</p>{doc.descripcion && <p className="text-xs text-foreground-muted">{doc.descripcion}</p>}</div>
+                        {doc.url && <a href={doc.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4 text-primary" /></a>}
+                      </div>
+                    ))}
                   </div>
                 )}
 
-                {guia.universal_requirements_lgs_art13?.length > 0 && (
-                  <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
-                    <p className="text-sm font-bold text-amber-800 dark:text-amber-200 mb-2">Requisitos universales (LGS Art. 13)</p>
-                    <ul className="space-y-1.5">
-                      {guia.universal_requirements_lgs_art13.map((req, i) => (
-                        <li key={i} className="text-sm text-amber-900 dark:text-amber-100 flex items-start gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                          {req}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {guia.legal_disclaimer && (
-                  <div className="bg-surface-muted rounded-xl p-4">
-                    <p className="text-xs text-foreground-muted italic">{guia.legal_disclaimer}</p>
+                {analisis.disclaimer && (
+                  <div className="bg-surface-muted rounded-xl p-4 mt-4">
+                    <p className="text-xs text-foreground-muted italic">{analisis.disclaimer}</p>
                   </div>
                 )}
               </motion.div>
@@ -509,35 +358,20 @@ function GuiaGalleryModal({ guia, onClose }: { guia: GuiaSubvencion; onClose: ()
 
         {/* Navigation */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-surface-muted/50">
-          <button
-            onClick={prev}
-            disabled={current === 0}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          >
+          <button onClick={prev} disabled={current === 0}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-foreground-muted hover:text-foreground hover:bg-surface-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
             <ChevronLeft className="w-4 h-4" /> Anterior
           </button>
-
-          {/* Dots */}
           <div className="flex items-center gap-1.5">
             {Array.from({ length: totalSlides }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrent(i)}
-                className={`h-2 rounded-full transition-all ${
-                  i === current ? "w-6 bg-primary" : "w-2 bg-border hover:bg-foreground-muted"
-                }`}
-              />
+              <button key={i} onClick={() => setCurrent(i)}
+                className={`h-2 rounded-full transition-all ${i === current ? "w-6 bg-primary" : "w-2 bg-border hover:bg-foreground-muted"}`} />
             ))}
           </div>
-
-          <button
-            onClick={current === totalSlides - 1 ? onClose : next}
+          <button onClick={current === totalSlides - 1 ? onClose : next}
             className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-              current === totalSlides - 1
-                ? "bg-primary text-white hover:bg-primary-hover"
-                : "text-foreground-muted hover:text-foreground hover:bg-surface-muted"
-            }`}
-          >
+              current === totalSlides - 1 ? "bg-primary text-white hover:bg-primary-hover" : "text-foreground-muted hover:text-foreground hover:bg-surface-muted"
+            }`}>
             {current === totalSlides - 1 ? "Cerrar" : <>Siguiente <ChevronRight className="w-4 h-4" /></>}
           </button>
         </div>
@@ -546,44 +380,124 @@ function GuiaGalleryModal({ guia, onClose }: { guia: GuiaSubvencion; onClose: ()
   );
 }
 
-function GuiaIaCard({ guia }: { guia: GuiaSubvencion | null }) {
+function AnalisisIaCard({ convocatoriaId }: { convocatoriaId: number }) {
+  const [autenticado, setAutenticado] = useState(false);
+  const [analizando, setAnalizando] = useState(false);
+  const [analisis, setAnalisis] = useState<AnalisisCompleto | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [showGallery, setShowGallery] = useState(false);
+
+  useEffect(() => { setAutenticado(isAuthenticated()); }, []);
+
+  const analizar = async () => {
+    if (analizando) return;
+    setAnalizando(true);
+    setError(null);
+    try {
+      const res = await convocatoriasUsuarioApi.analisis(convocatoriaId);
+      setAnalisis(res.data);
+      setShowGallery(true);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(msg || "Error al analizar. Inténtalo de nuevo.");
+    } finally {
+      setAnalizando(false);
+    }
+  };
+
+  if (!autenticado) {
+    return (
+      <Card padding="sm">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-white" />
+          </div>
+          <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted">
+            Analizar con <span className="text-primary">IA</span>
+          </p>
+        </div>
+        <p className="text-sm text-foreground-muted mb-3">Inicia sesión para analizar esta convocatoria con IA.</p>
+        <Link href="/login" className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover transition-colors">
+          <Lock className="w-4 h-4" /> Iniciar sesión
+        </Link>
+      </Card>
+    );
+  }
 
   return (
     <>
       <Card padding="sm">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-primary flex items-center justify-center">
-            <BookOpen className="w-3.5 h-3.5 text-white" />
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-white" />
           </div>
           <p className="text-xs font-bold uppercase tracking-widest text-foreground-muted">
-            Guía <span className="text-primary">IA</span>
+            Analizar con <span className="text-primary">IA</span>
           </p>
         </div>
 
-        {guia ? (
+        {analisis ? (
           <div className="space-y-3">
-            <p className="text-sm text-foreground-muted">
-              Guía paso a paso para solicitar esta convocatoria.
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowGallery(true)}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover transition-colors"
-            >
-              <BookOpen className="w-4 h-4" /> Ver guía
+            {/* Compatibility badge */}
+            {analisis.compatibilidad && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border ${compatBadge(analisis.compatibilidad.nivel).bg}`}>
+                    {compatBadge(analisis.compatibilidad.nivel).text}
+                    {analisis.compatibilidad.puntuacion > 0 && <span className="font-bold">{analisis.compatibilidad.puntuacion}%</span>}
+                  </span>
+                </div>
+                <p className="text-sm text-foreground leading-relaxed">{analisis.compatibilidad.explicacion}</p>
+              </div>
+            )}
+
+            {/* Quick slide preview */}
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-foreground-muted mb-1.5">Contenido del análisis</p>
+              {analisis.slides?.slice(0, 4).map((s, i) => {
+                const Icon = SLIDE_ICONS[s.tipo] ?? FileText;
+                return (
+                  <button key={i} type="button" onClick={() => { setShowGallery(true); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-colors text-left">
+                    <Icon className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span className="text-xs font-medium text-foreground truncate">{s.titulo}</span>
+                  </button>
+                );
+              })}
+              {(analisis.slides?.length ?? 0) > 4 && (
+                <p className="text-xs text-foreground-muted text-center">+{analisis.slides.length - 4} secciones más</p>
+              )}
+            </div>
+
+            <button type="button" onClick={() => setShowGallery(true)}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover transition-colors">
+              <BookOpen className="w-4 h-4" /> Ver análisis completo
             </button>
           </div>
         ) : (
-          <p className="text-sm text-foreground-muted">
-            Guía no disponible. Pulsa «Analizar con IA» para generarla.
-          </p>
+          <>
+            <p className="text-sm text-foreground-muted mb-3">
+              Análisis completo: requisitos, documentación, plazos, gastos subvencionables y guía paso a paso personalizada.
+            </p>
+            <button type="button" onClick={analizar} disabled={analizando}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              {analizando ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Analizando...</>
+              ) : (
+                <><Sparkles className="w-4 h-4" /> Analizar con IA</>
+              )}
+            </button>
+          </>
+        )}
+
+        {error && (
+          <p className="mt-2 text-xs text-red-600 bg-red-50 dark:bg-red-950/30 rounded-lg px-3 py-2">{error}</p>
         )}
       </Card>
 
       <AnimatePresence>
-        {showGallery && guia && (
-          <GuiaGalleryModal guia={guia} onClose={() => setShowGallery(false)} />
+        {showGallery && analisis && (
+          <AnalisisGalleryModal analisis={analisis} onClose={() => setShowGallery(false)} />
         )}
       </AnimatePresence>
     </>
@@ -646,7 +560,6 @@ export default function ConvocatoriaDetallePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState(false);
-  const [guiaData, setGuiaData] = useState<GuiaSubvencion | null>(null);
   const [esFavorito, setEsFavorito] = useState(false);
   const [favToggling, setFavToggling] = useState(false);
 
@@ -989,10 +902,7 @@ export default function ConvocatoriaDetallePage() {
             )}
 
             {/* Analizar con IA */}
-            <AnalisisIaCard convocatoriaId={detalle.id} onGuiaReady={setGuiaData} />
-
-            {/* Guía paso a paso */}
-            <GuiaIaCard guia={guiaData} />
+            <AnalisisIaCard convocatoriaId={detalle.id} />
 
             {/* Favorito */}
             <button
