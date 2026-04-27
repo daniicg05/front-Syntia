@@ -371,7 +371,7 @@ export default function BdnsPage() {
           clearInterval(pollingCatsRef.current);
           pollingCatsRef.current = null;
         }
-      }, 5000);
+      }, 1500);
     }
 
     return () => {
@@ -400,7 +400,7 @@ export default function BdnsPage() {
             })
             .catch(() => null);
         }
-      }, 5000);
+      }, 1500);
     }
 
     return () => {
@@ -456,6 +456,8 @@ export default function BdnsPage() {
     try {
       await adminApi.etl.importarCatalogos();
       const data = await cargarCatalogos();
+      setTimeout(() => { void cargarCatalogos(); }, 500);
+      setTimeout(() => { void cargarCatalogos(); }, 1500);
       toast.update(
         loadingId,
         "success",
@@ -494,6 +496,8 @@ export default function BdnsPage() {
     try {
       await adminApi.etl.construirIndices();
       await cargarIndices();
+      setTimeout(() => { void cargarIndices(); }, 500);
+      setTimeout(() => { void cargarIndices(); }, 1500);
       toast.update(loadingId, "success", "Construcción de índices iniciada.");
     } catch (error: unknown) {
       const status = (error as { response?: { status?: number } })?.response?.status;
