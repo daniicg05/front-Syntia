@@ -288,6 +288,7 @@ export const adminApi = {
         // Fase 1: Catálogos
         conteoCatalogos: () => api.get("/admin/etl/catalogos"),
         importarCatalogos: () => api.post("/admin/etl/catalogos"),
+        cancelarCatalogos: () => api.delete("/admin/etl/catalogos"),
         // Fase 2: Índices
         estadoIndices: () => api.get("/admin/etl/indices"),
         construirIndices: () => api.post("/admin/etl/indices"),
