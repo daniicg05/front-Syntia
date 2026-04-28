@@ -1,0 +1,49 @@
+﻿
+> front-syntia@0.1.0 build
+> next build
+
+Ôû▓ Next.js 16.2.0 (Turbopack)
+
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 3.8s
+  Running TypeScript ...
+  Finished TypeScript in 5.2s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/20) ...
+  Generating static pages using 11 workers (5/20) 
+  Generating static pages using 11 workers (10/20) 
+  Generating static pages using 11 workers (15/20) 
+Ô£ô Generating static pages using 11 workers (20/20) in 547ms
+  Finalizing page optimization ...
+
+Route (app)
+Ôöî Ôùï /
+Ôö£ Ôùï /_not-found
+Ôö£ Ôùï /admin/bdns
+Ôö£ Ôùï /admin/convocatorias
+Ôö£ ãÆ /admin/convocatorias/[id]/editar
+Ôö£ Ôùï /admin/convocatorias/nueva
+Ôö£ Ôùï /admin/dashboard
+Ôö£ Ôùï /admin/usuarios
+Ôö£ ãÆ /admin/usuarios/[id]
+Ôö£ ãÆ /api/[...slug]
+Ôö£ Ôùï /aviso-legal
+Ôö£ Ôùï /buscar
+Ôö£ Ôùï /dashboard
+Ôö£ Ôùï /guias
+Ôö£ Ôùï /home
+Ôö£ Ôùï /login
+Ôö£ Ôùï /perfil
+Ôö£ Ôùï /perfil/completar
+Ôö£ Ôùï /proyectos
+Ôö£ ãÆ /proyectos/[id]/editar
+Ôö£ ãÆ /proyectos/[id]/recomendaciones
+Ôö£ Ôùï /proyectos/nuevo
+Ôöö Ôùï /registro
+
+
+ãÆ Proxy (Middleware)
+
+Ôùï  (Static)   prerendered as static content
+ãÆ  (Dynamic)  server-rendered on demand
+

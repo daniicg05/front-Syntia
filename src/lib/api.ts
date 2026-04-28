@@ -306,8 +306,8 @@ export const adminApi = {
             api.post(`/admin/convocatorias/importar-bdns?pagina=${pagina}&tamano=${tamano}`),
     },
     bdns: {
-        importar: (modo: "FULL" | "INCREMENTAL" = "FULL", delayMs = -1) =>
-            api.post(`/admin/bdns/importar?modo=${modo}&delayMs=${delayMs}`),
+        importar: (modo: "FULL" | "NUEVAS" | "INCREMENTAL" = "NUEVAS", delayMs = -1, limite?: number) =>
+            api.post("/admin/bdns/importar", null, { params: { modo, delayMs, ...(limite ? { limite } : {}) } }),
         cancelar: () => api.delete("/admin/bdns/importar"),
         estado: () => api.get("/admin/bdns/estado"),
         ultimaImportacion: () => api.get("/admin/bdns/ultima-importacion"),
@@ -329,7 +329,8 @@ export const adminApi = {
         cancelarCatalogos: () => api.delete("/admin/etl/catalogos"),
         // Fase 2: Índices
         estadoIndices: () => api.get(`/admin/etl/indices?_=${Date.now()}`),
-        construirIndices: () => api.post("/admin/etl/indices"),
+        construirIndices: (limite?: number) =>
+            api.post("/admin/etl/indices", null, { params: limite ? { limite } : undefined }),
         cancelarIndices: () => api.delete("/admin/etl/indices"),
     },
 };

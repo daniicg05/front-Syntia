@@ -23,7 +23,7 @@ import {
 
 type EstadoImportacion = "INACTIVO" | "EN_CURSO" | "COMPLETADO" | "FALLIDO";
 type EstadoProceso = EstadoImportacion | "CANCELADO";
-type ModoImportacion = "FULL" | "INCREMENTAL";
+type ModoImportacion = "FULL" | "NUEVAS" | "INCREMENTAL";
 
 interface EstadoJob {
   estado: EstadoImportacion;
@@ -88,6 +88,10 @@ interface ConteoIndices {
   beneficiarios: number;
   organos: number;
   tiposAdmin: number;
+  actividades: number;
+  reglamentos: number;
+  objetivos: number;
+  sectores: number;
 }
 
 interface IndiceJobEstado {
@@ -126,6 +130,39 @@ function getErrorMessage(error: unknown, fallback: string) {
 }
 
 const fmtNum = (n: number) => n.toLocaleString("es-ES");
+
+function totalConteoIndices(conteos: ConteoIndices | null) {
+  if (!conteos) return 0;
+  return (
+    conteos.finalidades +
+    conteos.instrumentos +
+    conteos.beneficiarios +
+    conteos.organos +
+    conteos.tiposAdmin +
+    conteos.actividades +
+    conteos.reglamentos +
+    conteos.objetivos +
+    conteos.sectores
+  );
+}
+
+function parseFasePct(fase: string | null) {
+  if (!fase) return 0;
+
+  const etapa = fase.match(/\((\d+)\/(\d+)\)/);
+  if (!etapa) return 0;
+
+  const etapaActual = parseInt(etapa[1], 10);
+  const etapasTotal = parseInt(etapa[2], 10);
+  if (!etapasTotal) return 0;
+
+  const detalle = fase.match(/:\s*(\d+)\/(\d+)/);
+  const detallePct = detalle && parseInt(detalle[2], 10) > 0
+    ? parseInt(detalle[1], 10) / parseInt(detalle[2], 10)
+    : 0;
+
+  return Math.min(100, Math.max(0, ((etapaActual - 1 + detallePct) / etapasTotal) * 100));
+}
 
 function EstadoBadge({ estado }: { estado: EstadoProceso }) {
   if (estado === "INACTIVO") return null;
@@ -223,6 +260,7 @@ function JobBlock({
   progreso,
   resumen,
   error,
+  extraControls,
   primaryAction,
   secondaryAction,
 }: {
@@ -233,6 +271,7 @@ function JobBlock({
   progreso?: ReactNode;
   resumen?: ReactNode;
   error?: string | null;
+  extraControls?: ReactNode;
   primaryAction: ReactNode;
   secondaryAction?: ReactNode;
 }) {
@@ -252,6 +291,7 @@ function JobBlock({
       {progreso ? <div className="mb-3">{progreso}</div> : null}
       {resumen ? <div className="mb-3 text-xs text-foreground-muted">{resumen}</div> : null}
       {error ? <p className="mb-3 text-xs text-destructive">{error}</p> : null}
+      {extraControls ? <div className="mb-3">{extraControls}</div> : null}
 
       <div className="flex gap-2">
         {primaryAction}
@@ -270,8 +310,9 @@ export default function BdnsPage() {
   const [lanzando, setLanzando] = useState(false);
   const [cancelando, setCancelando] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
-  const [modo, setModo] = useState<ModoImportacion>("FULL");
+  const [modo, setModo] = useState<ModoImportacion>("NUEVAS");
   const [turbo, setTurbo] = useState(false);
+  const [limiteConvocatorias, setLimiteConvocatorias] = useState("5000");
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [conteoCats, setConteoCats] = useState<ConteoCatalogos | null>(null);
@@ -284,6 +325,7 @@ export default function BdnsPage() {
   const [indiceJob, setIndiceJob] = useState<IndiceJobEstado | null>(null);
   const [lanzandoIdx, setLanzandoIdx] = useState(false);
   const [cancelandoIdx, setCancelandoIdx] = useState(false);
+  const [limiteIndices, setLimiteIndices] = useState("5000");
   const pollingIdxRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollingIdxWarmupRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollingIdxBusyRef = useRef(false);
@@ -476,12 +518,18 @@ export default function BdnsPage() {
   }, []);
 
   const handleConfirmar = async () => {
+    const limite = limiteConvocatorias.trim() === "" ? undefined : parseInt(limiteConvocatorias, 10);
+    if (limite !== undefined && (isNaN(limite) || limite < 1)) {
+      toast.error("El limite de convocatorias debe ser mayor que 0.");
+      return;
+    }
+
     setConfirmando(false);
     setLanzando(true);
     const loadingId = toast.loading("Iniciando importación de convocatorias...");
 
     try {
-      await adminApi.bdns.importar(modo, turbo ? 0 : -1);
+      await adminApi.bdns.importar(modo, turbo ? 0 : -1, limite);
       const res = await adminApi.bdns.estado();
       setEstadoJob(res.data);
       toast.update(loadingId, "success", "Importación de convocatorias iniciada.");
@@ -514,6 +562,12 @@ export default function BdnsPage() {
   };
 
   const handleConstruirCatalogos = async () => {
+    if (indiceJob?.estado === "EN_CURSO" || lanzandoIdx) {
+      await cargarEtl().catch(() => null);
+      toast.error("Los indices estan en curso. Espera a que terminen o solicita pausa antes de construir catalogos.");
+      return;
+    }
+
     setLanzandoCats(true);
     const loadingId = toast.loading("Iniciando construcción de catálogos...");
 
@@ -558,11 +612,23 @@ export default function BdnsPage() {
   };
 
   const handleConstruirIndices = async () => {
+    if (catalogoJob?.estado === "EN_CURSO" || lanzandoCats) {
+      await cargarEtl().catch(() => null);
+      toast.error("Los catalogos estan en curso. Espera a que terminen o solicita pausa antes de construir indices.");
+      return;
+    }
+
+    const limite = limiteIndices.trim() === "" ? undefined : parseInt(limiteIndices, 10);
+    if (limite !== undefined && (isNaN(limite) || limite < 1)) {
+      toast.error("El limite de indices debe ser mayor que 0.");
+      return;
+    }
+
     setLanzandoIdx(true);
     const loadingId = toast.loading("Iniciando construcción de índices...");
 
     try {
-      await adminApi.etl.construirIndices();
+      await adminApi.etl.construirIndices(limite);
       // Estado optimista para habilitar pausa mientras el backend consolida EN_CURSO.
       setIndiceJob((prev) => ({
         estado: "EN_CURSO",
@@ -622,8 +688,12 @@ export default function BdnsPage() {
   const enCurso = estadoJob?.estado === "EN_CURSO";
   const catsEnCurso = catalogoJob?.estado === "EN_CURSO" || lanzandoCats;
   const idxEnCurso = indiceJob?.estado === "EN_CURSO" || lanzandoIdx;
+  const catsBloqueadosPorIdx = idxEnCurso;
+  const idxBloqueadosPorCats = catsEnCurso;
   const pagInfo = parsePaginas(estadoJob?.ejeActual ?? null);
   const progresoPct = pagInfo?.total ? (pagInfo.current / pagInfo.total) * 100 : 0;
+  const progresoCatsPct = parseFasePct(catalogoJob?.fase ?? null);
+  const progresoIdxPct = parseFasePct(indiceJob?.fase ?? null);
 
   const totalCats = conteoCats
     ? conteoCats.finalidades +
@@ -636,13 +706,7 @@ export default function BdnsPage() {
       conteoCats.organos
     : 0;
 
-  const totalIdx = conteoIdx
-    ? conteoIdx.finalidades +
-      conteoIdx.instrumentos +
-      conteoIdx.beneficiarios +
-      conteoIdx.organos +
-      conteoIdx.tiposAdmin
-    : 0;
+  const totalIdx = totalConteoIndices(conteoIdx);
 
   if (loading) {
     return (
@@ -775,7 +839,7 @@ export default function BdnsPage() {
                 catsEnCurso ? (
                   <div className="space-y-2">
                     <p className="text-xs text-foreground-muted">{catalogoJob?.fase ?? "Procesando..."}</p>
-                    <BarraProgreso pct={100} colorClass="bg-violet-500" />
+                    <BarraProgreso pct={progresoCatsPct} colorClass="bg-violet-500" />
                   </div>
                 ) : undefined
               }
@@ -794,7 +858,7 @@ export default function BdnsPage() {
                 <Button
                   onClick={handleConstruirCatalogos}
                   loading={lanzandoCats}
-                  disabled={lanzandoCats || catsEnCurso}
+                  disabled={lanzandoCats || catsEnCurso || catsBloqueadosPorIdx}
                   icon={<Database className="h-4 w-4" />}
                   className="flex-1"
                 >
@@ -824,7 +888,7 @@ export default function BdnsPage() {
                 idxEnCurso ? (
                   <div className="space-y-2">
                     <p className="text-xs text-foreground-muted">{indiceJob?.fase ?? "Procesando..."}</p>
-                    <BarraProgreso pct={100} colorClass="bg-violet-500" />
+                    <BarraProgreso pct={progresoIdxPct} colorClass="bg-violet-500" />
                   </div>
                 ) : undefined
               }
@@ -839,11 +903,41 @@ export default function BdnsPage() {
                 ) : undefined
               }
               error={indiceJob?.estado === "FALLIDO" ? indiceJob.error : null}
+              extraControls={
+                !idxEnCurso ? (
+                  <div className="flex flex-wrap items-end gap-2">
+                    <label className="flex flex-col gap-1 text-xs text-foreground-muted">
+                      Limite por ejecucion
+                      <input
+                        type="number"
+                        min={1}
+                        max={10000}
+                        step={1}
+                        value={limiteIndices}
+                        onChange={(e) => setLimiteIndices(e.target.value)}
+                        className="h-9 w-32 rounded-lg border border-border bg-surface px-3 text-sm text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      />
+                    </label>
+                    {[50, 500, 5000].map((valor) => (
+                      <Button
+                        key={valor}
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setLimiteIndices(String(valor))}
+                        className="h-9 px-3"
+                      >
+                        {fmtNum(valor)}
+                      </Button>
+                    ))}
+                  </div>
+                ) : undefined
+              }
               primaryAction={
                 <Button
                   onClick={handleConstruirIndices}
                   loading={lanzandoIdx}
-                  disabled={lanzandoIdx || idxEnCurso}
+                  disabled={lanzandoIdx || idxEnCurso || idxBloqueadosPorCats}
                   icon={<ListTree className="h-4 w-4" />}
                   className="flex-1"
                 >
@@ -919,6 +1013,10 @@ export default function BdnsPage() {
                         { label: "Beneficiarios", val: conteoIdx.beneficiarios },
                         { label: "Órganos", val: conteoIdx.organos },
                         { label: "Tipos admin.", val: conteoIdx.tiposAdmin },
+                        { label: "Actividades", val: conteoIdx.actividades },
+                        { label: "Reglamentos", val: conteoIdx.reglamentos },
+                        { label: "Objetivos", val: conteoIdx.objetivos },
+                        { label: "Sectores", val: conteoIdx.sectores },
                       ]}
                     />
                   </div>
@@ -1070,10 +1168,11 @@ export default function BdnsPage() {
 
                 <div className="mb-4">
                   <p className="mb-2 text-xs font-medium text-foreground-muted">Modo</p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     {([
-                      { m: "FULL" as const, label: "Actualizar", desc: "Añade lo que falta" },
-                      { m: "INCREMENTAL" as const, label: "Reanudar", desc: "Continúa desde donde se interrumpió" },
+                      { m: "NUEVAS" as const, label: "Nuevas", desc: "Desde la ultima local" },
+                      { m: "INCREMENTAL" as const, label: "Continuar", desc: "Desde la pagina guardada" },
+                      { m: "FULL" as const, label: "Reiniciar", desc: "Desde pagina 0" },
                     ] as const).map(({ m, label, desc }) => (
                       <button
                         key={m}
@@ -1087,6 +1186,33 @@ export default function BdnsPage() {
                         <p className="text-sm font-medium">{label}</p>
                         <p className="mt-0.5 text-xs opacity-70">{desc}</p>
                       </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="mb-2 block text-xs font-medium text-foreground-muted">Limite por ejecucion</label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={10000}
+                      step={1}
+                      value={limiteConvocatorias}
+                      onChange={(e) => setLimiteConvocatorias(e.target.value)}
+                      className="h-9 w-32 rounded-lg border border-border bg-surface px-3 text-sm text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                    {[50, 500, 5000].map((valor) => (
+                      <Button
+                        key={valor}
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setLimiteConvocatorias(String(valor))}
+                        className="h-9 px-3"
+                      >
+                        {fmtNum(valor)}
+                      </Button>
                     ))}
                   </div>
                 </div>
