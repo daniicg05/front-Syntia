@@ -166,14 +166,13 @@ function AnalisisGalleryModal({ analisis, onClose }: { analisis: AnalisisComplet
         {slide.items?.length > 0 && (
           <div className="space-y-2">
             {slide.items.map((item, i) => (
-              <div key={i} className={`rounded-xl border p-3 ${
-                item.estado === "cumple" ? "border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800" :
-                item.estado === "no_cumple" ? "border-red-200 bg-red-50/50 dark:bg-red-950/20 dark:border-red-800" :
-                item.estado === "verificar" ? "border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800" :
-                item.tipo === "advertencia" ? "border-red-200 bg-red-50/50 dark:bg-red-950/20 dark:border-red-800" :
-                item.tipo === "consejo" ? "border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800" :
-                "border-border/50 bg-surface-muted/30"
-              }`}>
+              <div key={i} className={`rounded-xl border p-3 ${item.estado === "cumple" ? "border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800" :
+                  item.estado === "no_cumple" ? "border-red-200 bg-red-50/50 dark:bg-red-950/20 dark:border-red-800" :
+                    item.estado === "verificar" ? "border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800" :
+                      item.tipo === "advertencia" ? "border-red-200 bg-red-50/50 dark:bg-red-950/20 dark:border-red-800" :
+                        item.tipo === "consejo" ? "border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800" :
+                          "border-border/50 bg-surface-muted/30"
+                }`}>
                 <div className="flex items-start gap-2.5">
                   {item.estado ? estadoIcon(item.estado) : (
                     item.tipo === "criterio" && item.peso != null ? (
@@ -233,13 +232,11 @@ function AnalisisGalleryModal({ analisis, onClose }: { analisis: AnalisisComplet
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex justify-center items-start pt-[100px] bg-black/60 backdrop-blur-sm p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       onClick={onClose}
     >
       <motion.div
-        className="relative w-full max-w-3xl bg-surface rounded-2xl border border-border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
-        initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+        className="relative w-full max-w-3xl bg-surface rounded-2xl border border-border shadow-2xl overflow-hidden max-h-[calc(90vh-100px)] flex flex-col" initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -279,18 +276,16 @@ function AnalisisGalleryModal({ analisis, onClose }: { analisis: AnalisisComplet
             const Icon = SLIDE_ICONS[s.tipo] ?? FileText;
             return (
               <button key={i} onClick={() => setCurrent(i)}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${
-                  current === i ? "bg-primary/10 text-primary" : "text-foreground-muted hover:bg-surface-muted"
-                }`}>
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${current === i ? "bg-primary/10 text-primary" : "text-foreground-muted hover:bg-surface-muted"
+                  }`}>
                 <Icon className="w-3 h-3" />
                 <span className="hidden sm:inline">{s.titulo.split(" ").slice(0, 2).join(" ")}</span>
               </button>
             );
           })}
           <button onClick={() => setCurrent(totalSlides - 1)}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${
-              current === totalSlides - 1 ? "bg-primary/10 text-primary" : "text-foreground-muted hover:bg-surface-muted"
-            }`}>
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${current === totalSlides - 1 ? "bg-primary/10 text-primary" : "text-foreground-muted hover:bg-surface-muted"
+              }`}>
             <ExternalLink className="w-3 h-3" />
             <span className="hidden sm:inline">Recursos</span>
           </button>
@@ -369,9 +364,8 @@ function AnalisisGalleryModal({ analisis, onClose }: { analisis: AnalisisComplet
             ))}
           </div>
           <button onClick={current === totalSlides - 1 ? onClose : next}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-              current === totalSlides - 1 ? "bg-primary text-white hover:bg-primary-hover" : "text-foreground-muted hover:text-foreground hover:bg-surface-muted"
-            }`}>
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${current === totalSlides - 1 ? "bg-primary text-white hover:bg-primary-hover" : "text-foreground-muted hover:text-foreground hover:bg-surface-muted"
+              }`}>
             {current === totalSlides - 1 ? "Cerrar" : <>Siguiente <ChevronRight className="w-4 h-4" /></>}
           </button>
         </div>
@@ -567,7 +561,7 @@ export default function ConvocatoriaDetallePage() {
     if (convocatoriaId !== null) {
       favoritosApi.ids().then(r => {
         setEsFavorito(new Set(r.data).has(convocatoriaId));
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }, [convocatoriaId]);
 
@@ -649,11 +643,10 @@ export default function ConvocatoriaDetallePage() {
             {/* Badges */}
             <div className="flex flex-wrap items-center gap-2 mb-3">
               {detalle.abierto != null && (
-                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-                  detalle.abierto
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${detalle.abierto
                     ? "bg-emerald-500/10 text-emerald-600 border border-emerald-200"
                     : "bg-red-500/10 text-red-600 border border-red-200"
-                }`}>
+                  }`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${detalle.abierto ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
                   {detalle.abierto ? "Abierta" : "Cerrada"}
                 </span>
@@ -779,7 +772,7 @@ export default function ConvocatoriaDetallePage() {
               {detalle.urlOficial && (
                 <MetaRow icon={ExternalLink} label="Enlace oficial">
                   <a href={detalle.urlOficial} target="_blank" rel="noopener noreferrer"
-                     className="inline-flex items-center gap-1.5 text-primary font-medium hover:underline break-all">
+                    className="inline-flex items-center gap-1.5 text-primary font-medium hover:underline break-all">
                     Ver en BDNS <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                   </a>
                 </MetaRow>
@@ -910,15 +903,13 @@ export default function ConvocatoriaDetallePage() {
               onClick={toggleFavorito}
               disabled={favToggling}
               aria-label={esFavorito ? "Quitar de favoritos" : "Añadir a favoritos"}
-              className={`w-full inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all group disabled:opacity-50 ${
-                esFavorito
+              className={`w-full inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all group disabled:opacity-50 ${esFavorito
                   ? "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100"
                   : "border-border bg-surface text-foreground-muted hover:bg-primary hover:text-white hover:border-primary"
-              }`}
+                }`}
             >
-              <Star className={`w-4 h-4 transition-colors ${
-                esFavorito ? "fill-amber-500 text-amber-500" : "group-hover:fill-white"
-              }`} />
+              <Star className={`w-4 h-4 transition-colors ${esFavorito ? "fill-amber-500 text-amber-500" : "group-hover:fill-white"
+                }`} />
               {esFavorito ? "En favoritos" : "Añadir a favoritos"}
             </button>
           </div>
