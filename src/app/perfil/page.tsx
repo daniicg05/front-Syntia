@@ -130,7 +130,7 @@ function Field({
           )}
           <input
               type={type}
-              value={value}
+              value={value ?? ""}
               onChange={(e) => onChange?.(e.target.value)}
               disabled={disabled}
               className={`w-full ${icon ? "pl-9" : "pl-3"} pr-3 py-2.5 rounded-xl border bg-surface text-sm text-foreground focus:outline-none transition-colors ${
