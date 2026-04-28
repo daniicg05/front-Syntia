@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, useEffect, useCallback } from "react";
 
-import { Search, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ArrowRight, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
 import { ModalAccesoRequerido } from "@/components/ModalAccesoRequerido";
 import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
@@ -15,10 +15,10 @@ const stripCodigo = (d: string) => d.replace(/^[A-Z0-9]+ - /, "").trim();
 const TIPOS_BENEFICIARIO = ["Pyme", "Autónomo", "Gran Empresa", "Startup", "Entidad sin ánimo de lucro"];
 
 const PLAZOS_CIERRE = [
-    { value: "",   label: "Cualquier plazo"     },
-    { value: "7",  label: "Cierra en 7 días"    },
-    { value: "30", label: "Cierra en 30 días"   },
-    { value: "90", label: "Cierra en 90 días"   },
+    { value: "", label: "Cualquier plazo" },
+    { value: "7", label: "Cierra en 7 días" },
+    { value: "30", label: "Cierra en 30 días" },
+    { value: "90", label: "Cierra en 90 días" },
 ];
 
 // ── Componente ─────────────────────────────────────────────────────────────────
@@ -33,7 +33,7 @@ export default function HomePage() {
         setAutenticado(auth);
         if (auth) {
             setSortBy("relevancia");
-            favoritosApi.ids().then(r => setFavIds(new Set(r.data))).catch(() => {});
+            favoritosApi.ids().then(r => setFavIds(new Set(r.data))).catch(() => { });
         }
     }, []);
 
@@ -45,48 +45,48 @@ export default function HomePage() {
         });
     }
 
-    const [modalAcceso,  setModalAcceso]  = useState(false);
-    const [finalidades,  setFinalidades]  = useState<string[]>([]);
-    const [tipos,        setTipos]        = useState<string[]>([]);
-    const [regiones,     setRegiones]     = useState<RegionNodo[]>([]);
+    const [modalAcceso, setModalAcceso] = useState(false);
+    const [finalidades, setFinalidades] = useState<string[]>([]);
+    const [tipos, setTipos] = useState<string[]>([]);
+    const [regiones, setRegiones] = useState<RegionNodo[]>([]);
 
     // Filtros rápidos (barra junto al buscador)
-    const [query,        setQuery]        = useState("");
-    const [nivel,        setNivel]        = useState("");
+    const [query, setQuery] = useState("");
+    const [nivel, setNivel] = useState("");
     const [soloAbiertas, setSoloAbiertas] = useState(true);
 
     // Filtros de la barra lateral
-    const [sectorActivo,      setSectorActivo]      = useState("");
-    const [plazoCierre,       setPlazoCierre]        = useState("");
-    const [presupuestoMin,    setPresupuestoMin]     = useState(0);
-    const [tipoBeneficiario,  setTipoBeneficiario]  = useState("");
-    const [selectedRegionId,  setSelectedRegionId]  = useState<number | null>(null);
+    const [sectorActivo, setSectorActivo] = useState("");
+    const [plazoCierre, setPlazoCierre] = useState("");
+    const [presupuestoMin, setPresupuestoMin] = useState(0);
+    const [tipoBeneficiario, setTipoBeneficiario] = useState("");
+    const [selectedRegionId, setSelectedRegionId] = useState<number | null>(null);
     const [selectedProvinciaId, setSelectedProvinciaId] = useState<number | null>(null);
 
-    const [sortBy,            setSortBy]             = useState("plazo");
-    const [sidebarVisible,    setSidebarVisible]     = useState(true);
+    const [sortBy, setSortBy] = useState("plazo");
+    const [sidebarVisible, setSidebarVisible] = useState(true);
 
     // Estado de resultados
     const [resultados, setResultados] = useState<BusquedaPublicaResponse | null>(null);
-    const [loading,    setLoading]    = useState(true);
-    const [page,       setPage]       = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(0);
 
     // Filtros aplicados (los que se han enviado al API)
-    const [appliedQuery,   setAppliedQuery]   = useState("");
-    const [appliedSector,  setAppliedSector]  = useState("");
+    const [appliedQuery, setAppliedQuery] = useState("");
+    const [appliedSector, setAppliedSector] = useState("");
     const [appliedAbierto, setAppliedAbierto] = useState(true);
 
     const buscar = useCallback((q: string, sec: string, tipo: string, abierto: boolean, p: number, regionId?: number | null, orden?: string, minPresupuesto?: number) => {
         setLoading(true);
         const baseParams = {
-            q:               q    || undefined,
-            sector:          sec  || undefined,
-            tipo:            tipo || undefined,
-            abierto:         abierto ? true : undefined,
-            regionId:        regionId ?? undefined,
-            presupuestoMin:  minPresupuesto && minPresupuesto > 0 ? minPresupuesto : undefined,
-            page:            p,
-            size:            20,
+            q: q || undefined,
+            sector: sec || undefined,
+            tipo: tipo || undefined,
+            abierto: abierto ? true : undefined,
+            regionId: regionId ?? undefined,
+            presupuestoMin: minPresupuesto && minPresupuesto > 0 ? minPresupuesto : undefined,
+            page: p,
+            size: 20,
         };
         const request = autenticado
             ? convocatoriasUsuarioApi.buscar({ ...baseParams, sort: orden || "relevancia" })
@@ -102,13 +102,13 @@ export default function HomePage() {
         buscar("", "", "", true, 0, null, sortBy);
         convocatoriasPublicasApi.finalidades()
             .then((res) => setFinalidades(res.data))
-            .catch(() => {});
+            .catch(() => { });
         convocatoriasPublicasApi.tipos()
             .then((res) => setTipos(res.data))
-            .catch(() => {});
+            .catch(() => { });
         convocatoriasPublicasApi.regiones()
             .then((res) => setRegiones(res.data))
-            .catch(() => {});
+            .catch(() => { });
     }, [buscar]);
 
     // Búsqueda desde la barra rápida (submit o cambio de filtro)
@@ -223,15 +223,25 @@ export default function HomePage() {
 
                     {/* Barra de búsqueda principal */}
                     <form onSubmit={handleQuickSearch} className="relative max-w-2xl mx-auto mb-4">
-                        <div className="flex items-center gap-0 bg-surface border-2 border-border rounded-2xl shadow-sm focus-within:border-primary transition-colors overflow-hidden">
+                        <div className="flex items-center gap-0 bg-surface border-2 border-border rounded-2xl shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-colors overflow-hidden">
                             <Search className="w-5 h-5 text-foreground-muted ml-4 shrink-0" />
                             <input
                                 type="text"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Busca por sector, tipo de proyecto o nombre de convocatoria..."
-                                className="flex-1 px-4 py-4 bg-transparent text-foreground placeholder:text-foreground-subtle outline-none text-sm"
+                                className="flex-1 px-4 py-4 bg-transparent text-foreground placeholder:text-foreground-subtle outline-none focus:outline-none focus-visible:outline-none caret-transparent text-sm"
+                                style={{ outline: 'none', boxShadow: 'none', caretColor: 'transparent', WebkitAppearance: 'none', WebkitTapHighlightColor: 'transparent' }}
                             />
+                            {query && (
+                                <button
+                                    type="button"
+                                    onClick={() => setQuery("")}
+                                    className="mr-2 text-foreground-muted hover:text-foreground transition-colors"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            )}
                             <button
                                 type="submit"
                                 className="m-1.5 flex items-center gap-2 bg-primary text-white px-5 py-3 rounded-xl font-semibold text-sm hover:bg-primary-hover transition-colors shrink-0"
@@ -269,11 +279,10 @@ export default function HomePage() {
                         <button
                             type="button"
                             onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), sectorActivo, nivel, next); }}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
-                                soloAbiertas
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${soloAbiertas
                                     ? "border-primary bg-primary-light text-primary dark:text-blue-300"
                                     : "border-border text-foreground-muted hover:border-primary/50"
-                            }`}
+                                }`}
                         >
                             <span className={`w-2 h-2 rounded-full ${soloAbiertas ? "bg-primary" : "bg-foreground-subtle"}`} />
                             {soloAbiertas ? "Solo abiertas" : "Incluir cerradas"}
@@ -360,12 +369,12 @@ export default function HomePage() {
                                                     Presupuesto Mínimo
                                                     {presupuestoMin > 0 && (
                                                         <span className="ml-2 text-primary normal-case tracking-normal">
-                                                    {presupuestoMin >= 1_000_000
-                                                        ? `${(presupuestoMin / 1_000_000).toFixed(1)}M€`
-                                                        : presupuestoMin >= 1_000
-                                                            ? `${Math.round(presupuestoMin / 1_000)}k€`
-                                                            : `${presupuestoMin}€`}
-                                                </span>
+                                                            {presupuestoMin >= 1_000_000
+                                                                ? `${(presupuestoMin / 1_000_000).toFixed(1)}M€`
+                                                                : presupuestoMin >= 1_000
+                                                                    ? `${Math.round(presupuestoMin / 1_000)}k€`
+                                                                    : `${presupuestoMin}€`}
+                                                        </span>
                                                     )}
                                                 </label>
                                                 <input
@@ -463,8 +472,8 @@ export default function HomePage() {
                                     <div className="flex bg-surface-muted p-1 rounded-lg">
                                         {[
                                             { id: "relevancia", label: "Relevancia", requiresAuth: true },
-                                            { id: "plazo",      label: "Plazo",      requiresAuth: false },
-                                            { id: "cuantia",    label: "Cuantía",     requiresAuth: false },
+                                            { id: "plazo", label: "Plazo", requiresAuth: false },
+                                            { id: "cuantia", label: "Cuantía", requiresAuth: false },
                                         ].map((opt) => (
                                             <button
                                                 key={opt.id}
@@ -478,13 +487,12 @@ export default function HomePage() {
                                                     buscar(appliedQuery, appliedSector, nivel, appliedAbierto, 0, selectedProvinciaId ?? selectedRegionId, opt.id, presupuestoMin);
                                                 }}
                                                 title={opt.requiresAuth && !autenticado ? "Inicia sesión para ordenar por relevancia según tu perfil" : undefined}
-                                                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
-                                                    sortBy === opt.id
+                                                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${sortBy === opt.id
                                                         ? "bg-white shadow-sm text-primary"
                                                         : opt.requiresAuth && !autenticado
                                                             ? "text-foreground-muted/50 cursor-not-allowed"
                                                             : "text-foreground-muted hover:text-foreground"
-                                                }`}
+                                                    }`}
                                             >
                                                 {opt.label}
                                             </button>
@@ -541,21 +549,20 @@ export default function HomePage() {
 
                                     {Array.from({ length: Math.min(resultados.totalPages, 7) }, (_, i) => {
                                         const total = resultados.totalPages;
-                                        const cur   = resultados.page;
+                                        const cur = resultados.page;
                                         let p: number;
-                                        if      (total <= 7)       p = i;
-                                        else if (cur   <= 3)       p = i;
-                                        else if (cur   >= total-4) p = total - 7 + i;
-                                        else                        p = cur - 3 + i;
+                                        if (total <= 7) p = i;
+                                        else if (cur <= 3) p = i;
+                                        else if (cur >= total - 4) p = total - 7 + i;
+                                        else p = cur - 3 + i;
                                         return (
                                             <button
                                                 key={p}
                                                 onClick={() => goToPage(p)}
-                                                className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${
-                                                    p === cur
+                                                className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${p === cur
                                                         ? "bg-primary text-white"
                                                         : "bg-surface border border-border text-foreground-muted hover:bg-surface-muted"
-                                                }`}
+                                                    }`}
                                             >
                                                 {p + 1}
                                             </button>

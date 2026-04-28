@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ScoreBadge } from "@/components/ui/Badge";
 import { ConvocatoriaCard } from "@/components/ConvocatoriaCard";
-import { Search, ArrowRight, Sparkles, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { Search, ArrowRight, Sparkles, ChevronDown, ChevronUp, Loader2, X } from "lucide-react";
 
 interface Recomendacion {
   id: number;
@@ -226,15 +226,25 @@ export default function RecomendacionesPage() {
         onSubmit={(e) => { e.preventDefault(); buscar(); }}
         className="relative max-w-2xl mx-auto mb-4"
       >
-        <div className="flex items-center gap-0 bg-surface border-2 border-border rounded-2xl shadow-sm focus-within:border-primary transition-colors overflow-hidden">
+        <div className="flex items-center gap-0 bg-surface border-2 border-border rounded-2xl shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-colors overflow-hidden">
           <Search className="w-5 h-5 text-foreground-muted ml-4 shrink-0" />
           <input
             type="text"
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
             placeholder="Busca por sector, tipo de proyecto o nombre de convocatoria..."
-            className="flex-1 px-4 py-4 bg-transparent text-foreground placeholder:text-foreground-subtle outline-none text-sm"
+            className="flex-1 px-4 py-4 bg-transparent text-foreground placeholder:text-foreground-subtle outline-none focus:outline-none focus-visible:outline-none caret-transparent text-sm"
+            style={{ outline: 'none', boxShadow: 'none', caretColor: 'transparent', WebkitAppearance: 'none', WebkitTapHighlightColor: 'transparent' }}
           />
+          {filtro && (
+            <button
+              type="button"
+              onClick={() => setFiltro("")}
+              className="mr-2 text-foreground-muted hover:text-foreground transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
           <button
             type="submit"
             disabled={buscando || streaming}

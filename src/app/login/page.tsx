@@ -46,12 +46,15 @@ export default function LoginPage() {
         router.push(perfilCompleto ? "/home" : "/perfil/completar");
       }
     } catch (err: unknown) {
+      setEmail("");
+      setPassword("");
       toast.update(
         loadingId,
         "error",
         err instanceof Error
           ? err.message
-          : "Credenciales incorrectas. Inténtalo de nuevo."
+          : "Credenciales incorrectas. Inténtalo de nuevo.",
+        7000
       );
     } finally {
       setLoading(false);

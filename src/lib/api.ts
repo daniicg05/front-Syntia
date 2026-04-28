@@ -42,7 +42,12 @@ export const authApi = {
     login: (email: string, password: string) =>
         api.post<{ token: string; email: string; rol: string; expiration: number }>(
             "/auth/login",
-            { email, password }
+            { email, password },
+            {
+                headers: {
+                    [SKIP_AUTH_REDIRECT_HEADER]: "true",
+                },
+            }
         ),
     registro: (email: string, password: string, confirmarPassword: string) =>
         api.post<{ token: string; email: string; rol: string; expiration: number }>(

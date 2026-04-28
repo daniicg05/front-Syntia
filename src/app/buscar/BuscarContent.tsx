@@ -415,14 +415,15 @@ export default function BuscarContent() {
             {/* Barra de búsqueda */}
             <div className="mb-4">
                 <form onSubmit={handleSearch} className="flex gap-2">
-                    <div className="flex-1 flex items-center gap-0 bg-surface border-2 border-border rounded-xl focus-within:border-primary transition-colors overflow-hidden">
+                    <div className="flex-1 flex items-center gap-0 bg-surface border-2 border-border rounded-xl focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-colors overflow-hidden">
                         <Search className="w-4 h-4 text-foreground-muted ml-3 shrink-0" />
                         <input
                             type="text"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder="Busca convocatorias por nombre, sector, organismo..."
-                            className="flex-1 px-3 py-3 bg-transparent text-foreground placeholder:text-foreground-subtle outline-none text-sm"
+                            className="flex-1 px-3 py-3 bg-transparent text-foreground placeholder:text-foreground-subtle outline-none focus:outline-none focus-visible:outline-none caret-transparent text-sm"
+                            style={{ outline: 'none', boxShadow: 'none', caretColor: 'transparent', WebkitAppearance: 'none', WebkitTapHighlightColor: 'transparent' }}
                         />
                         {query && (
                             <button
