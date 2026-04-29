@@ -217,7 +217,12 @@ export const convocatoriasUsuarioApi = {
     analisis: (convocatoriaId: number, proyectoId?: number) =>
         api.get<AnalisisCompleto>(
             `/usuario/convocatorias/${convocatoriaId}/analisis`,
-            { params: proyectoId ? { proyectoId } : {}, timeout: 120_000 }
+            { params: proyectoId ? { proyectoId } : {}, timeout: 180_000 }
+        ),
+    guia: (convocatoriaId: number) =>
+        api.get<GuiaSubvencion>(
+            `/usuario/convocatorias/${convocatoriaId}/guia`,
+            { timeout: 120_000 }
         ),
 };
 
@@ -257,6 +262,30 @@ export const proyectosApi = {
     update: (id: number, data: Record<string, string>) =>
         api.put(`/usuario/proyectos/${id}`, data),
     delete: (id: number) => api.delete(`/usuario/proyectos/${id}`),
+};
+
+// ── Guías del usuario ─────────────────────────────────────────────────────────
+export interface GuiaUsuarioDTO {
+    id: number;
+    origen: string;
+    convocatoriaId: number;
+    titulo: string;
+    organismo?: string;
+    sector?: string;
+    ubicacion?: string;
+    fechaCierre?: string;
+    abierto?: boolean;
+    urlOficial?: string;
+    numeroConvocatoria?: string;
+    proyectoId?: number;
+    proyectoNombre?: string;
+    guia: GuiaSubvencion;
+    creadoEn?: string;
+    puntuacion: number;
+}
+
+export const guiasUsuarioApi = {
+    list: () => api.get<GuiaUsuarioDTO[]>("/usuario/guias"),
 };
 
 // ── Recomendaciones ───────────────────────────────────────────────────────────
