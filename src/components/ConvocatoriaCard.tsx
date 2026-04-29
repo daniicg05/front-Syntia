@@ -5,6 +5,7 @@ import { ArrowRight, ExternalLink, Lock, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
+import { motion } from "framer-motion";
 
 interface Props {
     convocatoria: ConvocatoriaPublica;
@@ -23,8 +24,8 @@ function calcDaysLeft(fechaCierre?: string): number | null {
 }
 
 function calcProgress(daysLeft: number): number {
-    if (daysLeft <= 0)  return 100;
-    if (daysLeft <= 7)  return 90;
+    if (daysLeft <= 0) return 100;
+    if (daysLeft <= 7) return 90;
     if (daysLeft <= 14) return 75;
     if (daysLeft <= 30) return 55;
     if (daysLeft <= 60) return 30;
@@ -48,7 +49,7 @@ function formatFecha(fecha?: string): string {
 function formatPresupuesto(p?: number): string | null {
     if (p == null || p === 0) return null;
     if (p >= 1_000_000) return `${(p / 1_000_000).toFixed(1).replace(".", ",")}M€`;
-    if (p >= 100_000)   return `${Math.round(p / 1_000)}k€`;
+    if (p >= 100_000) return `${Math.round(p / 1_000)}k€`;
     return `${new Intl.NumberFormat("es-ES").format(Math.round(p))}€`;
 }
 
@@ -67,21 +68,21 @@ export function ConvocatoriaCard({
     const { theme } = useTheme();
 
     const esCerrada = c.abierto === false;
-    const daysLeft  = calcDaysLeft(c.fechaCierre);
+    const daysLeft = calcDaysLeft(c.fechaCierre);
     const highMatch = showMatch && (c.matchScore ?? 0) >= 70;
-    const urgent    = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
-    const moderate  = daysLeft !== null && daysLeft > 7 && daysLeft <= 30;
+    const urgent = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
+    const moderate = daysLeft !== null && daysLeft > 7 && daysLeft <= 30;
 
     const presupuestoFmt = formatPresupuesto(c.presupuesto);
-    const progress       = daysLeft != null && daysLeft > 0 ? calcProgress(daysLeft) : null;
+    const progress = daysLeft != null && daysLeft > 0 ? calcProgress(daysLeft) : null;
 
     const themedPrimaryText = theme === "dark" ? "text-blue-300" : "text-primary";
 
     const accentBar =
         esCerrada ? null :
-            urgent    ? "bg-destructive" :
+            urgent ? "bg-destructive" :
                 highMatch ? "bg-accent-green" :
-                    moderate  ? "bg-accent-amber" :
+                    moderate ? "bg-accent-amber" :
                         null;
 
     const badge =
@@ -96,12 +97,12 @@ export function ConvocatoriaCard({
                         : null;
 
     const progressBarColor =
-        urgent   ? "bg-destructive" :
+        urgent ? "bg-destructive" :
             moderate ? "bg-accent-amber" :
                 "bg-primary";
 
     const daysTextColor =
-        urgent   ? "text-destructive" :
+        urgent ? "text-destructive" :
             moderate ? "text-accent-amber" :
                 "text-foreground-muted";
 
@@ -136,14 +137,19 @@ export function ConvocatoriaCard({
     }
 
     return (
-        <div
+        <motion.div
             className="
                 bg-surface
-                hover:shadow-xl hover:shadow-black/[0.03]
-                transition-all duration-200
                 p-6 rounded-2xl group relative overflow-hidden
                 border border-border
             "
+            whileHover={{
+                y: -8,
+                scale: 1.02,
+                boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.18)",
+                transition: { type: "spring", stiffness: 260, damping: 20 },
+            }}
+            whileTap={{ scale: 0.985 }}
         >
             {accentBar && (
                 <div className={`absolute top-0 left-0 w-1 h-full ${accentBar}`} />
@@ -326,6 +332,6 @@ export function ConvocatoriaCard({
                     )}
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 }
