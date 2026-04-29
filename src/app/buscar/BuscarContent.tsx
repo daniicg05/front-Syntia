@@ -14,19 +14,6 @@ type RegionOption = { id: number | null; label: string; groupLabel?: string };
 
 const stripCodigo = (d: string) => d.replace(/^[A-Z0-9]+ - /, "").trim();
 
-const SECTORES_FILTRO = [
-    { value: "",             label: "Todos",            icon: "🔍" },
-    { value: "tecnologia",   label: "Tecnología",       icon: "💻" },
-    { value: "agricola",     label: "Agrícola",         icon: "🌾" },
-    { value: "industrial",   label: "Industrial",       icon: "🏭" },
-    { value: "hosteleria",   label: "Hostelería",       icon: "🏨" },
-    { value: "social",       label: "Social",           icon: "🤝" },
-    { value: "medioambiente",label: "Medioambiente",    icon: "🌿" },
-    { value: "comercio",     label: "Comercio",         icon: "🛒" },
-    { value: "salud",        label: "Salud",            icon: "🏥" },
-    { value: "educacion",    label: "Educación",        icon: "📚" },
-];
-
 const panelVariants = {
     hidden:  { opacity: 0, y: -8, scale: 0.98 },
     visible: { opacity: 1, y: 0,  scale: 1,    transition: easeDecelerate },
@@ -307,6 +294,7 @@ export default function BuscarContent() {
     const [sector, setSector]             = useState(sectorParam);
     const [soloAbiertas, setSoloAbiertas] = useState(!cerradasParam);
     const [selectedRegionId, setSelectedRegionId] = useState<number | null>(regionParam);
+    const [finalidades, setFinalidades]   = useState<string[]>([]);
     const [regiones, setRegiones]         = useState<RegionNodo[]>([]);
     const [resultados, setResultados]     = useState<BusquedaPublicaResponse | null>(null);
     const [loading, setLoading]           = useState(false);
@@ -337,6 +325,11 @@ export default function BuscarContent() {
     }, [autenticado]);
 
     useEffect(() => {
+        if (finalidades.length === 0) {
+            convocatoriasPublicasApi.finalidades()
+                .then((res) => setFinalidades(res.data))
+                .catch(() => {});
+        }
         if (regiones.length === 0) {
             convocatoriasPublicasApi.regiones()
                 .then((res) => setRegiones(res.data))
@@ -400,9 +393,7 @@ export default function BuscarContent() {
         })()
         : null;
 
-    const sectorLabel = sector
-        ? SECTORES_FILTRO.find((s) => s.value === sector)
-        : null;
+    const sectorLabel = sector || null;
 
     const tieneResultados = resultados && resultados.content.length > 0;
 
@@ -474,8 +465,7 @@ export default function BuscarContent() {
                             <div className="flex flex-wrap gap-2 pt-3">
                                 {sectorLabel && (
                                     <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 bg-primary-light text-primary text-xs font-medium rounded-full border border-primary/20">
-                                        <span>{sectorLabel.icon}</span>
-                                        {sectorLabel.label}
+                                        {sectorLabel}
                                         <button
                                             type="button"
                                             onClick={() => handleSectorChange("")}
@@ -538,19 +528,29 @@ export default function BuscarContent() {
                                     Sector
                                 </p>
                                 <div className="flex flex-wrap gap-2">
-                                    {SECTORES_FILTRO.map((s) => (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSectorChange("")}
+                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all duration-150 ${
+                                            sector === ""
+                                                ? "border-primary bg-primary text-white shadow-sm"
+                                                : "border-border text-foreground-muted bg-surface hover:border-primary/40 hover:text-foreground hover:bg-surface-muted"
+                                        }`}
+                                    >
+                                        Todos
+                                    </button>
+                                    {finalidades.map((finalidad) => (
                                         <button
-                                            key={s.value}
+                                            key={finalidad}
                                             type="button"
-                                            onClick={() => handleSectorChange(s.value)}
+                                            onClick={() => handleSectorChange(finalidad)}
                                             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all duration-150 ${
-                                                sector === s.value
+                                                sector === finalidad
                                                     ? "border-primary bg-primary text-white shadow-sm"
                                                     : "border-border text-foreground-muted bg-surface hover:border-primary/40 hover:text-foreground hover:bg-surface-muted"
                                             }`}
                                         >
-                                            <span>{s.icon}</span>
-                                            {s.label}
+                                            {finalidad}
                                         </button>
                                     ))}
                                 </div>
@@ -612,7 +612,7 @@ export default function BuscarContent() {
                             convocatoria{resultados.totalElements !== 1 ? "s" : ""}{" "}
                             {soloAbiertas ? "abiertas" : ""} encontrada{resultados.totalElements !== 1 ? "s" : ""}
                             {qParam && (
-                                <> para <span className="font-medium text-foreground">"{qParam}"</span></>
+                                <> para <span className="font-medium text-foreground">&quot;{qParam}&quot;</span></>
                             )}
                             {sectorParam && (
                                 <> · sector <span className="font-medium text-foreground capitalize">{sectorParam}</span></>

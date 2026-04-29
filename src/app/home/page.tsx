@@ -56,7 +56,7 @@ export default function HomePage() {
     const [soloAbiertas, setSoloAbiertas] = useState(true);
 
     // Filtros de la barra lateral
-    const [sectorActivo, setSectorActivo] = useState("");
+    const [finalidadActiva, setFinalidadActiva] = useState("");
     const [plazoCierre, setPlazoCierre] = useState("");
     const [presupuestoMin, setPresupuestoMin] = useState(0);
     const [tipoBeneficiario, setTipoBeneficiario] = useState("");
@@ -76,7 +76,7 @@ export default function HomePage() {
     const [appliedSector, setAppliedSector] = useState("");
     const [appliedAbierto, setAppliedAbierto] = useState(true);
 
-    const buscar = useCallback((q: string, sec: string, tipo: string, abierto: boolean, p: number, regionId?: number | null, orden?: string, minPresupuesto?: number) => {
+    const buscar = useCallback((q: string, sec: string, tipo: string, abierto: boolean, p: number, regionId?: number | null, orden?: string, minPresupuesto?: number, beneficiario?: string, plazoDias?: string) => {
         setLoading(true);
         const baseParams = {
             q: q || undefined,
@@ -85,6 +85,8 @@ export default function HomePage() {
             abierto: abierto ? true : undefined,
             regionId: regionId ?? undefined,
             presupuestoMin: minPresupuesto && minPresupuesto > 0 ? minPresupuesto : undefined,
+            tipoBeneficiario: beneficiario || undefined,
+            plazoCierreDias: plazoDias ? Number(plazoDias) : undefined,
             page: p,
             size: 20,
         };
@@ -114,7 +116,7 @@ export default function HomePage() {
     // Búsqueda desde la barra rápida (submit o cambio de filtro)
     function handleQuickSearch(e: FormEvent) {
         e.preventDefault();
-        applyQuickFilters(query.trim(), sectorActivo, nivel, soloAbiertas);
+        applyQuickFilters(query.trim(), finalidadActiva, nivel, soloAbiertas);
     }
 
     function applyQuickFilters(q: string, sec: string, niv: string, abierto: boolean) {
@@ -122,31 +124,31 @@ export default function HomePage() {
         setAppliedSector(sec);
         setAppliedAbierto(abierto);
         setPage(0);
-        buscar(q, sec, niv, abierto, 0, selectedProvinciaId ?? selectedRegionId, sortBy, presupuestoMin);
+        buscar(q, sec, niv, abierto, 0, selectedProvinciaId ?? selectedRegionId, sortBy, presupuestoMin, tipoBeneficiario, plazoCierre);
     }
 
     // Aplicar filtros desde la barra lateral
     function handleApplyFilters() {
-        setAppliedSector(sectorActivo);
+        setAppliedSector(finalidadActiva);
         setAppliedAbierto(soloAbiertas);
         setPage(0);
-        buscar(appliedQuery, sectorActivo, nivel, soloAbiertas, 0, selectedProvinciaId ?? selectedRegionId, sortBy, presupuestoMin);
+        buscar(appliedQuery, finalidadActiva, nivel, soloAbiertas, 0, selectedProvinciaId ?? selectedRegionId, sortBy, presupuestoMin, tipoBeneficiario, plazoCierre);
     }
 
     // Limpiar todos los filtros
     function handleClearFilters() {
         setQuery(""); setNivel(""); setSoloAbiertas(true);
-        setSectorActivo(""); setPlazoCierre("");
+        setFinalidadActiva(""); setPlazoCierre("");
         setPresupuestoMin(0); setTipoBeneficiario(""); setSelectedRegionId(null);
         setSelectedProvinciaId(null);
         setAppliedQuery(""); setAppliedSector(""); setAppliedAbierto(true);
         setPage(0);
-        buscar("", "", "", true, 0, null, sortBy, 0);
+        buscar("", "", "", true, 0, null, sortBy, 0, "", "");
     }
 
     function goToPage(p: number) {
         setPage(p);
-        buscar(appliedQuery, appliedSector, nivel, appliedAbierto, p, selectedProvinciaId ?? selectedRegionId, sortBy, presupuestoMin);
+        buscar(appliedQuery, appliedSector, nivel, appliedAbierto, p, selectedProvinciaId ?? selectedRegionId, sortBy, presupuestoMin, tipoBeneficiario, plazoCierre);
         document.getElementById("listado-section")?.scrollIntoView({ behavior: "smooth" });
     }
 
@@ -167,27 +169,6 @@ export default function HomePage() {
     const displayList = (() => {
         if (!resultados) return [];
         let list = resultados.content;
-
-        // Filtro cliente: plazo de cierre (dentro de N días)
-        if (plazoCierre) {
-            const maxDays = Number(plazoCierre);
-            const now = new Date();
-            const limit = new Date(now.getTime() + maxDays * 86_400_000);
-            list = list.filter((c) => {
-                if (!c.fechaCierre) return false;
-                const cierre = new Date(c.fechaCierre);
-                return cierre >= now && cierre <= limit;
-            });
-        }
-
-        // Filtro cliente: tipo de beneficiario
-        if (tipoBeneficiario) {
-            list = list.filter((c) =>
-                (c.tiposBeneficiario ?? []).some((t) =>
-                    t.toLowerCase().includes(tipoBeneficiario.toLowerCase())
-                )
-            );
-        }
 
         // Para usuarios no autenticados, aplicar sort client-side (el backend público no soporta sort)
         if (!autenticado) {
@@ -256,7 +237,7 @@ export default function HomePage() {
                     <div className="max-w-2xl mx-auto flex items-center gap-2">
                         <select
                             value={nivel}
-                            onChange={(e) => { setNivel(e.target.value); applyQuickFilters(query.trim(), sectorActivo, e.target.value, soloAbiertas); }}
+                            onChange={(e) => { setNivel(e.target.value); applyQuickFilters(query.trim(), finalidadActiva, e.target.value, soloAbiertas); }}
                             className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground-muted focus:outline-none focus:border-primary transition-colors"
                         >
                             <option value="">Todos los niveles</option>
@@ -266,8 +247,8 @@ export default function HomePage() {
                         </select>
 
                         <select
-                            value={sectorActivo}
-                            onChange={(e) => { setSectorActivo(e.target.value); applyQuickFilters(query.trim(), e.target.value, nivel, soloAbiertas); }}
+                            value={finalidadActiva}
+                            onChange={(e) => { setFinalidadActiva(e.target.value); applyQuickFilters(query.trim(), e.target.value, nivel, soloAbiertas); }}
                             className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground-muted focus:outline-none focus:border-primary transition-colors"
                         >
                             <option value="">Explorar por sector</option>
@@ -278,7 +259,7 @@ export default function HomePage() {
 
                         <button
                             type="button"
-                            onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), sectorActivo, nivel, next); }}
+                            onClick={() => { const next = !soloAbiertas; setSoloAbiertas(next); applyQuickFilters(query.trim(), finalidadActiva, nivel, next); }}
                             className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${soloAbiertas
                                     ? "border-primary bg-primary-light text-primary dark:text-blue-300"
                                     : "border-border text-foreground-muted hover:border-primary/50"
@@ -484,7 +465,7 @@ export default function HomePage() {
                                                     }
                                                     setSortBy(opt.id);
                                                     setPage(0);
-                                                    buscar(appliedQuery, appliedSector, nivel, appliedAbierto, 0, selectedProvinciaId ?? selectedRegionId, opt.id, presupuestoMin);
+                                                    buscar(appliedQuery, appliedSector, nivel, appliedAbierto, 0, selectedProvinciaId ?? selectedRegionId, opt.id, presupuestoMin, tipoBeneficiario, plazoCierre);
                                                 }}
                                                 title={opt.requiresAuth && !autenticado ? "Inicia sesión para ordenar por relevancia según tu perfil" : undefined}
                                                 className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${sortBy === opt.id
