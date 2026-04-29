@@ -125,7 +125,7 @@ export interface BusquedaPublicaResponse {
 }
 
 export const convocatoriasPublicasApi = {
-    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; regionId?: number; presupuestoMin?: number; page?: number; size?: number }) =>
+    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; regionId?: number; presupuestoMin?: number; plazoCierreDias?: number; tipoBeneficiario?: string; page?: number; size?: number }) =>
         api.get<BusquedaPublicaResponse>("/convocatorias/publicas/buscar", { params }),
     destacadas: () => api.get<ConvocatoriaPublica[]>("/convocatorias/publicas/destacadas"),
     finalidades: () => api.get<string[]>("/convocatorias/publicas/finalidades"),
@@ -217,7 +217,7 @@ export interface AnalisisItem {
 export const convocatoriasUsuarioApi = {
     recomendadas: (params?: { page?: number; size?: number }) =>
         api.get<ConvocatoriaPublica[]>("/usuario/convocatorias/recomendadas", { params }),
-    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; regionId?: number; presupuestoMin?: number; sort?: string; page?: number; size?: number }) =>
+    buscar: (params: { q?: string; sector?: string; tipo?: string; abierto?: boolean; regionId?: number; presupuestoMin?: number; plazoCierreDias?: number; tipoBeneficiario?: string; sort?: string; page?: number; size?: number }) =>
         api.get<BusquedaPublicaResponse>("/usuario/convocatorias/buscar", { params }),
     analisis: (convocatoriaId: number, proyectoId?: number) =>
         api.get<AnalisisCompleto>(

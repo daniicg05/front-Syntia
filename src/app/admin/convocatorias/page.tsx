@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { adminApi } from "@/lib/api";
+import { adminApi, convocatoriasPublicasApi } from "@/lib/api";
 import type { Convocatoria, ConvocatoriasPageResponse } from "@/lib/types/convocatorias";
 import { Button } from "@/components/ui/Button";
 import { Download, Pencil, Plus, Search, Trash2, X } from "lucide-react";
@@ -25,6 +25,7 @@ export default function AdminConvocatoriasPage() {
   const [searchSector, setSearchSector] = useState("");
   const [activeQ, setActiveQ] = useState("");
   const [activeSector, setActiveSector] = useState("");
+  const [finalidades, setFinalidades] = useState<string[]>([]);
 
   const pageCacheRef = useRef<PageCache>({});
   const inFlightRef = useRef<Record<number, Promise<ConvocatoriasPageResponse>>>({});
@@ -131,6 +132,12 @@ export default function AdminConvocatoriasPage() {
     void loadPage(0);
   }, [loadPage, activeQ, activeSector]);
 
+  useEffect(() => {
+    convocatoriasPublicasApi.finalidades()
+      .then((res) => setFinalidades(res.data))
+      .catch(() => setFinalidades([]));
+  }, []);
+
   const importar = async () => {
     setImportando(true);
     setMsg("");
@@ -214,8 +221,8 @@ export default function AdminConvocatoriasPage() {
           className="px-3 py-2 rounded-xl border border-border bg-surface text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
         >
           <option value="">Todos los sectores</option>
-          {["tecnologia","agricola","industrial","hosteleria","social","medioambiente","comercio","salud","educacion"].map(s => (
-            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+          {finalidades.map((finalidad) => (
+            <option key={finalidad} value={finalidad}>{finalidad}</option>
           ))}
         </select>
         <Button type="submit" size="sm" disabled={pageLoading}>Buscar</Button>
