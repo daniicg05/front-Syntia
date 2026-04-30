@@ -15,6 +15,7 @@ import {
   Search,
   Moon,
   Sun,
+  Users,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
@@ -48,17 +49,20 @@ const HOW_IT_WORKS = [
   {
     step: "01",
     title: "Describe tu proyecto",
-    description: "Cuéntanos en qué consiste tu proyecto, su sector, alcance y necesidades de financiación.",
+    description:
+        "Cuéntanos en qué consiste tu proyecto, su sector, alcance y necesidades de financiación.",
   },
   {
     step: "02",
     title: "La IA analiza y cruza datos",
-    description: "Syntia procesa tu descripción y la compara con toda la base de datos de subvenciones vigentes.",
+    description:
+        "Syntia procesa tu descripción y la compara con toda la base de datos de subvenciones vigentes.",
   },
   {
     step: "03",
     title: "Recibe tus recomendaciones",
-    description: "Obtén un ranking personalizado de subvenciones compatibles con puntuación y explicación detallada.",
+    description:
+        "Obtén un ranking personalizado de subvenciones compatibles con puntuación y explicación detallada.",
   },
 ];
 
@@ -99,7 +103,7 @@ const cardVariants = {
       type: "spring",
       stiffness: 100,
       damping: 15,
-    }
+    },
   },
 };
 
@@ -112,7 +116,7 @@ const stepVariants = {
       type: "spring",
       stiffness: 100,
       damping: 15,
-    }
+    },
   },
 };
 
@@ -144,6 +148,7 @@ export default function LandingPage() {
                 className="w-[60px] md:w-[100px] h-auto"
                 priority
             />
+
             <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-foreground-muted">
               <button
                   onClick={() => scrollToSection("funcionalidades")}
@@ -163,7 +168,14 @@ export default function LandingPage() {
               >
                 Empezar a buscar
               </button>
+              <Link
+                  href="/conocenos"
+                  className="hover:text-foreground transition-colors"
+              >
+                Conócenos
+              </Link>
             </nav>
+
             <div className="flex items-center gap-4">
               {mounted && (
                   <button
@@ -258,6 +270,13 @@ export default function LandingPage() {
                   Empezar gratis
                   <ArrowRight className="w-4 h-4" />
                 </Link>
+                <Link
+                    href="/conocenos"
+                    className="inline-flex items-center gap-2 border border-white/30 bg-white/10 text-white px-7 py-3.5 rounded-xl hover:bg-white hover:text-primary font-semibold text-base transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 backdrop-blur-sm"
+                >
+                  Conócenos
+                  <Users className="w-4 h-4" />
+                </Link>
               </motion.div>
               <motion.p
                   className="mt-5 text-sm text-white font-medium drop-shadow-md [text-shadow:_0_1px_6px_rgb(0_0_0_/_50%)]"
@@ -319,7 +338,7 @@ export default function LandingPage() {
                           y: -8,
                           scale: 1.02,
                           boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.15)",
-                          transition: { type: "spring", stiffness: 300, damping: 20 }
+                          transition: { type: "spring", stiffness: 300, damping: 20 },
                         }}
                         whileTap={{ scale: 0.98 }}
                     >
@@ -368,7 +387,7 @@ export default function LandingPage() {
                         variants={stepVariants}
                         whileHover={{
                           scale: 1.03,
-                          transition: { type: "spring", stiffness: 300, damping: 20 }
+                          transition: { type: "spring", stiffness: 300, damping: 20 },
                         }}
                     >
                       <div className="flex items-center gap-3 mb-4">
@@ -381,7 +400,7 @@ export default function LandingPage() {
                               type: "spring",
                               stiffness: 200,
                               damping: 15,
-                              delay: i * 0.2
+                              delay: i * 0.2,
                             }}
                         >
                           {step.step}
@@ -416,7 +435,7 @@ export default function LandingPage() {
                   variants={fadeInScale}
                   whileHover={{
                     boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.1)",
-                    transition: { duration: 0.3 }
+                    transition: { duration: 0.3 },
                   }}
               >
                 <motion.div
@@ -427,9 +446,18 @@ export default function LandingPage() {
                     viewport={{ once: true }}
                 >
                   {[
-                    { icon: <Zap className="w-4 h-4 text-primary dark:text-blue-300" />, label: "Resultados instantáneos" },
-                    { icon: <Shield className="w-4 h-4 text-primary dark:text-blue-300" />, label: "Datos oficiales BDNS" },
-                    { icon: <TrendingUp className="w-4 h-4 text-primary dark:text-blue-300" />, label: "Alta precisión" },
+                    {
+                      icon: <Zap className="w-4 h-4 text-primary dark:text-blue-300" />,
+                      label: "Resultados instantáneos",
+                    },
+                    {
+                      icon: <Shield className="w-4 h-4 text-primary dark:text-blue-300" />,
+                      label: "Datos oficiales BDNS",
+                    },
+                    {
+                      icon: <TrendingUp className="w-4 h-4 text-primary dark:text-blue-300" />,
+                      label: "Alta precisión",
+                    },
                   ].map((item) => (
                       <motion.div
                           key={item.label}
@@ -472,6 +500,13 @@ export default function LandingPage() {
                   >
                     Crear cuenta gratis
                     <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                      href="/conocenos"
+                      className="inline-flex items-center gap-2 border border-border bg-background text-foreground px-7 py-3.5 rounded-xl hover:bg-surface-muted font-semibold text-base transition-all shadow-md hover:shadow-xl hover:scale-105 active:scale-95"
+                  >
+                    Conócenos
+                    <Users className="w-4 h-4" />
                   </Link>
                 </motion.div>
                 <motion.div

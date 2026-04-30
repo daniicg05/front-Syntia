@@ -9,7 +9,7 @@ export function GlobalUserNavbar() {
   const pathname = usePathname();
 
   const hideByExactOrPrefix = HIDDEN_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
+      (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
